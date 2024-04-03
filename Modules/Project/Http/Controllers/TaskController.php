@@ -291,6 +291,7 @@ class TaskController extends Controller
                             'deleteUrlClass' => 'delete_a_project_task',
                             'hasDescription' => ! empty($task->description) ?: false,
                             'hasComments' => ($task->comments->count() > 0) ?: false,
+                            'commentCount' => $task->comments->count(),
                             'dueDate' => $task->due_date,
                             'assigned_to' => $assigned_to,
                             'tags' => [__('project::lang.'.$task->priority)],
