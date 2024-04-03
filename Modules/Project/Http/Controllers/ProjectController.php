@@ -528,11 +528,11 @@ class ProjectController extends Controller
             $project->categories()->sync($categories);
 
             // send notification to project members
-            if (! empty($project_members['attached'])) {
+            if (! empty($project_members['updated'])) {
                 //check if user is a creator then don't notify him
-                foreach ($project_members['attached'] as $key => $value) {
+                foreach ($project_members['updated'] as $key => $value) {
                     if ($value == $project->created_by) {
-                        unset($project_members['attached'][$key]);
+                        unset($project_members['updated'][$key]);
                     }
                 }
 
@@ -547,7 +547,7 @@ class ProjectController extends Controller
                 );
                 $project['link'] = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['id' => $project->id]);
 
-                $this->projectUtil->notifyUsersAboutAssignedProject($project_members['attached'], $project);
+                $this->projectUtil->notifyUsersAboutAssignedProject($project_members['updated'], $project);
             }
 
             DB::commit();
