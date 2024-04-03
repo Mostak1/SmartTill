@@ -330,7 +330,7 @@ var KanbanBoard = /** @class */function () {
             }
 
             if (card.meta.hasComments) {
-                $cardTags.append("<span class=\"label label-default\" title=\"" + LANG.this_card_has_comments + "\"><i class=\"fas fa-comment\"></i></span>");
+                $cardTags.append("<span class=\"label label-default\" title=\"" + LANG.this_card_has_comments + "\"><i class=\"fas fa-comment\"> <sup>" + card.meta.commentCount + "</sup></i></span>");
             }
 
             if (card.meta.lead) {
