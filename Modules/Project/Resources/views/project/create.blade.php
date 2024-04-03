@@ -1,5 +1,6 @@
 <div class="modal-dialog  modal-lg" role="document">
-    {!! Form::open(['action' => '\Modules\Project\Http\Controllers\ProjectController@store', 'id' => 'project_form', 'method' => 'post']) !!}
+    {!! Form::open(['action' => '\Modules\Project\Http\Controllers\ProjectController@store', 'id' => 'project_form', 'method' => 'post','enctype'=>'multipart/form-data']) !!}
+    {{ csrf_field() }}  
     <div class="modal-content">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -36,7 +37,7 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         {!! Form::label('status', __('sale.status') .':*') !!}
-                        {!! Form::select('status', $statuses, null, ['class' => 'form-control select2', 'placeholder' => __('messages.please_select'), 'required', 'style' => 'width: 100%;']); !!}
+                        {!! Form::select('status', $statuses, null, ['class' => 'form-control select2','placeholder' => __('messages.please_select'), 'required', 'style' => 'width: 100%;']); !!}
                     </div>
                 </div>
                 <div class="col-md-4">

@@ -14,13 +14,15 @@ class ImageUploadController extends Controller
      */
     public function upload(Request $request)
     {
-        // Validate the uploaded file
+        $fileName = $request->file('file')->getClientOriginalName();
+        $path = $request->file('file')->storeAs('uploads', $fileName, 'public');
+        $url = asset("storage/$path");
+        return response()->json(['location' => $url]);
+        return response()->json(['location' => "<img src=\"$url\" alt=\"\">"]);
+        return response()->json(['location' => "/awc/Lacuna_ERP/public/storage/$path"]);
 
-        // Store the uploaded image in the storage directory
-        $imagePath = $request->file('image')->store('images', 'public');
-
-        // Return the path to the stored image
-        return response()->json(['location' => asset('storage/' . $imagePath)]);
+        /*$imgpath = request()->file('file')->store('uploads', 'public'); 
+        return response()->json(['location' => "/storage/$imgpath"]);*/
     }
     public function index()
     {

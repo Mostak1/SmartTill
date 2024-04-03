@@ -39,30 +39,6 @@ $('#project_model').on('shown.bs.modal', function (e) {
     //initialize editor
     tinymce.init({
         selector: 'textarea#description',
-        plugins: 'image',
-        toolbar: 'image',
-        images_upload_url: "{{route('upload.image')}}", // URL of your file upload endpoint
-        automatic_uploads: true,
-        file_picker_types: 'image',
-        images_upload_handler: function (blobInfo, success, failure) {
-            var formData;
-            formData = new FormData();
-            formData.append('image', blobInfo.blob(), blobInfo.filename());
-
-            $.ajax({
-                url: "{{route('upload.image')}}", // URL of your file upload endpoint
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (data) {
-                    success(data.location);
-                },
-                error: function (err) {
-                    failure('HTTP Error: ' + err.status);
-                }
-            });
-        }
     });
 
     $(".select2").select2();
@@ -201,30 +177,6 @@ $('.project_task_model').on('shown.bs.modal', function (e) {
     
     tinymce.init({
         selector: 'textarea#description',
-        plugins: 'image',
-        toolbar: 'image',
-        images_upload_url: "{{route('upload.image')}}", // URL of your file upload endpoint
-        automatic_uploads: true,
-        file_picker_types: 'image',
-        images_upload_handler: function (blobInfo, success, failure) {
-            var formData;
-            formData = new FormData();
-            formData.append('image', blobInfo.blob(), blobInfo.filename());
-
-            $.ajax({
-                url: "{{route('upload.image')}}", // URL of your file upload endpoint
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (data) {
-                    success(data.location);
-                },
-                error: function (err) {
-                    failure('HTTP Error: ' + err.status);
-                }
-            });
-        }
     });
 
     $('form#project_task_form .datepicker').datepicker({

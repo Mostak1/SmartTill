@@ -28,5 +28,5 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::post('/install', [Modules\Project\Http\Controllers\InstallController::class, 'install']);
     Route::get('/install/uninstall', [Modules\Project\Http\Controllers\InstallController::class, 'uninstall']);
     Route::get('/install/update', [Modules\Project\Http\Controllers\InstallController::class, 'update']);
-    Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('upload.image');
+    Route::post('/upload', [ImageUploadController::class, 'upload'])->name('upload.image');
 });
