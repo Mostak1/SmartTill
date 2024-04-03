@@ -287,8 +287,7 @@ class HmsBookingController extends Controller
 
             $ref_count = $this->commonUtil->setAndGetReferenceCount("hms_booking", $business_id);
             //Generate reference number
-            $ref_count = $this->commonUtil->setAndGetReferenceCount("hms_booking", $business_id);
-                //Generate reference number
+
             $ref_no = $this->commonUtil->generateReferenceNumber('hms_booking', $ref_count, $business_id, $prefix);
 
             // store in transsaction discount_amount

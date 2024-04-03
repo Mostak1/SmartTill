@@ -226,9 +226,9 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade project_task_model" tabindex="-1" role="dialog"></div>
+        <div class="modal fade project_task_model" tabindex="-1" role="dialog" data-backdrop="static"></div>
         <div class="modal fade" tabindex="-1" role="dialog" id="time_log_model"></div>
-        <div class="modal fade view_project_task_model" tabindex="-1" role="dialog"></div>
+        <div class="modal fade view_project_task_model" tabindex="-1" role="dialog" data-backdrop="static"></div>
         <div class="modal fade payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
         <div class="modal fade edit_payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel">
         </div>
