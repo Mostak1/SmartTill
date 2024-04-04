@@ -98,7 +98,7 @@
                             </label>
                             <div class="dropzone" id="fileupload"></div>
                         </div>
-                        <input type="hidden" id="comment_media" name="file_name[]" value="">
+                        <input type="hidden" id="comment_media" name="file_name[]" value="{{$project_task->id}}">
                     </div>
                 </div>
                 <button type="button" class="btn btn-info btn-sm upload_doc">

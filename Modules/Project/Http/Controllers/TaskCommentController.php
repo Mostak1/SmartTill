@@ -58,7 +58,7 @@ class TaskCommentController extends Controller
             }
 
             // send notification to task member
-            if (! empty($project_comment)) {
+            if (! empty($project_comment['body'])) {
                 $members = $project_task->members->pluck('id')->toArray();
 
                 //check if user is a commentor then don't notify him

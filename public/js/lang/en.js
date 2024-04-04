@@ -119,6 +119,7 @@ LANG = {
     'this_card_has_a_end_date' : 'This card has a end date',
     'this_card_has_a_description' : 'This card has a description',
     'this_card_has_comments' : 'This card has comments',
+    'this_card_has_media'   : 'this card has media',
     'more' : ' more',
     'lead' : 'Lead',
     'project' : 'Project',

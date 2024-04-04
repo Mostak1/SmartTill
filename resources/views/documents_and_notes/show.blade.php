@@ -12,16 +12,28 @@
                     {!! $document_note->description !!}
                 </div>
             </div>
-            @if(($document_note->media)->count() > 0)
+            @if ($document_note->media->count() > 0)
                 <hr>
                 <div class="row">
                     <div class="col-md-12">
                         <h4>@lang('lang_v1.documents')</h4>
-                        @foreach($document_note->media as $media)
-                            <a href="{{$media->display_url}}" download="{{$media->display_name}}">
-                                <i class="fa fa-download"></i>
-                                {{$media->display_name}}
-                            </a><br>
+                        @foreach ($document_note->media as $media)
+                            @php
+                                // Extract file extension from the media URL
+                                $fileExtension = pathinfo($media->display_url, PATHINFO_EXTENSION);
+                                // Define an array of allowed image extensions
+                                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+                            @endphp
+
+                            @if (in_array(strtolower($fileExtension), $allowedExtensions))
+                                <!-- If media is an image, display the image -->
+                                <img src="{{ $media->display_url }}" alt="{{ $media->display_name }}">
+                            @else
+                                <!-- If media is not an image, provide a download link -->
+                                <a href="{{ $media->display_url }}" download="{{ $media->display_name }}">
+                                    <i class="fa fa-download"></i> {{ $media->display_name }}
+                                </a><br>
+                            @endif
                         @endforeach
                     </div>
                 </div>
@@ -30,10 +42,10 @@
         <div class="modal-footer">
             <span class="pull-left">
                 <i class="fas fa-pencil-alt"></i>
-                {{$document_note->createdBy->user_full_name}}
+                {{ $document_note->createdBy->user_full_name }}
                 &nbsp;
                 <i class="fa fa-calendar-check-o"></i>
-                {{@format_date($document_note->created_at)}}
+                {{ @format_date($document_note->created_at) }}
             </span>
             <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">
                 @lang('messages.close')

@@ -33,7 +33,7 @@
             </div>
            
             
-            <div class="row">
+            <div hidden class="row">
                 <div class="col-md-12">
                     <div class="form-group">
                         <div class="form-group toggleMedia">
