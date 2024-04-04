@@ -32,7 +32,7 @@ return [
      |
      */
     'storage' => [
-        'enabled' => true,
+        'enabled' => false,
         'driver' => 'file', // redis, file, pdo, custom
         'path' => storage_path('debugbar'), // For file driver
         'connection' => null,   // Leave null for default connection (Redis/PDO)
@@ -53,7 +53,7 @@ return [
      |
      */
 
-    'include_vendors' => true,
+    'include_vendors' => false,
 
     /*
      |--------------------------------------------------------------------------
@@ -66,8 +66,8 @@ return [
      | Optionally, you can also send ServerTiming headers on ajax requests for the Chrome DevTools.
      */
 
-    'capture_ajax' => true,
-    'add_ajax_timing' => true,
+    'capture_ajax' => false,
+    'add_ajax_timing' => false,
 
     /*
      |--------------------------------------------------------------------------
@@ -78,7 +78,7 @@ return [
      | in the Messages tab.
      |
      */
-    'error_handler' => true,
+    'error_handler' => false,
 
     /*
      |--------------------------------------------------------------------------
