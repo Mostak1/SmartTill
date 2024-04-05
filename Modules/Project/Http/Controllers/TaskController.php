@@ -230,11 +230,21 @@ class TaskController extends Controller
 
                         return $html;
                     })
-                    ->editColumn('subject', '
-                            <a data-href="{{action([\Modules\Project\Http\Controllers\TaskController::class, \'show\'], [$id, "project_id" => $project_id])}}" class="cursor-pointer view_a_project_task text-black">
-                                {{$subject}} <code>{{$task_id}}</code>
-                            </a>
-                        ')
+                    ->editColumn('subject', function ($row) {
+                        $commentCount = $row->comments->count();
+                        $media_count = 0;
+                        // Iterate over each comment of the task
+                        foreach ($row->comments as $comment) {
+                            // Count the media associated with the current comment and add to total media count
+                            $media_count += Media::where('model_type', 'Modules\Project\Entities\ProjectTaskComment')
+                                ->where('model_id', $comment->id)->count();
+                        }
+                        $html = '
+                        <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$row->id, "project_id" => $row->project_id]) . '" class="cursor-pointer view_a_project_task text-black">
+                            ' . $row->subject . ' <code>' . $row->task_id . '</code> <span class="labeb label-default" title="this card has comment"><i class="fas fa-comment"><sup>' . $commentCount . '</sup></i></span>  <span class="labeb label-default" title="this card has media"><i class="fas fa-paperclip"></i><sup>' . $media_count . '</sup></span>
+                        </a>';
+                        return $html;
+                    })
                     ->removeColumn('id')
                     ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy'])
                     ->make(true);
