@@ -286,8 +286,7 @@ class TaskController extends Controller
                         foreach ($task->comments as $comment) {
                             // Count the media associated with the current comment and add to total media count
                             $media_count += Media::where('model_type', 'Modules\Project\Entities\ProjectTaskComment')
-                                ->where('model_id', $comment->id)
-                                ->count();
+                                ->where('model_id', $comment->id)->count();
                         }
 
                         $cards[] = [

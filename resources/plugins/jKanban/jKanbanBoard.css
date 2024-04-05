@@ -267,6 +267,15 @@
   max-height: 100%;
   border-radius: 4px;
 }
+
+.meta-tasks .card-tags sup {
+  font-size: 10px;
+  border-radius: 50%;
+  background-color: #F5365C;
+  color: white;
+  padding: 2.5px;
+}
+
 .meta-tasks .kanban-container .kanban-board .kanban-drag {
   overflow-y: auto;
   min-height: 100px;
