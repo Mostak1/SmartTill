@@ -276,6 +276,21 @@
   padding: 2.5px;
 }
 
+.ctn {
+  border-radius: 20%;
+  font-size: 12px;
+  padding: 3px;
+}
+
+.ctn sup {
+  font-size: 10px;
+  border-radius: 50%;
+  background-color: #F5365C;
+  color: white;
+  padding: 2.5px;
+  margin: 2px;
+}
+
 .meta-tasks .kanban-container .kanban-board .kanban-drag {
   overflow-y: auto;
   min-height: 100px;

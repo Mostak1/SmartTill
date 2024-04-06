@@ -241,8 +241,20 @@ class TaskController extends Controller
                         }
                         $html = '
                         <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$row->id, "project_id" => $row->project_id]) . '" class="cursor-pointer view_a_project_task text-black">
-                            ' . $row->subject . ' <code>' . $row->task_id . '</code> <span class="labeb label-default" title="this card has comment"><i class="fas fa-comment"><sup>' . $commentCount . '</sup></i></span>  <span class="labeb label-default" title="this card has media"><i class="fas fa-paperclip"></i><sup>' . $media_count . '</sup></span>
-                        </a>';
+                        ' . $row->subject . ' <code>' . $row->task_id . '</code>';
+
+                        // Check if comment count is greater than 0
+                        if ($commentCount > 0) {
+                            $html .= '<span class="label-default label-default-bt" title="This card has comment"><i class="fas fa-comment ctn"><sup>' . $commentCount . '</sup></i></span>';
+                        }
+
+                        // Check if media count is greater than 0
+                        if ($media_count > 0) {
+                            $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
+                        }
+
+                        $html .= '</a>';
+
                         return $html;
                     })
                     ->removeColumn('id')
@@ -367,6 +379,13 @@ class TaskController extends Controller
         $project_members = ProjectMember::projectMembersDropdown($project_id);
         $priorities = ProjectTask::prioritiesDropdown();
         $statuses = ProjectTask::taskStatuses();
+
+
+
+        $user_id = 1; // Example user ID
+
+        // Count the number of projects associated with the user
+        $project_count = ProjectMember::where('user_id', $user_id)->count();
 
         return view('project::task.create')
             ->with(compact('project_members', 'priorities', 'project_id', 'statuses'));
