@@ -457,9 +457,10 @@ class TaskController extends Controller
         $project_members = ProjectMember::projectMembersDropdown($project_id);
         $priorities = ProjectTask::prioritiesDropdown();
         $statuses = ProjectTask::taskStatuses();
+        $projects = Project::where('lead_id',auth()->user()->id)->pluck('name', 'id');
 
         return view('project::task.edit')
-            ->with(compact('project_members', 'priorities', 'project_task', 'statuses'));
+            ->with(compact('project_members','projects', 'priorities', 'project_task', 'statuses'));
     }
 
     /**
@@ -471,14 +472,13 @@ class TaskController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $input = $request->only('subject', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
+            $input = $request->only('subject','project_id', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
             $input['start_date'] = ! empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
             $input['due_date'] = ! empty($request->input('due_date')) ? $this->commonUtil->uf_date($request->input('due_date')) : null;
             $members = $request->input('user_id');
 
             $project_id = $request->get('project_id');
-            $project_task = ProjectTask::where('project_id', $project_id)
-                ->findOrFail($id);
+            $project_task = ProjectTask::findOrFail($id);
 
             $project_task->update($input);
             $task_members = $project_task->members()->sync($members);

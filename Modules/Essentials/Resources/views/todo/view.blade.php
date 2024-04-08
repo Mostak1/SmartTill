@@ -8,7 +8,8 @@
 		<div class="col-md-12">
 			<div class="box box-primary">
 				<div class="box-header">
-					<h4 class="box-title">
+					<h4>
+						<a class="navbar-brand" href="{{action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'index'])}}"><i class="fas fa-arrow-left"></i></a>
 						<i class="ion ion-clipboard"></i>
 						<small><code>({{$todo->task_id}})</code></small> {{$todo->task}}
 					</h4>

@@ -9,13 +9,13 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=kanban'}}"><i class="fas fa-project-diagram"></i> {{__('project::lang.project')}}</a>
+                <a class="navbar-brand" href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=list_view'}}"><i class="fas fa-project-diagram"></i> {{__('project::lang.project')}}</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                        <li @if(request()->segment(2) == 'project') class="active" @endif><a href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=kanban'}}">@lang('project::lang.projects')</a></li>
+                        <li @if(request()->segment(2) == 'project') class="active" @endif><a href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=list_view'}}">@lang('project::lang.projects')</a></li>
 
                         <li @if(request()->segment(2) == 'project-task') class="active" @endif><a href="{{action([\Modules\Project\Http\Controllers\TaskController::class, 'index'])}}">@lang('project::lang.my_tasks')</a></li>
 

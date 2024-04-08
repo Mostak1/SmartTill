@@ -126,7 +126,7 @@ class DataController extends Controller
                 'admin-sidebar-menu',
                 function ($menu) {
                     $menu->url(
-                        action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=kanban',
+                        action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=list_view',
                         __('project::lang.project'),
                         ['icon' => 'fa fa-project-diagram', 'active' => request()->segment(1) == 'project' || request()->get('type') == 'project', 'style' => config('app.env') == 'demo' ? 'background-color: #e4186d !important;' : '']
                     )
