@@ -162,7 +162,7 @@ var KanbanBoard = /** @class */function () {
     };
 
     KanbanBoard.prototype.processCard = function (card) {
-        var $title = $("<div class=\"card-title\"></div>");
+        var $title = $("<a class=\"view_a_project_task text-black\"  data-href=\"" + card.meta.viewUrl + "\"><div class=\"card-title\"></div></a>");
         var genIcon = function (iconClass, title) {
           title = title ? " title=\"" + _.escape(title) + "\"" : '';
           return "<i class=\"" + _.escape(iconClass) + " fa-fw\"" + (title ? " title=\"" + _.escape(title) + "\"" : '') + "></i>";
@@ -283,10 +283,6 @@ var KanbanBoard = /** @class */function () {
                 $cardActions.append(genAction('fas fa-trash', LANG.delete, card.meta.deleteUrl, '', card.meta.deleteUrlClass));
             }
 
-            if (card.meta.viewUrl) {
-                $cardActions.append(genAction('fas fa-eye', LANG.view, card.meta.viewUrl, '', card.meta.viewUrlClass));
-            }
-
         //append default actions - probably should also be context sensitive
         // $cardActions.append(genAction('fas fa-check text-success', 'Accept', null, "<span class=\"text-success\">" + 'Accept' + "</span>"));
 
@@ -332,6 +328,10 @@ var KanbanBoard = /** @class */function () {
             if (card.meta.hasComments) {
                 $cardTags.append("<span class=\"label label-default\" title=\"" + LANG.this_card_has_comments + "\"><i class=\"fas fa-comment\"> <sup>" + card.meta.commentCount + "</sup></i></span>");
             }
+
+            if (card.meta.media_count) {
+    			$cardTags.append("<span class=\"label label-default\" title=\"" + LANG.this_card_has_media + "\"><i class=\"fas fa-paperclip\"> <sup>" + card.meta.media_count + "</sup></i></span>");
+			}
 
             if (card.meta.lead) {
                 $cardTags.append("<span class=\"label label-default\" title=\"" + LANG.lead + "\"><i class=\"fas fa-user-tie\"></i> " + card.meta.lead + "</span>");
