@@ -31,6 +31,21 @@
                     </div>
                 </div>
             </div>
+           
+            
+            <div hidden class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <div class="form-group toggleMedia">
+                            <label for="fileupload">
+                                @lang('project::lang.file_upload'):
+                            </label>
+                            
+                        </div>
+                        <input type="file" class="form-control" id="custom_field_1" name="custom_field_1[]" value="">
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">

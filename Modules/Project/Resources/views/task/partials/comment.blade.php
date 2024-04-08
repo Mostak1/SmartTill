@@ -30,7 +30,7 @@
 
                     @if (in_array(strtolower($fileExtension), $allowedExtensions))
                         <!-- If media is an image, display the image -->
-                        <img style="width: 200px; height: auto;" src="{{ $media->display_url }}" alt="{{ $media->display_name }}">
+                        <img style="width: 200px; height: auto; margin-bottom: 10px;" src="{{ $media->display_url }}" alt="{{ $media->display_name }}">
                     @else
                         <!-- If media is not an image, provide a download link -->
                         <a href="{{ $media->display_url }}" download="{{ $media->display_name }}">
