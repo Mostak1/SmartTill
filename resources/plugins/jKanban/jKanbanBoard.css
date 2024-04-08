@@ -276,6 +276,11 @@
   padding: 2.5px;
 }
 
+.label-default-bt{
+  margin-left: 3px;
+  border-radius: 10%;
+}
+
 .ctn {
   border-radius: 20%;
   font-size: 12px;
