@@ -14,14 +14,23 @@
             </h4>
         </div>
         <div class="modal-body">
-            @if ($projects->count() > 0)
-                <div class="col-md-4">
-                    <div class="form-group">
-                        {!! Form::label('project_id', 'Change Project') !!}
-                        {!! Form::select('project_id', $projects, $project_task->project_id, ['class' => 'form-control select2', 'style' => 'width: 100%;']) !!}
+            {{-- and {{ $project_task->project_id }} --}}
+            @if ($leader)
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    {!! Form::label('project_id', 'Change Project') !!}
+                    {!! Form::select('project_id', $projects, $project_task->project_id, [
+                        'class' => 'form-control select2',
+                        'style' => 'width: 100%;',
+                        ]) !!}
                     </div>
                 </div>
+                @else
+                {!! Form::hidden('project_id', $project_task->project_id, ['class' => 'form-control']) !!}
+                
             @endif
+
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group">

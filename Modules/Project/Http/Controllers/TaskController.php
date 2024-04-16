@@ -501,10 +501,13 @@ class TaskController extends Controller
         $project_members = ProjectMember::projectMembersDropdown($project_id);
         $priorities = ProjectTask::prioritiesDropdown();
         $statuses = ProjectTask::taskStatuses();
-        $projects = Project::where('lead_id',auth()->user()->id)->pluck('name', 'id');
+        $leader = Project::where('lead_id', auth()->user()->id)->find($project_id); // Corrected
+
+            $projects = Project::where('lead_id',auth()->user()->id)->pluck('name', 'id');
+       
 
         return view('project::task.edit')
-            ->with(compact('project_members','projects', 'priorities', 'project_task', 'statuses'));
+            ->with(compact('project_members','leader','projects', 'priorities', 'project_task', 'statuses'));
     }
 
     /**

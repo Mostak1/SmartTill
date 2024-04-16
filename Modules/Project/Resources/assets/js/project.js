@@ -201,30 +201,53 @@ $('.project_task_model').on('shown.bs.modal', function (e) {
     
     tinymce.init({
         selector: 'textarea#description',
-        plugins: 'image',
-        toolbar: 'image',
-        images_upload_url: "{{route('upload.image')}}", // URL of your file upload endpoint
-        automatic_uploads: true,
-        file_picker_types: 'image',
-        images_upload_handler: function (blobInfo, success, failure) {
-            var formData;
-            formData = new FormData();
-            formData.append('image', blobInfo.blob(), blobInfo.filename());
 
-            $.ajax({
-                url: "{{route('upload.image')}}", // URL of your file upload endpoint
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (data) {
-                    success(data.location);
-                },
-                error: function (err) {
-                    failure('HTTP Error: ' + err.status);
-                }
+        image_class_list: [{ title: 'img-responsive', value: 'img-responsive' }],
+        height: 500,
+        setup: function (editor) {
+            editor.on('init change', function () {
+                editor.save();
             });
-        }
+        },
+        plugins: [
+            'advlist autolink lists link image charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table paste',
+        ],
+        toolbar:
+            'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code ',
+
+        image_title: true,
+        automatic_uploads: true,
+        images_upload_url: '/awc/Lacuna_ERP/public/project/upload',
+        file_picker_types: 'image',
+        // images_upload_base_path: '/some/basepath',
+        file_picker_callback: function (cb, value, meta) {
+            var input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.onchange = function () {
+                var file = this.files[0];
+
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function () {
+                    var id = 'blobid' + new Date().getTime();
+                    var blobCache = tinymce.activeEditor.editorUpload.blobCache;
+                    var base64 = reader.result.split(',')[1];
+                    var blobInfo = blobCache.create(id, file, base64);
+                    blobCache.add(blobInfo);
+                   // Instead of setting the blob URI directly, set the absolute URL
+                // cb("{{ asset('storage') }}/" + file.name, { title: file.name });
+                cb(blobInfo.blobUri(), { title: file.name });
+                    // This will immediately display the uploaded image in the editor
+                    var img = new Image();
+                    img.src = reader.result;
+                    tinymce.activeEditor.insertContent(img.outerHTML);
+                };
+            };
+            input.click();
+        },
     });
 
     $('form#project_task_form .datepicker').datepicker({
