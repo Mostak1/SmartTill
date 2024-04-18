@@ -19,6 +19,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TaskController extends Controller
 {
+
     /**
      * All Utils instance.
      */
@@ -123,6 +124,10 @@ class TaskController extends Controller
 
             if (request()->get('task_view') == 'list_view') {
                 return Datatables::of($project_task)
+                    ->filter(function ($query) {
+                        // Exclude rows with status 'archive'
+                        $query->where('status', '!=', 'archive');
+                    })
                     ->addColumn('action', function ($row) use ($can_crud) {
                         $html = '<div class="btn-group">
                                     <button class="btn btn-info dropdown-toggle btn-xs" type="button"  data-toggle="dropdown" aria-expanded="false">
@@ -157,6 +162,12 @@ class TaskController extends Controller
                                     <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'destroy'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer delete_a_project_task">
                                         <i class="fas fa-trash"></i>
                                         ' . __('messages.delete') . '
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer change_status_to_archive">
+                                    <i class="fas fa-file-archive"></i>
+                                        ' . __('project::lang.archive') . '
                                     </a>
                                 </li>';
                         }
@@ -204,6 +215,9 @@ class TaskController extends Controller
                         return $html;
                     })
                     ->editColumn('status', function ($row) {
+                        $status = '';
+                        $bg = '';
+
                         if ($row->status == 'completed') {
                             $status = __('project::lang.completed');
                             $bg = 'bg-green';
@@ -224,7 +238,7 @@ class TaskController extends Controller
                         $href = action([\Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]);
 
                         $html = '<span class="cursor-pointer change_status_of_project_task label ' . $bg . '" data-href="' . $href . '">
-                                ' .
+                            ' .
                             $status
                             . '</span>';
 
@@ -348,6 +362,136 @@ class TaskController extends Controller
                 ];
 
                 return $output;
+            } elseif (request()->get('task_view') == 'archive') {
+                return Datatables::of($project_task)
+                    ->filter(function ($query) {
+                        // Include only rows with status 'archive'
+                        $query->where('status', 'archive');
+                    })
+                    ->addColumn('action', function ($row) use ($can_crud) {
+                        $html = '<div class="btn-group">
+                                    <button class="btn btn-info dropdown-toggle btn-xs" type="button"  data-toggle="dropdown" aria-expanded="false">
+                                        ' . __('messages.action') . '
+                                        <span class="caret"></span>
+                                        <span class="sr-only">'
+                            . __('messages.action') . '
+                                        </span>
+                                    </button>
+                                      <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                                       <li>
+                                            <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer view_a_project_task">
+                                                <i class="fa fa-eye"></i>
+                                                ' . __('messages.view') . '
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]) . '"class="cursor-pointer change_status_of_project_task">
+                                                <i class="fa fa-check"></i>
+                                                ' . __('project::lang.change_status') . '
+                                            </a>
+                                        </li>';
+
+                        if ($can_crud) {
+                            $html .= '<li>
+                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'edit'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer edit_a_project_task">
+                                        <i class="fa fa-edit"></i>
+                                        ' . __('messages.edit') . '
+                                    </a>
+                                </li>
+                                <li>
+                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'destroy'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer delete_a_project_task">
+                                        <i class="fas fa-trash"></i>
+                                        ' . __('messages.delete') . '
+                                    </a>
+                                </li>';
+                        }
+
+                        $html .= '</ul>
+                                </div>';
+
+                        return $html;
+                    })
+                    ->editColumn('priority', function ($row) {
+                        $priority = __('project::lang.' . $row->priority);
+
+                        $html = '<span class="label ' . $this->priority_colors[$row->priority] . '">' .
+                            $priority
+                            . '</span>';
+
+                        return $html;
+                    })
+                    ->editColumn('start_date', '
+                            @if(isset($start_date))
+                                {{@format_date($start_date)}}
+                            @endif
+                    ')
+                    ->editColumn('due_date', '
+                            @if(isset($due_date))
+                                {{@format_date($due_date)}}
+                            @endif
+                    ')
+                    ->editColumn('createdBy', function ($row) {
+                        return $row->createdBy?->user_full_name;
+                    })
+                    ->editColumn('project', function ($row) {
+                        return $row->project->name;
+                    })
+                    ->editColumn('members', function ($row) {
+                        $html = '&nbsp;';
+                        foreach ($row->members as $member) {
+                            if (isset($member->media->display_url)) {
+                                $html .= '<img class="user_avatar" src="' . $member->media->display_url . '" data-toggle="tooltip" title="' . $member->user_full_name . '">';
+                            } else {
+                                $html .= '<img class="user_avatar" src="https://ui-avatars.com/api/?name=' . $member->first_name . '" data-toggle="tooltip" title="' . $member->user_full_name . '">';
+                            }
+                        }
+
+                        return $html;
+                    })
+                    ->editColumn('status', function ($row) {
+                        // Modify the status column for 'archive' tasks
+                        $status = __('project::lang.archive');
+                        $bg = 'bg-primary';
+
+                        $href = action([\Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]);
+
+                        $html = '<span class="cursor-pointer change_status_of_project_task label ' . $bg . '" data-href="' . $href . '">
+                                ' .
+                            $status
+                            . '</span>';
+
+                        return $html;
+                    })
+                    ->editColumn('subject', function ($row) {
+                        $commentCount = $row->comments->count();
+                        $media_count = 0;
+                        // Iterate over each comment of the task
+                        foreach ($row->comments as $comment) {
+                            // Count the media associated with the current comment and add to total media count
+                            $media_count += Media::where('model_type', 'Modules\Project\Entities\ProjectTaskComment')
+                                ->where('model_id', $comment->id)->count();
+                        }
+                        $html = '
+                        <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$row->id, "project_id" => $row->project_id]) . '" class="cursor-pointer view_a_project_task text-black">
+                        ' . $row->subject . ' <code>' . $row->task_id . '</code>';
+
+                        // Check if comment count is greater than 0
+                        if ($commentCount > 0) {
+                            $html .= '<span class="label-default label-default-bt" title="This card has comment"><i class="fas fa-comment ctn"><sup>' . $commentCount . '</sup></i></span>';
+                        }
+
+                        // Check if media count is greater than 0
+                        if ($media_count > 0) {
+                            $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
+                        }
+
+                        $html .= '</a>';
+
+                        return $html;
+                    })
+                    ->removeColumn('id')
+                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy'])
+                    ->make(true);
             }
         }
 
@@ -643,7 +787,7 @@ class TaskController extends Controller
             ];
         }
 
-        return $output;
+        return response()->json($output);
     }
 
     /**

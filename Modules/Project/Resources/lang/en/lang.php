@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'archive' => 'Archive',
     'project' => 'Project',
     'projects' => 'Projects',
     'all_projects' => 'All Projects',
@@ -77,6 +78,7 @@ return [
     'create' => 'Create',
     'invoice_details' => 'Invoice Details',
     'enable_invoice' => 'Enable Invoice',
+    'enable_archive' => 'Enable Archive',
     'project_invoice' => 'Project Invoice',
     'delete_project' => 'Delete Project',
     'project_module' => 'Project Module',

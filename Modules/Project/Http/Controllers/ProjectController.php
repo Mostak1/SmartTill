@@ -176,6 +176,11 @@ class ProjectController extends Controller
                                 $invoiceTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_invoices';
                             }
 
+                            $archiveUrl = '';
+                            if ((isset($project->settings['enable_archive']) && $project->settings['enable_archive']) && ($is_lead || $is_admin)) {
+                                $archiveUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_archives';
+                            }
+
                             $settingsTabUrl = '';
                             if ($is_lead || $is_admin) {
                                 $settingsTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_settings';
@@ -320,6 +325,7 @@ class ProjectController extends Controller
                 'enable_timelog' => 1,
                 'enable_invoice' => 1,
                 'enable_notes_documents' => 1,
+                'enable_archive' => 'archive',
                 'members_crud_task' => 0,
                 'members_crud_note' => 0,
                 'members_crud_timelog' => 0,
@@ -618,6 +624,7 @@ class ProjectController extends Controller
             $input['enable_timelog'] = ! empty($request->enable_timelog) ? 1 : 0;
             $input['enable_notes_documents'] = ! empty($request->enable_notes_documents) ? 1 : 0;
             $input['enable_invoice'] = ! empty($request->enable_invoice) ? 1 : 0;
+            $input['enable_archive'] = ! empty($request->enable_archive) ? 'archive' : 0;
             $input['members_crud_task'] = ! empty($request->members_crud_task) ? 1 : 0;
             $input['members_crud_note'] = ! empty($request->members_crud_note) ? 1 : 0;
             $input['members_crud_timelog'] = ! empty($request->members_crud_timelog) ? 1 : 0;

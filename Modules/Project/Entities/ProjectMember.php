@@ -47,7 +47,8 @@ class ProjectMember extends Model
             ->whereHas('members', function ($query) use ($id) {
                 $query->where('user_id', $id);
             })
-            ->where('status', '!=', 'completed')->count();
+            ->whereNotIn('status', ['completed', 'archive']) // Exclude completed and archived tasks
+        ->count();
         return "$name ($task_count tasks)";
     });
 

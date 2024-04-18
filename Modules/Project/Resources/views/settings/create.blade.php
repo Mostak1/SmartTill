@@ -24,6 +24,13 @@
 				</label>
 			</div>
 		</div>
+		<div class="col-md-4">
+			<div class="checkbox">
+				<label>
+				  <input type="checkbox" name="enable_archive" value="archive" @if(isset($project->settings['enable_archive']) && $project->settings['enable_archive']) checked @endif> @lang('project::lang.enable_archive')
+				</label>
+			</div>
+		</div>
 	</div>
 	<div class="row">
 		<div class="col-md-4">
