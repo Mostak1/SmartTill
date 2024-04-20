@@ -42,7 +42,10 @@
                 <div class="col-md-4">
                     <div class="form-group">
                         {!! Form::label('lead_id', __('project::lang.lead') .':*') !!}
-                        {!! Form::select('lead_id', $users, $project->lead_id, ['class' => 'form-control select2','multiple', 'placeholder' => __('messages.please_select'), 'required', 'style' => 'width: 100%;']); !!}
+                        {!! Form::select('lead_id', $users, $project->lead_id, ['class' => 'form-control select2','multiple', 'placeholder' => __('messages.please_select'),'id'=>'lead_id', 'required', 'style' => 'width: 100%;']); !!}
+                        <span id="lead_id_error" class="invalid-feedback" role="alert" style="display: none; color:crimson;">
+                            <strong>Select Only One Leader</strong>
+                        </span>
                     </div>
                 </div>
             </div>

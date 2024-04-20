@@ -5,7 +5,7 @@
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                     aria-hidden="true">&times;</span></button>
-            <h4 class="modal-title">@lang('essentials::lang.edit_to_do')</h4>
+            <h4 class="modal-title">@lang('essentials::lang.todo')</h4>
         </div>
 
         <div class="modal-body">
@@ -15,7 +15,6 @@
                         <div class="box box-primary">
                             <div class="box-header">
                                 <h4>
-                                    <a class="navbar-brand" href="{{action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'index'])}}"><i class="fas fa-arrow-left"></i></a>
                                     <i class="ion ion-clipboard"></i>
                                     <small><code>({{$todo->task_id}})</code></small> {{$todo->task}}
                                 </h4>

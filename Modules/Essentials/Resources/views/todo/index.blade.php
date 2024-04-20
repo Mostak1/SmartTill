@@ -88,26 +88,72 @@
         @endcomponent
     </section>
     @include('essentials::todo.update_task_status_modal')
-	
+
 @endsection
 
 @section('javascript')
     <script type="text/javascript">
         $(document).ready(function() {
-			// Create new for todo task popup view
-            $(document).on('click', '.view_a_project_task', function() {
-                var url = $(this).data('href');
+            // todo task view popup scripts end here
+            $(document).on('submit', 'form#task_comment_form', function(e) {
+                e.preventDefault();
+                var url = $(this).attr("action");
+                var method = $(this).attr("method");
+                var data = $("form#task_comment_form").serialize();
+                var ladda = Ladda.create(document.querySelector('.add-comment-btn'));
+                ladda.start();
                 $.ajax({
-                    method: 'GET',
-                    dataType: 'html',
+                    method: method,
                     url: url,
+                    data: data,
+                    dataType: "json",
                     success: function(result) {
-                        $('.view_project_task_model').html(result).modal('show');
-                    },
+                        ladda.stop();
+                        if (result.success == true) {
+                            toastr.success(result.msg);
+                            $('.direct-chat-messages').prepend(result.comment_html);
+                            $("form#task_comment_form").find('#comment').val('');
+                        } else {
+                            toastr.error(result.msg);
+                        }
+                    }
                 });
             });
-            
-			task_table = $('#task_table').DataTable({
+            $(document).on('click', '.delete-comment', function(e) {
+                var element = $(this);
+                $.ajax({
+                    url: '/essentials/todo/delete-comment/' + element.data('comment_id'),
+                    dataType: "json",
+                    success: function(result) {
+                        if (result.success == true) {
+                            toastr.success(result.msg);
+                            element.closest('.direct-chat-msg').remove();
+                        } else {
+                            toastr.error(result.msg);
+                        }
+                    }
+                });
+            });
+
+            $(document).on('click', '.delete-document', function(e) {
+                e.preventDefault();
+                var element = $(this);
+                var url = $(this).attr('href');
+                $.ajax({
+                    url: url,
+                    dataType: "json",
+                    success: function(result) {
+                        if (result.success == true) {
+                            toastr.success(result.msg);
+                            element.closest('tr').remove();
+                        } else {
+                            toastr.error(result.msg);
+                        }
+                    }
+                });
+            });
+            // todo task view popup scripts end here
+            task_table = $('#task_table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {

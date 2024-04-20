@@ -250,9 +250,7 @@ class TaskController extends Controller
                         if ($media_count > 0) {
                             $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
                         }
-
                         $html .= '</a>';
-
                         return $html;
                     })
                     ->removeColumn('id')
