@@ -14,6 +14,7 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::get('project-task-get-status', [Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus']);
     Route::put('project-task/{id}/post-status', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus']);
     Route::put('project-task/{id}/post-description', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskDescription']);
+    Route::get('/project/project-task/{id}/archive-status', [\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'])->name('project.task.archive-status');
     Route::resource('project-task-comment', 'Modules\Project\Http\Controllers\TaskCommentController');
     Route::post('post-media-dropzone-upload', [Modules\Project\Http\Controllers\TaskCommentController::class, 'postMedia']);
     Route::resource('project-task-time-logs', 'Modules\Project\Http\Controllers\ProjectTimeLogController');
@@ -29,4 +30,5 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::get('/install/uninstall', [Modules\Project\Http\Controllers\InstallController::class, 'uninstall']);
     Route::get('/install/update', [Modules\Project\Http\Controllers\InstallController::class, 'update']);
     Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('upload.image');
+    
 });

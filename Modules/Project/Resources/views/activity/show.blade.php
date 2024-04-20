@@ -26,7 +26,6 @@
 			'on_hold' => __('project::lang.on_hold'),
 			'in_progress' => __('project::lang.in_progress'),
 			'not_started' => __('project::lang.not_started'),
-			'archive' => __('project::lang.archive'),
 			'low' => __('project::lang.low'),
 			'medium' => __('project::lang.medium'),
 			'high' => __('project::lang.high'),

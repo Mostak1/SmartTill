@@ -159,15 +159,9 @@ class TaskController extends Controller
                                     </a>
                                 </li>
                                 <li>
-                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'destroy'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer delete_a_project_task">
-                                        <i class="fas fa-trash"></i>
-                                        ' . __('messages.delete') . '
-                                    </a>
-                                </li>
-                                <li>
-                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer change_status_to_archive">
+                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer archive_project_task">
                                     <i class="fas fa-file-archive"></i>
-                                        ' . __('project::lang.archive') . '
+                                    ' . __('project::lang.archive') . '
                                     </a>
                                 </li>';
                         }
@@ -297,7 +291,7 @@ class TaskController extends Controller
                         if ($can_crud) {
                             $edit = action([\Modules\Project\Http\Controllers\TaskController::class, 'edit'], [$task->id, 'project_id' => $task->project_id]);
 
-                            $delete = action([\Modules\Project\Http\Controllers\TaskController::class, 'destroy'], [$task->id, 'project_id' => $task->project_id]);
+                            $delete = action([\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'], [$task->id, 'project_id' => $task->project_id]);
                         }
 
                         $view = action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$task->id, 'project_id' => $task->project_id]);
@@ -336,7 +330,7 @@ class TaskController extends Controller
                             'editUrl' => $edit,
                             'editUrlClass' => 'edit_a_project_task',
                             'deleteUrl' => $delete,
-                            'deleteUrlClass' => 'delete_a_project_task',
+                            'deleteUrlClass' => 'archive_project_task',
                             'hasDescription' => !empty($task->description) ?: false,
                             'hasComments' => ($task->comments->count() > 0) ?: false,
                             'commentCount' => $task->comments->count(),
@@ -816,6 +810,29 @@ class TaskController extends Controller
             $output = [
                 'success' => true,
                 'task_description_html' => $task_description_html,
+                'msg' => __('lang_v1.success'),
+            ];
+        } catch (Exception $e) {
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+
+            $output = [
+                'success' => false,
+                'msg' => __('messages.something_went_wrong'),
+            ];
+        }
+
+        return $output;
+    }
+
+    public function archiveTaskStatus($id)
+    {
+        try {
+            $project_task = ProjectTask::findOrFail($id);
+            $project_task->status = 'archive';
+            $project_task->save();
+
+            $output = [
+                'success' => true,
                 'msg' => __('lang_v1.success'),
             ];
         } catch (Exception $e) {
