@@ -38,7 +38,7 @@ class DataController extends Controller
                     ]
                 );
 
-                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['id' => $project->id]);
+                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['project' => $project->id]);
 
                 $notification_datas = [
                     'msg' => $msg,
@@ -64,7 +64,7 @@ class DataController extends Controller
                     ]
                 );
 
-                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['id' => $task->project_id]);
+                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['project' => $task->project_id]);
 
                 $notification_datas = [
                     'msg' => $msg,
@@ -92,7 +92,7 @@ class DataController extends Controller
                     ]
                 );
 
-                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['id' => $task->project_id]);
+                $link = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['project' => $task->project_id]);
 
                 $notification_datas = [
                     'msg' => $msg,

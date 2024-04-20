@@ -62,7 +62,6 @@ class TaskController extends Controller
             $project_task = ProjectTask::with(['members', 'createdBy', 'project', 'comments'])
                 ->where('business_id', $business_id)
                 ->select('*');
-
             //if user is not admin get assiged task only
             $user_id = $user['id'];
             if (empty(request()->get('project_id')) && !$is_admin) {
@@ -70,7 +69,6 @@ class TaskController extends Controller
                     $q->where('user_id', $user_id);
                 });
             }
-
             //filter by project id
             if (!empty(request()->get('project_id'))) {
                 $project_task->where('project_id', request()->get('project_id'));
@@ -502,12 +500,20 @@ class TaskController extends Controller
         $priorities = ProjectTask::prioritiesDropdown();
         $statuses = ProjectTask::taskStatuses();
         $leader = Project::where('lead_id', auth()->user()->id)->find($project_id); // Corrected
+        if (auth()->user()->hasRole('Admin#' . session('business.id'))) {
+            $projects = Project::pluck('name', 'id');
+        } else {
+            $projects = Project::whereHas('members', function ($query) {
+                $query->where('user_id', auth()->user()->id);
+            })->pluck('name', 'id');
+        }
 
-            $projects = Project::where('lead_id',auth()->user()->id)->pluck('name', 'id');
-       
+
+
+
 
         return view('project::task.edit')
-            ->with(compact('project_members','leader','projects', 'priorities', 'project_task', 'statuses'));
+            ->with(compact('project_members', 'leader', 'projects', 'priorities', 'project_task', 'statuses'));
     }
 
     /**
@@ -519,9 +525,9 @@ class TaskController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $input = $request->only('subject','project_id', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
-            $input['start_date'] = ! empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
-            $input['due_date'] = ! empty($request->input('due_date')) ? $this->commonUtil->uf_date($request->input('due_date')) : null;
+            $input = $request->only('subject', 'project_id', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
+            $input['start_date'] = !empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
+            $input['due_date'] = !empty($request->input('due_date')) ? $this->commonUtil->uf_date($request->input('due_date')) : null;
             $members = $request->input('user_id');
 
             $project_id = $request->get('project_id');

@@ -64,15 +64,12 @@
                         {!! Form::label('lead_id', __('project::lang.lead') . ':*') !!}
                         {!! Form::select('lead_id', $users, null, [
                             'class' => 'form-control select2',
-                            'multiple',
                             'placeholder' => __('messages.please_select'),
+                            'multiple',
                             'required',
                             'style' => 'width: 100%;',
                         ]) !!}
-                        {{-- <select class="form-control select2" name="" id="">
-                            <option value="">A</option>
-                            <option value="">B</option>
-                        </select> --}}
+                    
                     </div>
                 </div>
             </div>

@@ -23,7 +23,6 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::get('project-employee-timelog-reports', [Modules\Project\Http\Controllers\ReportController::class, 'getEmployeeTimeLogReport']);
     Route::get('project-timelog-reports', [Modules\Project\Http\Controllers\ReportController::class, 'getProjectTimeLogReport']);
     Route::get('project-reports', [Modules\Project\Http\Controllers\ReportController::class, 'index']);
-
     Route::get('/install', [Modules\Project\Http\Controllers\InstallController::class, 'index']);
     Route::post('/install', [Modules\Project\Http\Controllers\InstallController::class, 'install']);
     Route::get('/install/uninstall', [Modules\Project\Http\Controllers\InstallController::class, 'uninstall']);

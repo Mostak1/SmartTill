@@ -300,6 +300,7 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+       
         $business_id = request()->session()->get('user.business_id');
 
         if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.create_project')))) {
@@ -308,7 +309,7 @@ class ProjectController extends Controller
 
         try {
             DB::beginTransaction();
-
+           
             $input = $request->only('name', 'description', 'contact_id', 'status', 'lead_id');
             $input['start_date'] = ! empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
             $input['end_date'] = ! empty($request->input('end_date')) ? $this->commonUtil->uf_date($request->input('end_date')) : null;
@@ -502,6 +503,7 @@ class ProjectController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $business_id = request()->session()->get('user.business_id');
 
         if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.edit_project')))) {

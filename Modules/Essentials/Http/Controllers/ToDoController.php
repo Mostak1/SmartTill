@@ -126,7 +126,7 @@ class ToDoController extends Controller
                             $html .= '<li><a href="#" data-href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'destroy'], [$row->id]).'" class="delete_task" ><i class="fa fa-trash"></i> '.__('messages.delete').'</a></li>';
                         }
 
-                        $html .= '<li><a href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]).'" ><i class="fa fa-eye"></i> '.__('messages.view').'</a></li>';
+                        $html .= '<li><a href="" data-href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]).'" class="btn-modal" data-container="#task_modal" ><i class="fa fa-eye"></i> '.__('messages.view').'</a></li>';
 
                         $html .= '<li><a href="#" class="change_status" data-status="'.$row->status.'" data-task_id="'.$row->id.'"><i class="fas fa-check-circle"></i> '.__('essentials::lang.change_status').'</a></li>';
 
