@@ -57,6 +57,7 @@
                 <th>@lang('project::lang.task_custom_field_2')</th>
                 <th>@lang('project::lang.task_custom_field_3')</th>
                 <th>@lang('project::lang.task_custom_field_4')</th>
+                <th>@lang('project::lang.updated_at')</th>
             </tr>
         </thead>
     </table>
@@ -90,6 +91,7 @@
                 <th>@lang('project::lang.task_custom_field_2')</th>
                 <th>@lang('project::lang.task_custom_field_3')</th>
                 <th>@lang('project::lang.task_custom_field_4')</th>
+                <th>@lang('project::lang.updated_at')</th>
             </tr>
         </thead>
     </table>

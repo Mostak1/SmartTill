@@ -196,6 +196,12 @@ class TaskController extends Controller
                     ->editColumn('project', function ($row) {
                         return $row->project->name;
                     })
+                    ->editColumn('updated_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $updatedAt = Carbon::parse($row->updated_at);
+                        // Format the date and time to your desired format
+                        return $updatedAt->format('M d, Y h:i A');
+                    })
                     ->editColumn('members', function ($row) {
                         $html = '&nbsp;';
                         foreach ($row->members as $member) {
@@ -266,7 +272,7 @@ class TaskController extends Controller
                         return $html;
                     })
                     ->removeColumn('id')
-                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy'])
+                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy','updated_at'])
                     ->make(true);
             } elseif (request()->get('task_view') == 'kanban') {
                 $project_task = $project_task->get()->groupBy('status');
@@ -430,6 +436,12 @@ class TaskController extends Controller
                     ->editColumn('project', function ($row) {
                         return $row->project->name;
                     })
+                    ->editColumn('updated_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $updatedAt = Carbon::parse($row->updated_at);
+                        // Format the date and time to your desired format
+                        return $updatedAt->format('M d, Y h:i A');
+                    })
                     ->editColumn('members', function ($row) {
                         $html = '&nbsp;';
                         foreach ($row->members as $member) {
@@ -484,7 +496,7 @@ class TaskController extends Controller
                         return $html;
                     })
                     ->removeColumn('id')
-                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy'])
+                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy','updated_at'])
                     ->make(true);
             }
         }

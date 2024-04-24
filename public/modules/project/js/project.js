@@ -216,6 +216,9 @@ $(document).on('click', '.archive_project_task', function () {
                 // Update table content (if needed)
                 // For example, reload the datatable
                 $('#project_task_table').DataTable().ajax.reload();
+                if (typeof my_task_datatable != 'undefined') {
+                    my_task_datatable.ajax.reload();
+                }
                 initializeTaskKanbanBoard();
                 // Show success toaster message
                 toastr.success(response.msg);
@@ -705,6 +708,9 @@ $(document).on('submit', 'form#add_comment_form', function (e) {
                 if (typeof archive_datatable !== 'undefined') {
                     archive_datatable.ajax.reload();
                 }
+                if (typeof my_task_datatable != 'undefined') {
+                    my_task_datatable.ajax.reload();
+                }
                 initializeTaskKanbanBoard();
             } else {
                 toastr.error(result.msg);
@@ -810,6 +816,9 @@ $(document).on(
             }
             if (typeof archive_datatable !== 'undefined') {
                 archive_datatable.ajax.reload();
+            }
+            if (typeof my_task_datatable != 'undefined') {
+                my_task_datatable.ajax.reload();
             }
         }
     }
@@ -1177,6 +1186,7 @@ function initializeProjectTaskDatatable() {
                 { data: 'custom_field_2', name: 'custom_field_2' },
                 { data: 'custom_field_3', name: 'custom_field_3' },
                 { data: 'custom_field_4', name: 'custom_field_4' },
+                { data: 'updated_at', name: 'updated_at' },
             ],
         });
     } else if (task_view == 'list_view') {
@@ -1224,6 +1234,7 @@ function initializeArchiveDatatable() {
                 { data: 'custom_field_2', name: 'custom_field_2' },
                 { data: 'custom_field_3', name: 'custom_field_3' },
                 { data: 'custom_field_4', name: 'custom_field_4' },
+                { data: 'updated_at', name: 'updated_at' },
             ],
         });
     } else if (task_view == 'archive') {
@@ -1659,6 +1670,9 @@ $(document).on('click', '.delete-task-comment', function (e) {
                         }
                         if (typeof archive_datatable !== 'undefined') {
                             archive_datatable.ajax.reload();
+                        }
+                        if (typeof my_task_datatable != 'undefined') {
+                            my_task_datatable.ajax.reload();
                         }
                         initializeTaskKanbanBoard();
                     } else {

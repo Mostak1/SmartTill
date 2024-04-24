@@ -987,6 +987,7 @@ function initializeProjectTaskDatatable() {
                     { data: 'priority', name: 'priority' },
                     { data: 'start_date', name: 'start_date' },
                     { data: 'due_date', name: 'due_date' },
+                    { data: 'updated_at', name: 'updated_at' },
                     { data: 'status', name: 'status' },
                     { data: 'createdBy'},
                     { data: 'custom_field_1', name: 'custom_field_1' },
