@@ -6,6 +6,7 @@ return [
     'description' => 'Description',
     'submit' => 'Submit',
     'delete' => 'Delete',
+    'archive' => 'Archive',
     'download' => 'Download',
     'name' => 'Name',
     'created_at' => 'Created Date',

@@ -123,7 +123,7 @@ class ToDoController extends Controller
                         }
 
                         if (auth()->user()->can('essentials.delete_todos')) {
-                            $html .= '<li><a href="#" data-href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'destroy'], [$row->id]).'" class="delete_task" ><i class="fa fa-trash"></i> '.__('messages.delete').'</a></li>';
+                            $html .= '<li><a href="#" data-href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'destroy'], [$row->id]).'" class="delete_task" ><i class="fas fa-file-archive"></i> '.__('essentials::lang.archive').'</a></li>';
                         }
 
                         $html .= '<li><a href="'.action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]).'" ><i class="fa fa-eye"></i> '.__('messages.view').'</a></li>';
@@ -178,7 +178,7 @@ class ToDoController extends Controller
 
         $users = [];
         if (auth()->user()->can('essentials.assign_todos')) {
-            $users = User::forDropdown($business_id, false);
+            $users = ToDo::userTodoDropdown($business_id, false);
         }
 
         return view('essentials::todo.index')->with(compact('users', 'task_statuses', 'priorities'));

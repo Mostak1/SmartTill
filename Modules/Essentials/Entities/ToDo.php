@@ -2,7 +2,11 @@
 
 namespace Modules\Essentials\Entities;
 
+use App\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class ToDo extends Model
 {
@@ -11,6 +15,7 @@ class ToDo extends Model
      *
      * @var array
      */
+    use HasFactory,SoftDeletes;
     protected $guarded = ['id'];
 
     /**
@@ -72,5 +77,18 @@ class ToDo extends Model
         $properties = ['status'];
 
         return $properties;
+    }
+
+    public static function userTodoDropdown($business_id, $prepend_none = true, $include_commission_agents = false, $prepend_all = false, $check_location_permission = false)
+    {
+        $query = User::with('todos')->where('business_id', $business_id)->get();
+
+        $users=[];
+        foreach ($query as $q){
+            $totatTodo = $q->todos->count();
+            $users[$q->id]= $q->first_name.' '.$q->last_name ." ($totatTodo)";
+        }
+
+        return $users;
     }
 }
