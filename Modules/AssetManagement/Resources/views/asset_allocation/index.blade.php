@@ -10,6 +10,26 @@
 	</section>
 	<!-- Main content -->
 	<section class="content no-print">
+		@component('components.filters', ['title' => __('report.filters')])
+        <div class="col-md-3">
+            <div class="form-group">
+                {!! Form::label('asset_list_filter_location_id',  __('purchase.business_location') . ':') !!}
+                {!! Form::select('asset_list_filter_location_id', $business_locations, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'placeholder' => __('lang_v1.all')]); !!}
+            </div>
+        </div>
+		<div class="col-md-3">
+            {!! Form::label('asset_list_filter_receiver_id', __('assetmanagement::lang.receiver_name') . ':' )!!}
+            {!! Form::select('asset_list_filter_receiver_id', $receiver_name, null, ['class' => 'form-control select2', 'placeholder' => __('lang_v1.all'), 'style' => 'width: 100%;']); !!}
+        </div>
+        <div class="col-md-3">
+            {!! Form::label('asset_list_filter_category_id', __('assetmanagement::lang.asset_category') . ':' )!!}
+            {!! Form::select('asset_list_filter_category_id', $asset_category, null, ['class' => 'form-control select2', 'placeholder' => __('lang_v1.all'), 'style' => 'width: 100%;']); !!}
+        </div>
+		<div class="col-md-3">
+            {!! Form::label('asset_list_filter_assets_id', __('assetmanagement::lang.assets') . ':' )!!}
+            {!! Form::select('asset_list_filter_assets_id', $assets, null, ['class' => 'form-control select2', 'placeholder' => __('lang_v1.all'), 'style' => 'width: 100%;']); !!}
+        </div>
+		@endcomponent
 		<div class="box box-solid">
 			<div class="box-header with-border">
 				<div class="box-tools pull-right">
@@ -61,7 +81,10 @@
             ajax:{
                 url: '/asset/allocation',
                 "data": function ( d ) {
-                    //
+                    d.location_id = $('#asset_list_filter_location_id').val();
+                    d.category_id = $('#asset_list_filter_category_id').val();
+                    d.receiver_id = $('#asset_list_filter_receiver_id').val();
+					d.assets_id = $('#asset_list_filter_assets_id').val();
                 }
             },
             columnDefs: [{
@@ -84,6 +107,10 @@
                 { data: 'category', name: 'CAT.name' },
                 { data: 'reason', name: 'asset_transactions.reason' },
             ]
+		});
+
+		$(document).on('change', '#asset_list_filter_location_id, #asset_list_filter_category_id, #asset_list_filter_assets_id, #asset_list_filter_receiver_id, #asset_list_filter_purchase_type', function(){
+			assest_allocated_datatable.ajax.reload();
 		});
 
 		$(document).on('click', '#delete_allocated_asset', function () {
