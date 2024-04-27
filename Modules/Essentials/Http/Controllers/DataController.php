@@ -297,6 +297,16 @@ class DataController extends Controller
                 'label' => __('essentials::lang.access_sales_target'),
                 'default' => false,
             ],
+            [
+                'value' => 'essentials.archive',
+                'label' => __('essentials::lang.archive'),
+                'default' => false,
+            ],
+            [
+                'value' => 'essentials.restore',
+                'label' => __('essentials::lang.restore'),
+                'default' => false,
+            ],
         ];
     }
 

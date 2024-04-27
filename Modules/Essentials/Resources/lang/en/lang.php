@@ -7,6 +7,7 @@ return [
     'submit' => 'Submit',
     'delete' => 'Delete',
     'archive' => 'Archive',
+    'restore' => 'Restore',
     'download' => 'Download',
     'name' => 'Name',
     'created_at' => 'Created Date',

@@ -22,6 +22,9 @@ Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezon
         //todo controller
         Route::resource('todo', 'ToDoController');
 
+        Route::get('todo-archived', [Modules\Essentials\Http\Controllers\ToDoController::class, 'archived']);
+        Route::get('todo-archived/{id}/restore', [\Modules\Essentials\Http\Controllers\ToDoController::class, 'restore']);
+        Route::get('todo-archived/{id}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'permanentDelete']);
         Route::post('todo/add-comment', [Modules\Essentials\Http\Controllers\ToDoController::class, 'addComment']);
         Route::get('todo/delete-comment/{id}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteComment']);
         Route::get('todo/delete-document/{id}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteDocument']);
