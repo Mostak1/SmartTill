@@ -72,6 +72,7 @@
                     <thead>
                         <tr>
                             <th>@lang('lang_v1.added_on')</th>
+                            <th>@lang('messages.updated_at')</th>
                             <th> @lang('essentials::lang.task_id')</th>
                             <th class="col-md-2"> @lang('essentials::lang.task')</th>
                             <th> @lang('sale.status')</th>
@@ -113,6 +114,7 @@
                             toastr.success(result.msg);
                             $('.direct-chat-messages').prepend(result.comment_html);
                             $("form#task_comment_form").find('#comment').val('');
+                            task_table.ajax.reload();
                         } else {
                             toastr.error(result.msg);
                         }
@@ -128,6 +130,7 @@
                         if (result.success == true) {
                             toastr.success(result.msg);
                             element.closest('.direct-chat-msg').remove();
+                            task_table.ajax.reload();
                         } else {
                             toastr.error(result.msg);
                         }
@@ -146,6 +149,7 @@
                         if (result.success == true) {
                             toastr.success(result.msg);
                             element.closest('tr').remove();
+                            task_table.ajax.reload();
                         } else {
                             toastr.error(result.msg);
                         }
@@ -187,6 +191,10 @@
                 columns: [{
                         data: 'created_at',
                         name: 'created_at'
+                    },
+                    {
+                        data: 'updated_at',
+                        name: 'updated_at'
                     },
                     {
                         data: 'task_id',

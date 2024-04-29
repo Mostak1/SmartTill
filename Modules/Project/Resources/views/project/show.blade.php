@@ -128,7 +128,7 @@
                         @else
                             '' @endif"
                             id="project_task">
-                            <div class="row">
+                            <div class="row " id="taskFilter">
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         {!! Form::label('assigned_to_filter', __('project::lang.assigned_to') . ':') !!}

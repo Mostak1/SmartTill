@@ -13,7 +13,11 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::resource('project-task', 'Modules\Project\Http\Controllers\TaskController');
     Route::get('project-task-get-status', [Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus']);
     Route::put('project-task/{id}/post-status', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus']);
+    Route::get('project-change-get', [Modules\Project\Http\Controllers\TaskController::class, 'getChangeProject']);
+    Route::put('project-change/{id}/post-change', [Modules\Project\Http\Controllers\TaskController::class, 'postChangeProject']);
     Route::put('project-task/{id}/post-description', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskDescription']);
+    Route::get('/project/project-task/{id}/archive-status', [\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'])->name('project.task.archive-status');
+    Route::get('/get-project-members/{id}', [\Modules\Project\Http\Controllers\TaskController::class, 'getProjectMembers'])->name('get.project.members');
     Route::resource('project-task-comment', 'Modules\Project\Http\Controllers\TaskCommentController');
     Route::post('post-media-dropzone-upload', [Modules\Project\Http\Controllers\TaskCommentController::class, 'postMedia']);
     Route::resource('project-task-time-logs', 'Modules\Project\Http\Controllers\ProjectTimeLogController');

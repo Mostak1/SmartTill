@@ -32,6 +32,7 @@ return [
     'allocation_code_prefix' => 'Allocation code prefix',
     'revoke_code_prefix' => 'Revoke code prefix',
     'revoke' => 'Revoke',
+    'receiver_name' => 'Receiver Name',
     'revoke_code' => 'Revoke code',
     'revoked_at' => 'Revoked at',
     'revoke_asset' => 'Revoke <code>:allocation_code</code>',

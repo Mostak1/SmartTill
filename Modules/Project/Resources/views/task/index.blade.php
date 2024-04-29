@@ -29,6 +29,12 @@
             @endif>
         @lang('project::lang.kanban_board')
     </label>
+    @if(isset($project->settings['enable_archive']) && $project->settings['enable_archive'] == 'archive')
+    <label class="btn btn-info btn-sm">
+        <input type="radio" name="task_view" value="archive" class="task_view">
+        <i class="fas fa-file-archive"></i>
+    </label>
+    @endif
 </div>
 <br><br>
 <div class="table-responsive
@@ -40,6 +46,7 @@
         <thead>
             <tr>
                 <th> @lang('messages.action')</th>
+                <th> @lang('messages.created_at')</th>
                 <th class="col-md-4"> @lang('project::lang.subject')</th>
                 <th class="col-md-2"> @lang('project::lang.assigned_to')</th>
                 <th> @lang('project::lang.priority')</th>
@@ -47,6 +54,7 @@
                 <th>@lang('project::lang.due_date')</th>
                 <th>@lang('sale.status')</th>
                 <th>@lang('project::lang.assigned_by')</th>
+                <th> @lang('messages.updated_at')</th>
                 <th>@lang('project::lang.task_custom_field_1')</th>
                 <th>@lang('project::lang.task_custom_field_2')</th>
                 <th>@lang('project::lang.task_custom_field_3')</th>
@@ -68,4 +76,27 @@
             </div>
         </div>
     </div>
+</div>
+<div class="archive-table
+  @if (isset($project->settings['task_view'])) hide @endif">
+    <table class="table table-bordered table-striped" id="archive_project_task_table">
+        <thead>
+            <tr>
+                <th> @lang('messages.action')</th>
+                <th> @lang('messages.created_at')</th>
+                <th class="col-md-4"> @lang('project::lang.subject')</th>
+                <th class="col-md-2"> @lang('project::lang.assigned_to')</th>
+                <th> @lang('project::lang.priority')</th>
+                <th> @lang('business.start_date')</th>
+                <th>@lang('project::lang.due_date')</th>
+                <th>@lang('sale.status')</th>
+                <th>@lang('project::lang.assigned_by')</th>
+                <th> @lang('messages.updated_at')</th>
+                <th>@lang('project::lang.task_custom_field_1')</th>
+                <th>@lang('project::lang.task_custom_field_2')</th>
+                <th>@lang('project::lang.task_custom_field_3')</th>
+                <th>@lang('project::lang.task_custom_field_4')</th>
+            </tr>
+        </thead>
+    </table>
 </div>

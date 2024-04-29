@@ -64,12 +64,14 @@
                         {!! Form::label('lead_id', __('project::lang.lead') . ':*') !!}
                         {!! Form::select('lead_id', $users, null, [
                             'class' => 'form-control select2',
-                            'placeholder' => __('messages.please_select'),
                             'multiple',
                             'required',
                             'style' => 'width: 100%;',
                         ]) !!}
-                    
+                        <span id="lead_id_error" class="invalid-feedback" role="alert"
+                            style="display: none; color:crimson;">
+                            <strong>Only one lead allowed</strong>
+                        </span>
                     </div>
                 </div>
             </div>

@@ -99,7 +99,6 @@ class Project extends Model
     {
         return $this->hasMany('Modules\Project\Entities\ProjectTimeLog');
     }
-
     /**
      * Get the project categories.
      */
@@ -107,7 +106,6 @@ class Project extends Model
     {
         return $this->morphToMany(\App\Category::class, 'categorizable');
     }
-
     /**
      * Return the status for project.
      */
@@ -119,8 +117,8 @@ class Project extends Model
             'on_hold' => __('project::lang.on_hold'),
             'cancelled' => __('project::lang.cancelled'),
             'completed' => __('project::lang.completed'),
+            
         ];
-
         return $status;
     }
 
@@ -130,16 +128,13 @@ class Project extends Model
     public static function projectDropdown($business_id, $user_id = null)
     {
         $projects = Project::where('business_id', $business_id);
-
         // if user_id not empty get assigned project for filter
         if (! empty($user_id)) {
             $projects->whereHas('members', function ($q) use ($user_id) {
                 $q->where('user_id', $user_id);
             });
         }
-
         $projects = $projects->pluck('name', 'id');
-
         return $projects;
     }
 }

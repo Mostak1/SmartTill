@@ -2,6 +2,8 @@
 
 namespace Modules\AssetManagement\Http\Controllers;
 
+use App\BusinessLocation;
+use App\Category;
 use App\User;
 use App\Utils\ModuleUtil;
 use App\Utils\Util;
@@ -55,6 +57,8 @@ class AssetAllocationController extends Controller
                                 ->join('users as provider', 'asset_transactions.created_by', '=', 'provider.id')
                                 ->leftJoin('categories as CAT', 'assets.category_id',
                                     '=', 'CAT.id')
+                                ->leftJoin('business_locations as BL', 'assets.location_id',
+                                    '=', 'BL.id')
                                 ->leftJoin('asset_transactions as PT',
                                 'asset_transactions.id', '=', 'PT.parent_id')
                                 ->where('asset_transactions.business_id', $business_id)
@@ -70,6 +74,25 @@ class AssetAllocationController extends Controller
                                 'asset_transactions.allocated_upto'
                                 )
                                 ->groupBy('asset_transactions.id');
+
+                                $permitted_locations = auth()->user()->permitted_locations();
+
+            if ($permitted_locations != 'all') {
+                $asset_allocated->whereIn('asset_transactions.business_id', $permitted_locations);
+            }
+
+            if (! empty(request()->input('receiver_id'))) {
+                $asset_allocated->where('asset_transactions.receiver', request()->input('receiver_id'));
+            }
+            if (! empty(request()->input('category_id'))) {
+                $asset_allocated->where('CAT.id', request()->input('category_id'));
+            }
+
+            if (! empty(request()->input('assets_id'))) {
+                $asset_allocated->where('assets.id', request()->input('assets_id'));
+            }
+
+            $now = \Carbon::now();
 
             return Datatables::of($asset_allocated)
                 ->addColumn('action', function ($row) {
@@ -139,7 +162,13 @@ class AssetAllocationController extends Controller
                 ->make(true);
         }
 
-        return view('assetmanagement::asset_allocation.index');
+        $business_locations = BusinessLocation::forDropdown($business_id);
+        $asset_category = Category::forDropdown($business_id, 'asset');
+        $receiver_name = User::forDropdown($business_id);
+        $assets = Asset::forDropdown($business_id, true, false);
+
+        return view('assetmanagement::asset_allocation.index')
+        ->with(compact('receiver_name', 'business_locations', 'asset_category', 'assets'));
     }
 
     /**

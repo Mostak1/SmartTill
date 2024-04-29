@@ -44,4 +44,6 @@ return [
     'price' => 'Price',
     'activate' => 'Activate',
     'deactivate' => 'Deactivate',
+    'updated_at' =>'Last Updated',
+    'created_at' =>'Added On',
 ];

@@ -5,7 +5,7 @@
 				<div class="box box-solid box-primary">
 					<div class="box-header with-border">
 						<h3 class="box-title">
-							<a href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id])}}">
+							<a href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id])}}" id="project-title"  data-project_id="{{$project->id}}">
 					    		{{ucFirst($project->name)}}
 					    	</a>
 						</h3>

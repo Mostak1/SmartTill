@@ -121,7 +121,100 @@ class ProjectTask extends Model
     /**
      * Return the status for task.
      */
-    public static function taskStatuses()
+    public static function taskStatuses($project_id)
+    {
+        if ($project_id) {
+            $project = Project::where('id', $project_id)->first();
+        } else {
+            $statuses = [
+                'not_started' => __('project::lang.not_started'),
+                'in_progress' => __('project::lang.in_progress'),
+                'on_hold' => __('project::lang.on_hold'),
+                'cancelled' => __('project::lang.cancelled'),
+                'completed' => __('project::lang.completed'),
+                'archive' => __('project::lang.archive'),
+            ];
+            return $statuses;
+        }
+        
+        $settings = $project->settings;
+        $notStart = $project->settings['not_started'] ?? false;
+        $in_progress = $project->settings['in_progress'] ?? false;
+        $on_hold = $project->settings['on_hold'] ?? false;
+        $cancelled = $project->settings['cancelled'] ?? false;
+        $completed = $project->settings['completed'] ?? false;
+        $statuses = [
+            'not_started' => isset($notStart['name']) ? $notStart['name'] : __('project::lang.not_started'),
+            'in_progress' => isset($in_progress['name']) ? $in_progress['name'] : __('project::lang.in_progress'),
+            'on_hold' => isset($on_hold['name']) ? $on_hold['name'] : __('project::lang.on_hold'),
+            'cancelled' => isset($cancelled['name']) ? $cancelled['name'] : __('project::lang.cancelled'),
+            'completed' => isset($completed['name']) ? $completed['name'] : __('project::lang.completed'),
+        ];
+        // Filtered status
+        $filtered_status = [];
+        if (isset($settings['not_started']['id']) && $settings['not_started']['id'] == 1) {
+            $filtered_status['not_started'] = $statuses['not_started'];
+        }
+        if (isset($settings['in_progress']['id']) && $settings['in_progress']['id'] == 1) {
+            $filtered_status['in_progress'] = $statuses['in_progress'];
+        }
+        if (isset($settings['on_hold']['id']) && $settings['on_hold']['id'] == 1) {
+            $filtered_status['on_hold'] = $statuses['on_hold'];
+        }
+        if (isset($settings['cancelled']['id']) && $settings['cancelled']['id'] == 1) {
+            $filtered_status['cancelled'] = $statuses['cancelled'];
+        }
+        if (isset($settings['completed']['id']) && $settings['completed']['id'] == 1) {
+            $filtered_status['completed'] = $statuses['completed'];
+        }
+        // return $filtered_status;
+        if ($filtered_status) {
+            return $filtered_status;
+        } else {
+            return $statuses;
+        }
+    }
+    public static function statusesId($project_id)
+    {
+        if ($project_id) {
+            $project = Project::where('id', $project_id)->first();
+        } else {
+            $statuses = [
+                'not_started' => __('project::lang.not_started'),
+                'in_progress' => __('project::lang.in_progress'),
+                'on_hold' => __('project::lang.on_hold'),
+                'cancelled' => __('project::lang.cancelled'),
+                'completed' => __('project::lang.completed'),
+                'archive' => __('project::lang.archive'),
+            ];
+            return $statuses;
+        }
+         $settings = $project->settings;
+        $statuses = [
+            'not_started' => $settings['not_started']['id'],
+            'in_progress' => $settings['in_progress']['id'],
+            'on_hold' => $settings['on_hold']['id'],
+            'cancelled' => $settings['cancelled']['id'],
+            'completed' => $settings['completed']['id'],
+        ];
+
+        return $statuses;
+    }
+    public static function statusesColor($project_id)
+    {
+        $project = Project::where('id', $project_id)->first();
+        $settings = $project->settings['not_started'];
+        $statuses = [
+            'not_started' => $settings['name'],
+            'in_progress' => __('project::lang.in_progress'),
+            'on_hold' => __('project::lang.on_hold'),
+            'cancelled' => __('project::lang.cancelled'),
+            'completed' => __('project::lang.completed'),
+        ];
+
+        return $statuses;
+    }
+    public static function taskStatuses1()
     {
         $statuses = [
             'not_started' => __('project::lang.not_started'),
@@ -129,6 +222,7 @@ class ProjectTask extends Model
             'on_hold' => __('project::lang.on_hold'),
             'cancelled' => __('project::lang.cancelled'),
             'completed' => __('project::lang.completed'),
+            'archive' => __('project::lang.archive'),
         ];
 
         return $statuses;

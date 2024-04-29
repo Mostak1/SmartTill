@@ -47,6 +47,10 @@ class User extends Authenticatable
     /**
      * Get the business that owns the user.
      */
+    public function todos()
+    {
+        return $this->belongsToMany(\Modules\Essentials\Entities\ToDo::class, 'essentials_todos_users', 'user_id', 'todo_id');
+    }
     public function business()
     {
         return $this->belongsTo(\App\Business::class);

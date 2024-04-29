@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'archive' => 'Archive',
+    'restore' => 'Restore',
     'essentials' => 'Essentials',
     'document' => 'Document',
     'description' => 'Description',

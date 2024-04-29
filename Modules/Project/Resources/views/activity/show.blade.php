@@ -21,11 +21,7 @@
 		];
 
 		$status_and_priority = [
-			'completed' => __('project::lang.completed'),
-			'cancelled' => __('project::lang.cancelled'),
-			'on_hold' => __('project::lang.on_hold'),
-			'in_progress' => __('project::lang.in_progress'),
-			'not_started' => __('project::lang.not_started'),
+			
 			'low' => __('project::lang.low'),
 			'medium' => __('project::lang.medium'),
 			'high' => __('project::lang.high'),
