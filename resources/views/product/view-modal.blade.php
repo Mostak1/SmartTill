@@ -19,7 +19,6 @@
 						@php 
     						$custom_labels = json_decode(session('business.custom_labels'), true);
 						@endphp
-
                         @for($i = 1; $i <= 20; $i++)
                             @php
                                 $db_field = 'product_custom_field' . $i;
@@ -32,7 +31,6 @@
                                 {{$product->$db_field }}
                             @endif
                         @endfor
-						
 						<br>
 						<strong>@lang('lang_v1.available_in_locations'):</strong>
 						@if(count($product->product_locations) > 0)

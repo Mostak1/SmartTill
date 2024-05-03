@@ -14,14 +14,26 @@
                             <span class="input-group-addon">
                                 <i class="fa fa-user"></i>
                             </span>
-                            {!! Form::select('user_id_filter', $users, null, [
-                                'class' => 'form-control select2',
-                                'placeholder' => __('messages.all'),
-                            ]) !!}
+                            <div class="" id="assignedByAll">
+
+                                {!! Form::select('user_id_filter', $users, null, [
+                                    'class' => 'form-control select2',
+                                    'placeholder' => __('messages.all'),
+                                ]) !!}
+                            </div>
+                            <div class="" id="assignedByMe" hidden>
+                                {!! Form::select('user_id_filter1', $usersBy, null, [
+                                    'class' => 'form-control select2',
+                                    'style' => 'width:100%;',
+                                    'placeholder' => __('messages.all'),
+                                ]) !!}
+                            </div>
+
                         </div>
                     </div>
                 </div>
             @endcan
+
             <div class="col-md-3">
                 <div class="form-group">
                     {!! Form::label('priority_filter', __('essentials::lang.priority') . ':') !!}
@@ -48,6 +60,12 @@
                         'class' => 'form-control',
                         'readonly',
                     ]) !!}
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <input type="checkbox" value="" name="assignedBy" id="assignedBy">
+                    {!! Form::label('assignedBy', 'Only Assigned By Me') !!}
                 </div>
             </div>
         @endcomponent
@@ -95,6 +113,19 @@
 @section('javascript')
     <script type="text/javascript">
         $(document).ready(function() {
+            $('#assignedBy').change(function() {
+                if (this.checked) {
+                    $(this).val('1');
+                    $('#assignedByMe').removeAttr('hidden');
+                    $('#assignedByAll').attr('hidden', true);
+                    task_table.ajax.reload();
+                } else {
+                    $(this).val('');
+                    $('#assignedByMe').attr('hidden', true);
+                    $('#assignedByAll').removeAttr('hidden');
+                    task_table.ajax.reload();
+                }
+            });
             // todo task view popup scripts end here
             $(document).on('submit', 'form#task_comment_form', function(e) {
                 e.preventDefault();
@@ -163,7 +194,8 @@
                 ajax: {
                     url: '/essentials/todo',
                     data: function(d) {
-                        d.user_id = $('#user_id_filter').length ? $('#user_id_filter').val() : '';
+                        d.user_id = $('#user_id_filter').val() || $('#user_id_filter1').val() || '';
+                        d.assigned = $('#assignedBy').val();
                         d.priority = $('#priority_filter').val();
                         d.status = $('#status_filter').val();
                         var start = '';
@@ -275,9 +307,10 @@
             });
 
             //event on date chnage
-            $(document).on('change', "#priority_filter, #user_id_filter, #status_filter", function() {
-                task_table.ajax.reload();
-            });
+            $(document).on('change', "#priority_filter, #user_id_filter, #user_id_filter1,#status_filter",
+                function() {
+                    task_table.ajax.reload();
+                });
         });
 
         $(document).on('click', '.change_status', function(e) {

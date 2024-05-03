@@ -16,7 +16,7 @@ class ToDo extends Model
      *
      * @var array
      */
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
 
     /**
@@ -83,30 +83,42 @@ class ToDo extends Model
     public static function userTodoDropdown($business_id, $prepend_none = true, $include_commission_agents = false, $prepend_all = false, $check_location_permission = false)
     {
         $query = User::with('todos')->where('business_id', $business_id)->get();
-
-        $users=[];
-        foreach ($query as $q){
-            $total=0;
-            foreach ($q->todos as $todo){
-                if($todo->created_by==Auth::user()->id){
+        $users = [];
+        foreach ($query as $q) {
+            $total = 0;
+            foreach ($q->todos as $todo) {
+                if ($todo->created_by == Auth::user()->id) {
                     $total++;
                 }
             }
             $totatTodo = $q->todos->count();
             if ((auth()->user()->can('superadmin'))) {
-                # code...
-                if ($totatTodo > 0){
-                    $users[$q->id]= $q->first_name.' '.$q->last_name ." ($totatTodo)";
+                if ($totatTodo > 0) {
+                    $users[$q->id] = $q->first_name . ' ' . $q->last_name . " ($totatTodo)";
                 }
             } else {
-                if ($total > 0){
-                    $users[$q->id]= $q->first_name.' '.$q->last_name ." ($total)";
+                if ($total > 0) {
+                    $users[$q->id] = $q->first_name . ' ' . $q->last_name . " ($total)";
                 }
             }
-            
-            
         }
-
+        return $users;
+    }
+    public static function userTodoDropdownAssignedBy($business_id, $prepend_none = true, $include_commission_agents = false, $prepend_all = false, $check_location_permission = false)
+    {
+        $query = User::with('todos')->where('business_id', $business_id)->get();
+        $users = [];
+        foreach ($query as $q) {
+            $total = 0;
+            foreach ($q->todos as $todo) {
+                if ($todo->created_by == Auth::user()->id) {
+                    $total++;
+                }
+            }
+            if ($total > 0) {
+                $users[$q->id] = $q->first_name . ' ' . $q->last_name . " ($total)";
+            }
+        }
         return $users;
     }
 }

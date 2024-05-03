@@ -113,6 +113,8 @@ class ProductController extends Controller
                 'products.name as product',
                 'products.type',
                 'c1.name as category',
+                'c1.id as category_id',
+                'c1.description as category_description',
                 'c2.name as sub_category',
                 'units.actual_name as unit',
                 'brands.name as brand',
@@ -285,7 +287,14 @@ class ProductController extends Controller
                 })
                 ->addColumn(
                     'purchase_price',
-                    '<div style="white-space: nowrap;">@format_currency($min_purchase_price) @if($max_purchase_price != $min_purchase_price && $type == "variable") -  @format_currency($max_purchase_price)@endif </div>'
+                    '<div style="white-space: nowrap;">@if($category_id == 47) 
+                    $ {{$max_purchase_price}} </br>
+                    ৳ {{$category_description * $max_purchase_price}} <br>
+                    ৳ {{$category_description}}
+                     @else
+                      @format_currency($min_purchase_price) @if($max_purchase_price != $min_purchase_price && $type == "variable") -  @format_currency($max_purchase_price)@endif </div>  
+                      @endif <span></span>
+                    '
                 )
                 ->addColumn(
                     'selling_price',

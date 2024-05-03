@@ -9,6 +9,7 @@ use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Modules\Essentials\Entities\EssentialsTodoComment;
 use Modules\Essentials\Entities\ToDo;
@@ -93,7 +94,11 @@ class ToDoController extends Controller
                 });
             }
 
-            //Filter by user id.
+            //Filter by Assigned By
+            if (!empty($request->assigned)) {
+                $user_id = Auth::user()->id;
+                $todos->where('created_by', $user_id);
+            }
             if (!empty($request->user_id)) {
                 $user_id = $request->user_id;
                 $todos->whereHas('users', function ($q) use ($user_id) {
@@ -196,11 +201,13 @@ class ToDoController extends Controller
         }
 
         $users = [];
+        $usersBy = [];
         if (auth()->user()->can('essentials.assign_todos')) {
             $users = ToDo::userTodoDropdown($business_id, false);
+            $usersBy = ToDo::userTodoDropdownAssignedBy($business_id, false);
         }
 
-        return view('essentials::todo.index')->with(compact('users', 'task_statuses', 'priorities'));
+        return view('essentials::todo.index')->with(compact('usersBy','users', 'task_statuses', 'priorities'));
     }
 
     /**

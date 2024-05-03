@@ -96,6 +96,7 @@
 	            { data: 'total_quantity', name: 'total_quantity' },
 	            { data: 'recipe_total' },
 	            { data: 'unit_cost' },
+				{ data: 'default_purchase_price', name: 'default_purchase_price' },
 	            { data: 'action', name: 'action' },
 	        ],
 	        fnDrawCallback: function(oSettings) {

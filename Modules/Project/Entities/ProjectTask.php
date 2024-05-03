@@ -132,7 +132,6 @@ class ProjectTask extends Model
                 'on_hold' => __('project::lang.on_hold'),
                 'cancelled' => __('project::lang.cancelled'),
                 'completed' => __('project::lang.completed'),
-                'archive' => __('project::lang.archive'),
             ];
             return $statuses;
         }
@@ -185,7 +184,6 @@ class ProjectTask extends Model
                 'on_hold' => __('project::lang.on_hold'),
                 'cancelled' => __('project::lang.cancelled'),
                 'completed' => __('project::lang.completed'),
-                'archive' => __('project::lang.archive'),
             ];
             return $statuses;
         }
@@ -222,7 +220,6 @@ class ProjectTask extends Model
             'on_hold' => __('project::lang.on_hold'),
             'cancelled' => __('project::lang.cancelled'),
             'completed' => __('project::lang.completed'),
-            'archive' => __('project::lang.archive'),
         ];
 
         return $statuses;
