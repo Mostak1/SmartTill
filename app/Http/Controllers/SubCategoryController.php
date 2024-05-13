@@ -35,24 +35,29 @@ class SubCategoryController extends Controller
         if (request()->ajax()) {
             $business_id = request()->session()->get('user.business_id');
 
-            $SubCategory = SubCategory::where('business_id', $business_id)
-                ->select(['name', 'category_id', 'created_by', 'id']);
+            $SubCategory = SubCategory::with('category')->where('business_id', $business_id)
+                ->select('*');
 
             return Datatables::of($SubCategory)->addColumn(
                 'action',
                 function ($row) {
                     $html = '';
-                    $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
-                    $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';
+                    $html .= '<button data-href="' . action([\App\Http\Controllers\SubCategoryController::class, 'edit'], [$row->id]) . '" class="btn btn-xs btn-primary subcategories_modal"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
+                    $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\SubCategoryController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';
                     return $html;
                 }
             )
                 ->editColumn('name', function ($row) {
-
                     return $row->name;
                 })
+                ->editColumn('category', function ($row) {
+                    return $row->category->name;
+                })
+                ->editColumn('created_by', function ($row) {
+                    return $row->created_by;
+                })->orderColumn('name', 'asc')
                 ->removeColumn('id')
-                ->rawColumns(['action'])
+                ->rawColumns(['action','created_by','name','category'])
                 ->make(true);
         }
         return view('subcategory.index');
@@ -68,12 +73,13 @@ class SubCategoryController extends Controller
         // if (!auth()->user()->can('brand.create')) {
         //     abort(403, 'Unauthorized action.');
         // }
-
+        $business_id = request()->session()->get('user.business_id');
         $quick_add = false;
         if (!empty(request()->input('quick_add'))) {
             $quick_add = true;
         }
-        $categories = Category::pluck('name', 'id');
+        // $categories = Category::pluck('name', 'id');
+        $categories = Category::forDropdown($business_id, 'product');
         $is_repair_installed = $this->moduleUtil->isModuleInstalled('Repair');
 
         return view('subcategory.create')

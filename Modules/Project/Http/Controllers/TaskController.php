@@ -84,7 +84,6 @@ class TaskController extends Controller
             if (!empty(request()->get('project_id'))) {
                 $project_task->where('project_id', request()->get('project_id'));
             }
-
             //filter by assigned to
             if (!empty(request()->get('user_id'))) {
                 $user_id = request()->get('user_id');
@@ -187,7 +186,6 @@ class TaskController extends Controller
                         $html = '<span class="label ' . $this->priority_colors[$row->priority] . '">' .
                             $priority
                             . '</span>';
-
                         return $html;
                     })
                     ->editColumn('start_date', '
@@ -423,7 +421,7 @@ class TaskController extends Controller
                     ->editColumn('priority', function ($row) {
                         $priority = __('project::lang.' . $row->priority);
 
-                        $html = '<span class="label ' . $this->priority_colors[$row->priority] . '">' .
+                        $html = '<span class="label ' . $this->priority_colors[$row->priority] . '">'.
                             $priority
                             . '</span>';
 

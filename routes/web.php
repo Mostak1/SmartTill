@@ -52,6 +52,7 @@ use App\Http\Controllers\SellPosController;
 use App\Http\Controllers\SellReturnController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\TaxonomyController;
 use App\Http\Controllers\TaxRateController;
 use App\Http\Controllers\TransactionPaymentController;
@@ -236,6 +237,8 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::resource('pos', SellPosController::class);
 
     Route::resource('roles', RoleController::class);
+    Route::resource('subcategories', SubCategoryController::class);
+    Route::get('indexjson', [SubCategoryController::class,'indexjson'])->name('subcategory.indexjson');
 
     Route::resource('users', ManageUserController::class);
 
@@ -297,17 +300,14 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/get-stock-value', [ReportController::class, 'getStockValue']);
 
     Route::get('business-location/activate-deactivate/{location_id}', [BusinessLocationController::class, 'activateDeactivateLocation']);
-
     //Business Location Settings...
     Route::prefix('business-location/{location_id}')->name('location.')->group(function () {
         Route::get('settings', [LocationSettingsController::class, 'index'])->name('settings');
         Route::post('settings', [LocationSettingsController::class, 'updateSettings'])->name('settings_update');
     });
-
     //Business Locations...
     Route::post('business-location/check-location-id', [BusinessLocationController::class, 'checkLocationId']);
     Route::resource('business-location', BusinessLocationController::class);
-
     //Invoice layouts..
     Route::resource('invoice-layouts', InvoiceLayoutController::class);
 

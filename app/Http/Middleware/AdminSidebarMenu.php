@@ -186,6 +186,13 @@ class AdminSidebarMenu
                                 ['icon' => 'fa fas fa-tags', 'active' => request()->segment(1) == 'taxonomies' && request()->get('type') == 'product']
                             );
                         }
+                        if (auth()->user()->can('category.view') || auth()->user()->can('category.create')) {
+                            $sub->url(
+                                action([\App\Http\Controllers\SubCategoryController::class, 'index']),
+                                __('subcategory.subcategories'),
+                                ['icon' => 'fa fas fa-tags', 'active' => request()->segment(1) == 'taxonomies' && request()->get('type') == 'product']
+                            );
+                        }
                         if (auth()->user()->can('brand.view') || auth()->user()->can('brand.create')) {
                             $sub->url(
                                 action([\App\Http\Controllers\BrandController::class, 'index']),

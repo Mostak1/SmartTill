@@ -21,13 +21,14 @@
                                     'placeholder' => __('messages.all'),
                                 ]) !!}
                             </div>
-                            <div class="" id="assignedByMe" hidden>
+                            {{-- <div class="" id="assignedByMe" hidden>
                                 {!! Form::select('user_id_filter1', $usersBy, null, [
                                     'class' => 'form-control select2',
                                     'style' => 'width:100%;',
+                                    'id'=>'user_id_filter1',
                                     'placeholder' => __('messages.all'),
                                 ]) !!}
-                            </div>
+                            </div> --}}
 
                         </div>
                     </div>
@@ -62,12 +63,14 @@
                     ]) !!}
                 </div>
             </div>
+            @can('admin')
             <div class="col-md-3">
                 <div class="form-group">
                     <input type="checkbox" value="" name="assignedBy" id="assignedBy">
                     {!! Form::label('assignedBy', 'Only Assigned By Me') !!}
                 </div>
             </div>
+            @endcan
         @endcomponent
         @component('components.widget', [
             'title' => __('essentials::lang.todo_list'),
@@ -116,13 +119,13 @@
             $('#assignedBy').change(function() {
                 if (this.checked) {
                     $(this).val('1');
-                    $('#assignedByMe').removeAttr('hidden');
-                    $('#assignedByAll').attr('hidden', true);
+                    // $('#assignedByMe').removeAttr('hidden');
+                    // $('#assignedByAll').attr('hidden', true);
                     task_table.ajax.reload();
                 } else {
                     $(this).val('');
-                    $('#assignedByMe').attr('hidden', true);
-                    $('#assignedByAll').removeAttr('hidden');
+                    // $('#assignedByMe').attr('hidden', true);
+                    // $('#assignedByAll').removeAttr('hidden');
                     task_table.ajax.reload();
                 }
             });
@@ -194,7 +197,7 @@
                 ajax: {
                     url: '/essentials/todo',
                     data: function(d) {
-                        d.user_id = $('#user_id_filter').val() || $('#user_id_filter1').val() || '';
+                        d.user_id = $('#user_id_filter').val() || '';
                         d.assigned = $('#assignedBy').val();
                         d.priority = $('#priority_filter').val();
                         d.status = $('#status_filter').val();
@@ -307,7 +310,7 @@
             });
 
             //event on date chnage
-            $(document).on('change', "#priority_filter, #user_id_filter, #user_id_filter1,#status_filter",
+            $(document).on('change', "#priority_filter, #user_id_filter,#status_filter",
                 function() {
                     task_table.ajax.reload();
                 });
