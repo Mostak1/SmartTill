@@ -10,6 +10,8 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::put('project/{id}/post-status', [Modules\Project\Http\Controllers\ProjectController::class, 'postProjectStatus']);
     Route::put('project-settings', [Modules\Project\Http\Controllers\ProjectController::class, 'postSettings']);
     Route::resource('project', 'Modules\Project\Http\Controllers\ProjectController');
+    Route::get('project/{project}/restore', [Modules\Project\Http\Controllers\ProjectController::class, 'restore']);
+    Route::get('project/{project}/delete', [Modules\Project\Http\Controllers\ProjectController::class, 'permanentDelete']);
     Route::resource('project-task', 'Modules\Project\Http\Controllers\TaskController');
     Route::get('project-task-get-status', [Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus']);
     Route::put('project-task/{id}/post-status', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus']);

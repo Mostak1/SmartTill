@@ -101,7 +101,7 @@
                     <select name="custom_field_1" class="form-control">
                         <option value="">Select Level</option>
                         @foreach($levels as $level)
-                        <option class="select2" style="color: {{ $level['color'] }}; background-color: {{ $level['bg'] }};" value="{{ '<span style="color: ' . $level['color'] . '; background-color: ' . $level['bg'] . '; border-radius: 10%; padding: 1px 3px; font-weight: bold;"><small>' . $level['name'] . '</small></span>' }}">{{ $level['name'] }}</option>
+                        <option class="select2" style="color: {{ $level['color'] }}; background-color: {{ $level['bg'] }};" value="{{ '<span style="color: ' . $level['color'] . '; background-color: ' . $level['bg'] . '; border-radius: 10%; padding: 0px 4px 2px 4px; font-weight: bold;"><small>' . $level['name'] . '</small></span>' }}">{{ $level['name'] }}</option>
                         @endforeach
                     </select>
                 </div>

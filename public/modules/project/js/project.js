@@ -194,6 +194,85 @@ $(document).on('click', '.delete_a_project', function (e) {
                             initializeProjectKanbanBoard();
                         } else if (project_view == 'list_view') {
                             location.reload();
+                        } else if (project_view == 'archive'){
+                            location.reload();
+                        }
+                    } else {
+                        toastr.error(result.msg);
+                    }
+                },
+            });
+        }
+    });
+});
+
+//project restore
+$(document).on('click', '.restore_a_project', function (e) {
+    e.preventDefault();
+    var url = $(this).data('href');
+    swal({
+        title: LANG.sure,
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                method: 'GET',
+                dataType: 'json',
+                url: url,
+                success: function (result) {
+                    if (result.success) {
+                        toastr.success(result.msg);
+
+                        var project_view = urlSearchParam('project_view');
+
+                        if (project_view == 'kanban') {
+                            initializeProjectKanbanBoard();
+                        } else if (project_view == 'list_view') {
+                            location.reload();
+                        }
+                        else if (project_view == 'archive'){
+                            location.reload();
+                        }
+                    } else {
+                        toastr.error(result.msg);
+                    }
+                },
+            });
+        }
+    });
+});
+
+
+//project restore
+$(document).on('click', '.permanentDelete_a_project', function (e) {
+    e.preventDefault();
+    var url = $(this).data('href');
+    swal({
+        title: LANG.sure,
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                method: 'GET',
+                dataType: 'json',
+                url: url,
+                success: function (result) {
+                    if (result.success) {
+                        toastr.success(result.msg);
+
+                        var project_view = urlSearchParam('project_view');
+
+                        if (project_view == 'kanban') {
+                            initializeProjectKanbanBoard();
+                        } else if (project_view == 'list_view') {
+                            location.reload();
+                        }
+                        else if (project_view == 'archive'){
+                            location.reload();
                         }
                     } else {
                         toastr.error(result.msg);
@@ -962,10 +1041,43 @@ $(document).on(
             $('.project_html').html('');
             getProjectList();
         }
+        else if (project_view == 'list_view') {
+            $('.project_html').html('');
+            getProjectArchive();
+        }
     }
 );
 
 function getProjectList(url = '') {
+    var project_view = urlSearchParam('project_view');
+    var data = {
+        status: $('#project_status_filter').val(),
+        end_date: $('#project_end_date_filter').val(),
+        category_id: $('#project_categories_filter').val(),
+        project_view: project_view,
+    };
+
+    if (url.length == 0) {
+        url = '/project/project';
+    }
+
+    $.ajax({
+        method: 'GET',
+        dataType: 'json',
+        url: url,
+        data: data,
+        success: function (result) {
+            if (result.success) {
+                $('.load_more_project').hide();
+                $('.project_html').append(result.projects_html);
+            } else {
+                toastr.error(result.msg);
+            }
+        },
+    });
+}
+
+function getProjectArchive(url = '') {
     var project_view = urlSearchParam('project_view');
     var data = {
         status: $('#project_status_filter').val(),

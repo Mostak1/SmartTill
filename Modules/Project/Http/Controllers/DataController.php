@@ -188,6 +188,11 @@ class DataController extends Controller
                 'label' => __('project::lang.delete_project'),
                 'default' => false,
             ],
+            [
+                'value' => 'project.archive_project',
+                'label' => __('Archive'),
+                'default' => false,
+            ],
         ];
     }
 

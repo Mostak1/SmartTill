@@ -124,7 +124,28 @@ class ProjectController extends Controller
                     $projects_html = view('project::project.partials.index')
                         ->with(compact('projects'))
                         ->render();
-                } elseif ($project_view == 'kanban') {
+                }
+                elseif ($project_view == 'archive') {
+                    $projects = $projects->onlyTrashed()->latest()
+                        ->simplePaginate(10);
+
+                    //check if user is lead/admin for the project
+                    foreach ($projects as $key => $project) {
+                        $is_lead = $this->projectUtil->isProjectLead($user_id, $project->id);
+
+                        $projects[$key]['is_lead_or_admin'] = false;
+                        if ($is_lead || $is_admin) {
+                            $projects[$key]['is_lead_or_admin'] = true;
+                        }
+                    }
+
+                    //dynamically render projects
+                    $projects_html = view('project::project.partials.index')
+                        ->with(compact('projects'))
+                        ->render();
+                }
+                
+                elseif ($project_view == 'kanban') {
                     $projects = $projects->get()->groupBy('status');
                     //sort projects based on status
                     $sorted_projects = [];
@@ -617,7 +638,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
+        if (!(auth()->user() || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.archive_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -639,6 +660,54 @@ class ProjectController extends Controller
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
+
+        return $output;
+    }
+
+    public function permanentDelete($id)
+    {
+        $business_id = request()->session()->get('user.business_id');
+
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (request()->ajax()) {
+            try {
+                // Retrieve the project
+                $project = Project::withTrashed()->where('business_id', $business_id)->where('id', $id)->firstOrFail();
+
+                // Permanently delete the project
+                $project->forceDelete();
+
+                $output = [
+                    'success' => true,
+                    'msg' => __('lang_v1.success'),
+                ];
+            } catch (\Exception $e) {
+                \Log::error('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+
+                $output = [
+                    'success' => false,
+                    'msg' => __('messages.something_went_wrong'),
+                ];
+            }
+
+            return $output;
+        }
+    }
+
+
+    public function restore($id)
+    {
+        $project = Project::withTrashed()->findOrFail($id);
+
+        // Restore the soft deleted project item
+        $project->restore();
+        $output = [
+            'success' => true,
+            'msg' => __('lang_v1.success'),
+        ];
 
         return $output;
     }

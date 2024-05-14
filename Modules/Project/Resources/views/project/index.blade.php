@@ -71,6 +71,12 @@
 				        <input type="radio" name="project_view" value="kanban" class="project_view" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=kanban'}}">
 				        @lang('project::lang.kanban_board')
 				    </label>
+					@can('project.delete_project')
+						<label class="btn btn-info btn-sm archive">
+							<input type="radio" name="project_view" value="archive" class="project_view" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=archive'}}">
+							<i class="fas fa-file-archive"></i>
+						</label>
+					@endcan
 				</div>
 				@can('project.create_project')
 					<button type="button" class="btn btn-primary btn-sm add_new_project" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'create'])}}">
@@ -82,7 +88,7 @@
 		</div>
 		<div class="box-body">
 			<div class="row">
-				@if($project_view == 'list_view')
+				@if($project_view == 'list_view' || $project_view == 'archive')
 					<div class="col-md-3 project_status_filter">
 					    <div class="form-group">
 					        {!! Form::label('project_status_filter', __('sale.status') . ':') !!}
@@ -104,6 +110,11 @@
 				</div>
 			</div>
 			@if($project_view == 'list_view')
+				<div class="project_html">
+				</div>
+			@endif
+			{{-- project archive --}}
+			@if($project_view == 'archive')
 				<div class="project_html">
 				</div>
 			@endif
@@ -139,18 +150,27 @@
 	$(document).ready(function() {
 		var project_view = urlSearchParam('project_view');
 
-		//if project view is empty, set default to list_view
-		if (_.isEmpty(project_view)) {
-			project_view = 'list_view';
-		}
+	// If project view is empty, set default to list_view
+	if (_.isEmpty(project_view)) {
+		project_view = 'list_view';
+	}
 
-		if (project_view == 'kanban') {
-			$('.kanban').addClass('active');
-			$('.list').removeClass('active');
-			initializeProjectKanbanBoard();
-		} else if(project_view == 'list_view') {
-			getProjectList();
-		}
+	if (project_view == 'kanban') {
+		$('.kanban').addClass('active');
+		$('.list').removeClass('active');
+		$('.archive').removeClass('active');
+		initializeProjectKanbanBoard();
+	} else if (project_view == 'list_view') {
+		$('.list').addClass('active');
+		$('.kanban').removeClass('active');
+		$('.archive').removeClass('active');
+		getProjectList();
+	} else if (project_view == 'archive') {
+		$('.archive').addClass('active');
+		$('.kanban').removeClass('active');
+		$('.list').removeClass('active');
+		getProjectArchive();
+	}
 	});
 </script>
 @endsection
