@@ -1,4 +1,4 @@
-<div class="modal fade" id="update_task_status_modal" tabindex="-1" role="dialog" 
+<div class="modal fade" id="update_task_status_modal" data-backdrop="static" tabindex="-1" role="dialog" 
     	aria-labelledby="gridSystemModalLabel">
     <div class="modal-dialog" role="document">
   		<div class="modal-content">

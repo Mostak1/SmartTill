@@ -13,8 +13,11 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::resource('project-task', 'Modules\Project\Http\Controllers\TaskController');
     Route::get('project-task-get-status', [Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus']);
     Route::put('project-task/{id}/post-status', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskStatus']);
+    Route::get('project-change-get', [Modules\Project\Http\Controllers\TaskController::class, 'getChangeProject']);
+    Route::put('project-change/{id}/post-change', [Modules\Project\Http\Controllers\TaskController::class, 'postChangeProject']);
     Route::put('project-task/{id}/post-description', [Modules\Project\Http\Controllers\TaskController::class, 'postTaskDescription']);
     Route::get('/project/project-task/{id}/archive-status', [\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'])->name('project.task.archive-status');
+    Route::get('/get-project-members/{id}', [\Modules\Project\Http\Controllers\TaskController::class, 'getProjectMembers'])->name('get.project.members');
     Route::resource('project-task-comment', 'Modules\Project\Http\Controllers\TaskCommentController');
     Route::post('post-media-dropzone-upload', [Modules\Project\Http\Controllers\TaskCommentController::class, 'postMedia']);
     Route::resource('project-task-time-logs', 'Modules\Project\Http\Controllers\ProjectTimeLogController');
@@ -24,11 +27,9 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::get('project-employee-timelog-reports', [Modules\Project\Http\Controllers\ReportController::class, 'getEmployeeTimeLogReport']);
     Route::get('project-timelog-reports', [Modules\Project\Http\Controllers\ReportController::class, 'getProjectTimeLogReport']);
     Route::get('project-reports', [Modules\Project\Http\Controllers\ReportController::class, 'index']);
-
     Route::get('/install', [Modules\Project\Http\Controllers\InstallController::class, 'index']);
     Route::post('/install', [Modules\Project\Http\Controllers\InstallController::class, 'install']);
     Route::get('/install/uninstall', [Modules\Project\Http\Controllers\InstallController::class, 'uninstall']);
     Route::get('/install/update', [Modules\Project\Http\Controllers\InstallController::class, 'update']);
-    Route::post('/upload-image', [ImageUploadController::class, 'upload'])->name('upload.image');
-    
+    Route::post('/upload', [ImageUploadController::class, 'upload'])->name('upload.image');
 });

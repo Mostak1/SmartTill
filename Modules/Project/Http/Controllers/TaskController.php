@@ -19,7 +19,6 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TaskController extends Controller
 {
-
     /**
      * All Utils instance.
      */
@@ -48,22 +47,32 @@ class TaskController extends Controller
      *
      * @return Response
      */
+    public function getProjectMembers($id)
+    {
+        $project_id = $id;
+        $project_members = ProjectMember::projectMembersDropdown($project_id);
+        return response()->json($project_members);
+    }
     public function index()
     {
+        // check if user can crud task
+        $project_id = request()->get('project_id');
+        $project = Project::find($project_id);
+        $is_lead = $this->projectUtil->isProjectLead(auth()->user()->id, $project_id);
+        $is_member = $this->projectUtil->isProjectMember(auth()->user()->id, $project_id);
         $business_id = request()->session()->get('user.business_id');
         $is_admin = $this->commonUtil->is_admin(auth()->user(), $business_id);
         $user = request()->session()->get('user');
-        $statuses = ProjectTask::taskStatuses();
-
+        $statuses = ProjectTask::taskStatuses($project_id);
+        $statuses1 = ProjectTask::taskStatuses1($project_id);
+        $statusesId = ProjectTask::statusesId($project_id);
         if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module'))) {
             abort(403, 'Unauthorized action.');
         }
-
         if (request()->ajax()) {
             $project_task = ProjectTask::with(['members', 'createdBy', 'project', 'comments'])
                 ->where('business_id', $business_id)
                 ->select('*');
-
             //if user is not admin get assiged task only
             $user_id = $user['id'];
             if (empty(request()->get('project_id')) && !$is_admin) {
@@ -71,12 +80,10 @@ class TaskController extends Controller
                     $q->where('user_id', $user_id);
                 });
             }
-
             //filter by project id
             if (!empty(request()->get('project_id'))) {
                 $project_task->where('project_id', request()->get('project_id'));
             }
-
             //filter by assigned to
             if (!empty(request()->get('user_id'))) {
                 $user_id = request()->get('user_id');
@@ -109,11 +116,7 @@ class TaskController extends Controller
                 }
             }
 
-            // check if user can crud task
-            $project_id = request()->get('project_id');
-            $project = Project::find($project_id);
-            $is_lead = $this->projectUtil->isProjectLead(auth()->user()->id, $project_id);
-            $is_member = $this->projectUtil->isProjectMember(auth()->user()->id, $project_id);
+
 
             $can_crud = false;
             if ($is_admin || $is_lead) {
@@ -125,7 +128,6 @@ class TaskController extends Controller
             if (request()->get('task_view') == 'list_view') {
                 return Datatables::of($project_task)
                     ->filter(function ($query) {
-                        // Exclude rows with status 'archive'
                         $query->where('status', '!=', 'archive');
                     })
                     ->addColumn('action', function ($row) use ($can_crud) {
@@ -152,17 +154,24 @@ class TaskController extends Controller
                                         </li>';
 
                         if ($can_crud) {
-                            $html .= '<li>
+                            $html .= '
+                            <li>
+                                <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'getChangeProject'], ['id' => $row->id, 'project_id' => $row->project_id]) . '"class="cursor-pointer change_project_of_project_task">
+                                 </i><i class="fas fa-project-diagram"></i>
+                                 ' . __('project::lang.change_project') . '
+                                  </a>
+                            </li>
+                            <li>
                                     <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'edit'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer edit_a_project_task">
                                         <i class="fa fa-edit"></i>
                                         ' . __('messages.edit') . '
                                     </a>
                                 </li>
                                 <li>
-                                    <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer archive_project_task">
-                                    <i class="fas fa-file-archive"></i>
-                                    ' . __('project::lang.archive') . '
-                                    </a>
+                                <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'], [$row->id, 'project_id' => $row->project_id]) . '" class="cursor-pointer archive_project_task">
+                                <i class="fas fa-file-archive"></i>
+                                ' . __('project::lang.archive') . '
+                                </a>
                                 </li>';
                         }
 
@@ -177,7 +186,6 @@ class TaskController extends Controller
                         $html = '<span class="label ' . $this->priority_colors[$row->priority] . '">' .
                             $priority
                             . '</span>';
-
                         return $html;
                     })
                     ->editColumn('start_date', '
@@ -190,17 +198,23 @@ class TaskController extends Controller
                                 {{@format_date($due_date)}}
                             @endif
                     ')
+                    ->editColumn('updated_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $updatedat = Carbon::parse($row->updated_at);
+                        // Format the date and time to your desired format
+                        return $updatedat->format('M d, Y h:i A');
+                    })
+                    ->editColumn('created_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $created_at = Carbon::parse($row->created_at);
+                        // Format the date and time to your desired format
+                        return $created_at->format('M d, Y h:i A');
+                    })
                     ->editColumn('createdBy', function ($row) {
                         return $row->createdBy?->user_full_name;
                     })
                     ->editColumn('project', function ($row) {
                         return $row->project->name;
-                    })
-                    ->editColumn('updated_at', function ($row) {
-                        // Parse the updated_at timestamp using Carbon
-                        $updatedAt = Carbon::parse($row->updated_at);
-                        // Format the date and time to your desired format
-                        return $updatedAt->format('M d, Y h:i A');
                     })
                     ->editColumn('members', function ($row) {
                         $html = '&nbsp;';
@@ -214,31 +228,31 @@ class TaskController extends Controller
 
                         return $html;
                     })
-                    ->editColumn('status', function ($row) {
+                    ->editColumn('status', function ($row) use ($statuses, $statusesId) {
                         $status = '';
                         $bg = '';
-
                         if ($row->status == 'completed') {
-                            $status = __('project::lang.completed');
+                            $status = $statuses['completed'];
                             $bg = 'bg-green';
                         } elseif ($row->status == 'cancelled') {
-                            $status = __('project::lang.cancelled');
+                            $status = $statuses['cancelled'];
                             $bg = 'bg-red';
                         } elseif ($row->status == 'on_hold') {
-                            $status = __('project::lang.on_hold');
+                            $status = $statuses['on_hold'];
                             $bg = 'bg-yellow';
                         } elseif ($row->status == 'in_progress') {
-                            $status = __('project::lang.in_progress');
+                            $status = $statuses['in_progress'];
                             $bg = 'bg-info';
                         } elseif ($row->status == 'not_started') {
-                            $status = __('project::lang.not_started');
+                            $status = $statuses['not_started'];
+                            // $status = __('project::lang.not_started');
                             $bg = 'bg-red';
                         }
 
                         $href = action([\Modules\Project\Http\Controllers\TaskController::class, 'getTaskStatus'], ['id' => $row->id, 'project_id' => $row->project_id]);
 
                         $html = '<span class="cursor-pointer change_status_of_project_task label ' . $bg . '" data-href="' . $href . '">
-                            ' .
+                                ' .
                             $status
                             . '</span>';
 
@@ -256,7 +270,6 @@ class TaskController extends Controller
                         $html = '
                         <a data-href="' . action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$row->id, "project_id" => $row->project_id]) . '" class="cursor-pointer view_a_project_task text-black">
                         ' . $row->subject . ' <code>' . $row->task_id . '</code>';
-
                         // Check if comment count is greater than 0
                         if ($commentCount > 0) {
                             $html .= '<span class="label-default label-default-bt" title="This card has comment"><i class="fas fa-comment ctn"><sup>' . $commentCount . '</sup></i></span>';
@@ -266,13 +279,11 @@ class TaskController extends Controller
                         if ($media_count > 0) {
                             $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
                         }
-
                         $html .= '</a>';
-
                         return $html;
                     })
                     ->removeColumn('id')
-                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy','updated_at'])
+                    ->rawColumns(['action', 'created_at', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy', 'updated_at'])
                     ->make(true);
             } elseif (request()->get('task_view') == 'kanban') {
                 $project_task = $project_task->get()->groupBy('status');
@@ -299,8 +310,8 @@ class TaskController extends Controller
 
                             $delete = action([\Modules\Project\Http\Controllers\TaskController::class, 'archiveTaskStatus'], [$task->id, 'project_id' => $task->project_id]);
                         }
-
                         $view = action([\Modules\Project\Http\Controllers\TaskController::class, 'show'], [$task->id, 'project_id' => $task->project_id]);
+                        // cHANGE Destroy/delete tasks to archive
 
                         //if member then get their avatar
                         if ($task->members->count() > 0) {
@@ -341,6 +352,7 @@ class TaskController extends Controller
                             'hasComments' => ($task->comments->count() > 0) ?: false,
                             'commentCount' => $task->comments->count(),
                             'media_count' => $media_count,
+                            'level' =>$task->custom_field_1,
                             'dueDate' => $task->due_date,
                             'assigned_to' => $assigned_to,
                             'tags' => [__('project::lang.' . $task->priority)],
@@ -350,17 +362,15 @@ class TaskController extends Controller
                     //get all the card & board title for particular board(status)
                     $kanban_tasks[] = [
                         'id' => $key,
-                        'title' => __('project::lang.' . $key),
+                        'title' =>  $statuses[$key],
                         'cards' => $cards,
                     ];
                 }
-
                 $output = [
                     'success' => true,
                     'project_tasks' => $kanban_tasks,
                     'msg' => __('lang_v1.success'),
                 ];
-
                 return $output;
             } elseif (request()->get('task_view') == 'archive') {
                 return Datatables::of($project_task)
@@ -429,18 +439,23 @@ class TaskController extends Controller
                             @if(isset($due_date))
                                 {{@format_date($due_date)}}
                             @endif
-                    ')
+                    ')->editColumn('updated_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $updatedat = Carbon::parse($row->updated_at);
+                        // Format the date and time to your desired format
+                        return $updatedat->format('M d, Y h:i A');
+                    })
+                    ->editColumn('created_at', function ($row) {
+                        // Parse the updated_at timestamp using Carbon
+                        $created_at = Carbon::parse($row->created_at);
+                        // Format the date and time to your desired format
+                        return $created_at->format('M d, Y h:i A');
+                    })
                     ->editColumn('createdBy', function ($row) {
                         return $row->createdBy?->user_full_name;
                     })
                     ->editColumn('project', function ($row) {
                         return $row->project->name;
-                    })
-                    ->editColumn('updated_at', function ($row) {
-                        // Parse the updated_at timestamp using Carbon
-                        $updatedAt = Carbon::parse($row->updated_at);
-                        // Format the date and time to your desired format
-                        return $updatedAt->format('M d, Y h:i A');
                     })
                     ->editColumn('members', function ($row) {
                         $html = '&nbsp;';
@@ -496,28 +511,23 @@ class TaskController extends Controller
                         return $html;
                     })
                     ->removeColumn('id')
-                    ->rawColumns(['action', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy','updated_at'])
+                    ->rawColumns(['action', 'created_at', 'updated_at', 'project', 'subject', 'members', 'priority', 'start_date', 'due_date', 'status', 'createdBy'])
                     ->make(true);
             }
         }
-
         $business_id = request()->session()->get('user.business_id');
         $users = User::forDropdown($business_id, false);
         $priorities = ProjectTask::prioritiesDropdown();
         $due_dates = ProjectTask::dueDatesDropdown();
-
         // if not admin get assigned project for filter
         $user_id = null;
         if (!$is_admin) {
             $user_id = $user['id'];
         }
-
         $projects = Project::projectDropdown($business_id, $user_id);
-
         return view('project::my_task.index')
             ->with(compact('users', 'statuses', 'priorities', 'due_dates', 'projects', 'is_admin'));
     }
-
     /**
      * Show the form for creating a new resource.
      *
@@ -528,9 +538,16 @@ class TaskController extends Controller
         $project_id = request()->get('project_id');
         $project_members = ProjectMember::projectMembersDropdown($project_id);
         $priorities = ProjectTask::prioritiesDropdown();
-        $statuses = ProjectTask::taskStatuses();
+        $statuses = ProjectTask::taskStatuses($project_id);
 
+        // Retrieve the project based on the project_id
+        $project = Project::findOrFail($project_id);
 
+        // Check if settings exist and if levels are set
+        $levels = [];
+        if (isset($project->settings['levels'])) {
+            $levels = $project->settings['levels'];
+        }
 
         $user_id = 1; // Example user ID
 
@@ -538,7 +555,7 @@ class TaskController extends Controller
         $project_count = ProjectMember::where('user_id', $user_id)->count();
 
         return view('project::task.create')
-            ->with(compact('project_members', 'priorities', 'project_id', 'statuses'));
+            ->with(compact('project_members','levels','priorities', 'project_id', 'statuses'));
     }
 
     /**
@@ -650,10 +667,25 @@ class TaskController extends Controller
 
         $project_members = ProjectMember::projectMembersDropdown($project_id);
         $priorities = ProjectTask::prioritiesDropdown();
-        $statuses = ProjectTask::taskStatuses();
+        $statuses = ProjectTask::taskStatuses($project_id);
+        $leader = Project::where('lead_id', auth()->user()->id)->find($project_id); // Corrected
+        if (auth()->user()->hasRole('Admin#' . session('business.id'))) {
+            $projects = Project::pluck('name', 'id');
+        } else {
+            $projects = Project::whereHas('members', function ($query) {
+                $query->where('user_id', auth()->user()->id);
+            })->pluck('name', 'id');
+        }
+        // Retrieve the project based on the project_id
+        $project = Project::findOrFail($project_id);
 
+        // Check if settings exist and if levels are set
+        $levels = [];
+        if (isset($project->settings['levels'])) {
+            $levels = $project->settings['levels'];
+        }
         return view('project::task.edit')
-            ->with(compact('project_members', 'priorities', 'project_task', 'statuses'));
+            ->with(compact('project_members', 'levels', 'leader', 'projects', 'priorities', 'project_task', 'statuses'));
     }
 
     /**
@@ -665,14 +697,13 @@ class TaskController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $input = $request->only('subject', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
+            $input = $request->only('subject', 'project_id', 'description', 'priority', 'custom_field_1', 'custom_field_2', 'custom_field_3', 'custom_field_4', 'status');
             $input['start_date'] = !empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
             $input['due_date'] = !empty($request->input('due_date')) ? $this->commonUtil->uf_date($request->input('due_date')) : null;
             $members = $request->input('user_id');
 
             $project_id = $request->get('project_id');
-            $project_task = ProjectTask::where('project_id', $project_id)
-                ->findOrFail($id);
+            $project_task = ProjectTask::findOrFail($id);
 
             $project_task->update($input);
             $task_members = $project_task->members()->sync($members);
@@ -756,7 +787,7 @@ class TaskController extends Controller
     {
         $task_id = request()->get('id');
         $project_id = request()->get('project_id');
-        $statuses = ProjectTask::taskStatuses();
+        $statuses = ProjectTask::taskStatuses($project_id);
         $project_task = ProjectTask::where('project_id', $project_id)
             ->findOrFail($task_id);
 
@@ -792,8 +823,60 @@ class TaskController extends Controller
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
-
         return response()->json($output);
+        return $output;
+    }
+    public function getChangeProject()
+    {
+        $task_id = request()->get('id');
+        $project_id = request()->get('project_id');
+        $project_task = ProjectTask::with('members')
+            ->where('project_id', $project_id)
+            ->findOrFail($task_id);
+
+        $project_members = ProjectMember::projectMembersDropdown($project_id);
+        $priorities = ProjectTask::prioritiesDropdown();
+        $statuses = ProjectTask::taskStatuses($project_id);
+        $leader = Project::where('lead_id', auth()->user()->id)->find($project_id); // Corrected
+        if (auth()->user()->hasRole('Admin#' . session('business.id'))) {
+            $projects = Project::pluck('name', 'id');
+        } else {
+            $projects = Project::whereHas('members', function ($query) {
+                $query->where('user_id', auth()->user()->id);
+            })->pluck('name', 'id');
+        }
+        return view('project::task.change_task_project')
+            ->with(compact('project_members', 'leader', 'projects', 'priorities', 'project_task', 'statuses'));
+    }
+    /**
+     * update task status
+     *
+     * @return Response
+     */
+    public function postChangeProject($id)
+    {
+        try {
+            $project_id = request()->get('project_id');
+
+            $project_task = ProjectTask::findOrFail($id);
+
+            $project_task->project_id = request()->input('project_id');
+            $project_task->save();
+
+            $output = [
+                'success' => true,
+                'msg' => __('lang_v1.success'),
+            ];
+        } catch (Exception $e) {
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+
+            $output = [
+                'success' => false,
+                'msg' => __('messages.something_went_wrong'),
+            ];
+        }
+        return response()->json($output);
+        return $output;
     }
 
     /**
@@ -835,7 +918,6 @@ class TaskController extends Controller
 
         return $output;
     }
-
     public function archiveTaskStatus($id)
     {
         try {
@@ -855,7 +937,6 @@ class TaskController extends Controller
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
-
         return $output;
     }
 }

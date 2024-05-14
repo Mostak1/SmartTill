@@ -30,7 +30,23 @@ $(document).ready(function () {
         if (status === '1') {
             toastr.success($('#status_span').attr('data-msg'));
         } else if (status == '' || status === '0') {
-            toastr.error($('#status_span').attr('data-msg'));
+            swal({
+                title: 'Error!',
+                text: $('#status_span').attr('data-msg'),
+                icon: 'warning',
+                buttons: {
+                    confirm: {
+                        text: "OK",
+                        closeModal: true,
+                        className: 'btn-danger btn-center'
+                    },
+                },
+                dangerMode: true,
+            });
+            // toastr.error($('#status_span').attr('data-msg'), '', {
+            //     closeButton: true,
+            //     positionClass: 'toast-top-center'
+            // });
         }
     }
 

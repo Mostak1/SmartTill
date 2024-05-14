@@ -4585,7 +4585,7 @@ class TransactionUtil extends Util
         return $output;
     }
 
-    public function getGrossProfit($business_id, $start_date = null, $end_date = null, $location_id = null, $user_id = null, $permitted_locations)
+    public function getGrossProfit($business_id, $start_date = null, $end_date = null, $location_id = null, $user_id = null)
     {
         $query = TransactionSellLine::join('transactions as sale', 'transaction_sell_lines.transaction_id', '=', 'sale.id')
             ->leftjoin('transaction_sell_lines_purchase_lines as TSPL', 'transaction_sell_lines.id', '=', 'TSPL.sell_line_id')

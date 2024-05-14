@@ -30,8 +30,13 @@ class Media extends Model
     public function getDisplayNameAttribute()
     {
         $array = explode('_', $this->file_name, 3);
-
-        return ! empty($array[2]) ? $array[2] : $array[1];
+        // Check if $array has at least two elements
+        if (count($array) >= 2) {
+            return !empty($array[2]) ? $array[2] : $array[1];
+        } else {
+            // Handle the case where $array does not have enough elements
+            return null;
+        }
     }
 
     /**
@@ -39,7 +44,7 @@ class Media extends Model
      */
     public function getDisplayUrlAttribute()
     {
-        $path = asset('/uploads/media/'.rawurlencode($this->file_name));
+        $path = asset('/uploads/media/' . rawurlencode($this->file_name));
 
         return $path;
     }
@@ -49,7 +54,7 @@ class Media extends Model
      */
     public function getDisplayPathAttribute()
     {
-        $path = public_path('uploads/media').'/'.rawurlencode($this->file_name);
+        $path = public_path('uploads/media') . '/' . rawurlencode($this->file_name);
 
         return $path;
     }
@@ -60,12 +65,12 @@ class Media extends Model
     public function thumbnail($size = [60, 60], $class = null)
     {
         $html = '<img';
-        $html .= ' src="'.$this->display_url.'"';
-        $html .= ' width="'.$size[0].'"';
-        $html .= ' height="'.$size[1].'"';
+        $html .= ' src="' . $this->display_url . '"';
+        $html .= ' width="' . $size[0] . '"';
+        $html .= ' height="' . $size[1] . '"';
 
-        if (! empty($class)) {
-            $html .= ' class="'.$class.'"';
+        if (!empty($class)) {
+            $html .= ' class="' . $class . '"';
         }
 
         $html .= '>';
@@ -95,20 +100,20 @@ class Media extends Model
                 foreach ($files as $file) {
                     $uploaded_file = Media::uploadFile($file);
 
-                    if (! empty($uploaded_file)) {
+                    if (!empty($uploaded_file)) {
                         $uploaded_files[] = $uploaded_file;
                     }
                 }
             } else {
                 $uploaded_file = Media::uploadFile($files);
-                if (! empty($uploaded_file)) {
+                if (!empty($uploaded_file)) {
                     $uploaded_files[] = $uploaded_file;
                 }
             }
         }
 
         //check if base64
-        if (! empty($request->$file_name) && ! is_array($request->$file_name)) {
+        if (!empty($request->$file_name) && !is_array($request->$file_name)) {
             $base64_array = explode(',', $request->$file_name);
 
             $base64_string = $base64_array[1] ?? $base64_array[0];
@@ -118,7 +123,7 @@ class Media extends Model
             }
         }
 
-        if (! empty($uploaded_files)) {
+        if (!empty($uploaded_files)) {
             //If one to one relationship upload single file
             if ($is_single) {
                 $uploaded_files = $uploaded_files[0];
@@ -140,7 +145,7 @@ class Media extends Model
     {
         $file_name = null;
         if ($file->getSize() <= config('constants.document_size_limit')) {
-            $new_file_name = time().'_'.mt_rand().'_'.$file->getClientOriginalName();
+            $new_file_name = time() . '_' . mt_rand() . '_' . $file->getClientOriginalName();
             if ($file->storeAs('/media', $new_file_name)) {
                 $file_name = $new_file_name;
             }
@@ -151,9 +156,9 @@ class Media extends Model
 
     public static function uploadBase64Image($base64_string)
     {
-        $file_name = time().'_'.mt_rand().'_media.jpg';
+        $file_name = time() . '_' . mt_rand() . '_media.jpg';
 
-        $output_file = public_path('uploads').'/media/'.$file_name;
+        $output_file = public_path('uploads') . '/media/' . $file_name;
 
         // open the output file for writing
         $ifp = fopen($output_file, 'wb');
@@ -172,9 +177,9 @@ class Media extends Model
     public static function deleteMedia($business_id, $media_id)
     {
         $media = Media::where('business_id', $business_id)
-                        ->findOrFail($media_id);
+            ->findOrFail($media_id);
 
-        $media_path = public_path('uploads/media/'.$media->file_name);
+        $media_path = public_path('uploads/media/' . $media->file_name);
 
         if (file_exists($media_path)) {
             unlink($media_path);
@@ -189,15 +194,15 @@ class Media extends Model
 
     public static function attachMediaToModel($model, $business_id, $uploaded_files, $request = null, $model_media_type = null)
     {
-        if (! empty($uploaded_files)) {
+        if (!empty($uploaded_files)) {
             if (is_array($uploaded_files)) {
                 $media_obj = [];
                 foreach ($uploaded_files as $value) {
                     $media_obj[] = new \App\Media([
                         'file_name' => $value,
                         'business_id' => $business_id,
-                        'description' => ! empty($request->description) ? $request->description : null,
-                        'uploaded_by' => ! empty($request->uploaded_by) ? $request->uploaded_by : auth()->user()->id,
+                        'description' => !empty($request->description) ? $request->description : null,
+                        'uploaded_by' => !empty($request->uploaded_by) ? $request->uploaded_by : auth()->user()->id,
                         'model_media_type' => $model_media_type,
                     ]);
                 }
@@ -210,8 +215,8 @@ class Media extends Model
                 $media_obj = new \App\Media([
                     'file_name' => $uploaded_files,
                     'business_id' => $business_id,
-                    'description' => ! empty($request->description) ? $request->description : null,
-                    'uploaded_by' => ! empty($request->uploaded_by) ? $request->uploaded_by : auth()->user()->id,
+                    'description' => !empty($request->description) ? $request->description : null,
+                    'uploaded_by' => !empty($request->uploaded_by) ? $request->uploaded_by : auth()->user()->id,
                     'model_media_type' => $model_media_type,
                 ]);
                 $model->media()->save($media_obj);

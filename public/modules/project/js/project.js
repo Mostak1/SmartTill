@@ -3,6 +3,37 @@
  * project related code
  */
 // project - add form model
+// Project member
+function updateAssignedToFilterDropdown(project_id) {
+    $.ajax({
+        url:
+            "{{ action([ModulesProjectHttpControllersProjectController::class, 'getProjectMembers']) }}?id=" +
+            project_id,
+        type: 'GET',
+        success: function (data) {
+            console.log(data);
+            $('#assigned_to_filter_dropdown').empty();
+            $('#assigned_to_filter_dropdown').append(
+                '<option value="">{{ __("messages.all") }}</option>'
+            );
+            $.each(data, function (id, name) {
+                $('#assigned_to_filter_dropdown').append(
+                    '<option value="' + id + '">' + name + '</option>'
+                );
+            });
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            // Handle error here
+        },
+    });
+}
+$(document).on('click', '#projet_member', function () {
+    alert('Project Title');
+    var project_id = 30;
+    updateAssignedToFilterDropdown(project_id);
+});
+
 $(document).on('click', 'button.add_new_project', function () {
     var url = $(this).data('href');
     $.ajax({
@@ -11,6 +42,7 @@ $(document).on('click', 'button.add_new_project', function () {
         url: url,
         success: function (result) {
             $('#project_model').html(result).modal('show');
+            $('#project_model').find('.select2').select2();
         },
     });
 });
@@ -35,61 +67,55 @@ $('#project_model').on('shown.bs.modal', function (e) {
         format: datepicker_date_format,
     });
 
-    //initialize editor
     tinymce.init({
         selector: 'textarea#description',
-        plugins: 'image code',
-        toolbar: 'undo redo | link image | code',
-        /* enable title field in the Image dialog*/
+
+        image_class_list: [{ title: 'img-responsive', value: 'img-responsive' }],
+        height: 500,
+        setup: function (editor) {
+            editor.on('init change', function () {
+                editor.save();
+            });
+        },
+        plugins: [
+            'advlist autolink lists link image charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table paste',
+        ],
+        toolbar:
+            'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code ',
+
         image_title: true,
-        /* enable automatic uploads of images represented by blob or data URIs*/
         automatic_uploads: true,
-        /*
-          URL of our upload handler (for more details check: https://www.tiny.cloud/docs/configure/file-image-upload/#images_upload_url)
-          images_upload_url: 'postAcceptor.php',
-          here we add custom filepicker only to Image dialog
-        */
+        images_upload_url: '/upload',
         file_picker_types: 'image',
-        /* and here's our custom image picker*/
+        // images_upload_base_path: '/some/basepath',
         file_picker_callback: function (cb, value, meta) {
             var input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
-
-            /*
-            Note: In modern browsers input[type="file"] is functional without
-            even adding it to the DOM, but that might not be the case in some older
-            or quirky browsers like IE, so you might want to add it to the DOM
-            just in case, and visually hide it. And do not forget do remove it
-            once you do not need it anymore.
-          */
-
             input.onchange = function () {
                 var file = this.files[0];
 
                 var reader = new FileReader();
+                reader.readAsDataURL(file);
                 reader.onload = function () {
-                    /*
-                Note: Now we need to register the blob in TinyMCEs image blob
-                registry. In the next release this part hopefully won't be
-                necessary, as we are looking to handle it internally.
-              */
                     var id = 'blobid' + new Date().getTime();
                     var blobCache = tinymce.activeEditor.editorUpload.blobCache;
                     var base64 = reader.result.split(',')[1];
                     var blobInfo = blobCache.create(id, file, base64);
                     blobCache.add(blobInfo);
-
-                    /* call the callback and populate the Title field with the file name */
-                    cb(blobInfo.blobUri(), { title: file.name });
+                    // Instead of setting the blob URI directly, set the absolute URL
+                    cb("{{ asset('storage') }}/" + file.name, { title: file.name });
+                    // cb(blobInfo.blobUri(), { title: file.name });
+                    // This will immediately display the uploaded image in the editor
+                    var img = new Image();
+                    img.src = reader.result;
+                    tinymce.activeEditor.insertContent(img.outerHTML);
                 };
-                reader.readAsDataURL(file);
             };
-
             input.click();
         },
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-   
     });
 
     $('.select2').select2();
@@ -104,35 +130,43 @@ $('#project_model').on('hidden.bs.modal', function () {
 //project form submit
 $(document).on('submit', 'form#project_form', function (e) {
     e.preventDefault();
-    var url = $('form#project_form').attr('action');
-    var method = $('form#project_form').attr('method');
-    var data = $('form#project_form').serialize();
+    var lead = $('#lead_id').val().length;
     var ladda = Ladda.create(document.querySelector('.ladda-button'));
-    ladda.start();
-    $.ajax({
-        method: method,
-        dataType: 'json',
-        url: url,
-        data: data,
-        success: function (result) {
-            ladda.stop();
-            if (result.success) {
-                $('#project_model').modal('hide');
+    if ($('#lead_id').val().length > 1) {
+        $('#lead_id_error').show();
+        ladda.start();
+    } else {
+        $('#lead_id_error').hide();
+        var url = $('form#project_form').attr('action');
+        var method = $('form#project_form').attr('method');
+        var data = $('form#project_form').serialize();
+        ladda.start();
+        $.ajax({
+            method: method,
+            dataType: 'json',
+            url: url,
+            data: data,
+            success: function (result) {
+                ladda.stop();
+                if (result.success) {
+                    $('#project_model').modal('hide');
 
-                toastr.success(result.msg);
+                    toastr.success(result.msg);
 
-                var project_view = urlSearchParam('project_view');
+                    var project_view = urlSearchParam('project_view');
 
-                if (project_view == 'kanban') {
-                    initializeProjectKanbanBoard();
-                } else if (project_view == 'list_view') {
-                    location.reload();
+                    if (project_view == 'kanban') {
+                        initializeProjectKanbanBoard();
+                    } else if (project_view == 'list_view') {
+                        location.reload();
+                    }
+                } else {
+                    toastr.error(result.msg);
                 }
-            } else {
-                toastr.error(result.msg);
-            }
-        },
-    });
+            },
+        });
+    }
+    ladda.stop();
 });
 
 //project delete
@@ -175,9 +209,6 @@ $(document).on('click', '.delete_a_project', function (e) {
  * project task related code
  */
 // project task - add form model
-
-
-
 $(document).on('click', '.task_btn', function () {
     var url = $(this).data('href');
     $.ajax({
@@ -203,38 +234,44 @@ $(document).on('click', '.edit_a_project_task', function () {
     });
 });
 
-
 // project task - archive
 $(document).on('click', '.archive_project_task', function () {
     var url = $(this).data('href');
-    $.ajax({
-        method: 'GET',
-        dataType: 'json', // Change dataType to 'json' to receive JSON response
-        url: url,
-        success: function (response) {
-            if (response.success) {
-                // Update table content (if needed)
-                // For example, reload the datatable
-                $('#project_task_table').DataTable().ajax.reload();
-                if (typeof my_task_datatable != 'undefined') {
-                    my_task_datatable.ajax.reload();
-                }
-                initializeTaskKanbanBoard();
-                // Show success toaster message
-                toastr.success(response.msg);
-            } else {
-                // Show error toaster message (if needed)
-                toastr.error(response.msg);
-            }
-        },
-        error: function (xhr, status, error) {
-            // Handle error (if needed)
-            console.error('Error archiving task:', error);
+    swal({
+        title: LANG.sure,
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                method: 'GET',
+                dataType: 'json', // Change dataType to 'json' to receive JSON response
+                url: url,
+                success: function (response) {
+                    if (response.success) {
+                        // Update table content (if needed)
+                        // For example, reload the datatable
+                        $('#project_task_table').DataTable().ajax.reload();
+                        if (typeof my_task_datatable != 'undefined') {
+                            my_task_datatable.ajax.reload();
+                        }
+                        initializeTaskKanbanBoard();
+                        // Show success toaster message
+                        toastr.success(response.msg);
+                    } else {
+                        // Show error toaster message (if needed)
+                        toastr.error(response.msg);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // Handle error (if needed)
+                    console.error('Error archiving task:', error);
+                },
+            });
         }
     });
 });
-
-
 
 $(document).on('click', '.edit_a_task_from_view_task', function () {
     var url = $(this).data('href');
@@ -258,92 +295,54 @@ $(document).on('click', '.edit_a_task_from_view_task', function () {
 $('.project_task_model').on('shown.bs.modal', function (e) {
     tinymce.init({
         selector: 'textarea#description',
-        plugins: 'image code',
-        toolbar: 'undo redo | link image | code',
-        images_upload_url: "{{ url('/project/upload-image') }}", // Use route helper to generate URL
-        automatic_uploads: true,
-        file_picker_types: 'image',
-        images_upload_handler: function (blobInfo, success, failure) {
-            var formData = [];
-            formData.append('file', blobInfo.blob(), blobInfo.filename());
-    
-            // Fetch CSRF token
-            var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-            // Include CSRF token in AJAX request
-            formData.append('_token', csrfToken);
-    console.log(formData);
-            $.ajax({
-                url: "{{url('/project/upload-image') }}", // Use route helper again for consistency
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function (data) {
-                    success(data.location);
-                },
-                error: function (err) {
-                    failure('HTTP Error: ' + err.status);
-                }
+
+        image_class_list: [{ title: 'img-responsive', value: 'img-responsive' }],
+        height: 500,
+        setup: function (editor) {
+            editor.on('init change', function () {
+                editor.save();
             });
-        }
-    });
-    
-    tinymce.init({
-        selector: 'textarea#mm',
-        plugins: 'image code',
-        toolbar: 'undo redo | link image | code',
+        },
+        plugins: [
+            'advlist autolink lists link image charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table paste',
+        ],
+        toolbar:
+            'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code ',
+
         image_title: true,
         automatic_uploads: true,
-        images_upload_url: "{{ url('/project/upload-image') }}",
+        images_upload_url: '/Lacuna_main_only/public/project/upload',
         file_picker_types: 'image',
+        // images_upload_base_path: '/some/basepath',
         file_picker_callback: function (cb, value, meta) {
             var input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
-    
             input.onchange = function () {
                 var file = this.files[0];
-    
+
                 var reader = new FileReader();
-                reader.onload = function () {
-                    var formData = [];
-                    formData.append('file', file); // Append file directly, not blobInfo.blob()
-    
-                    // Fetch CSRF token
-                    var csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
-                    // Include CSRF token in AJAX request
-                    formData.append('_token', csrfToken);
-    
-                    $.ajax({
-                        url: "{{ url('/project/upload-image') }}",
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function (data) {
-                            var id = 'blobid' + new Date().getTime();
-                            var blobCache = tinymce.activeEditor.editorUpload.blobCache;
-                            var blobInfo = blobCache.create(id, file, reader.result);
-                            blobCache.add(blobInfo);
-    
-                            // Call the callback and populate the Title field with the file name
-                            cb(blobInfo.blobUri(), { title: file.name });
-                        },
-                        error: function (err) {
-                            failure('HTTP Error: ' + err.status);
-                        }
-                    });
-                };
                 reader.readAsDataURL(file);
+                reader.onload = function () {
+                    var id = 'blobid' + new Date().getTime();
+                    var blobCache = tinymce.activeEditor.editorUpload.blobCache;
+                    var base64 = reader.result.split(',')[1];
+                    var blobInfo = blobCache.create(id, file, base64);
+                    blobCache.add(blobInfo);
+                    // Instead of setting the blob URI directly, set the absolute URL
+                    cb("{{ asset('storage') }}/" + file.name, { title: file.name });
+                    // cb(blobInfo.blobUri(), { title: file.name });
+                    // This will immediately display the uploaded image in the editor
+                    var img = new Image();
+                    img.src = reader.result;
+                    tinymce.activeEditor.insertContent(img.outerHTML);
+                };
             };
-    
             input.click();
         },
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
     });
-    
 
     $('form#project_task_form .datepicker').datepicker({
         autoclose: true,
@@ -388,7 +387,6 @@ $(document).on('submit', 'form#project_task_form', function (e) {
                 if (typeof archive_datatable != 'undefined') {
                     archive_datatable.ajax.reload();
                 }
-
                 if (typeof my_task_datatable != 'undefined') {
                     my_task_datatable.ajax.reload();
                 }
@@ -443,11 +441,9 @@ $(document).on('click', '.delete_a_project_task', function (e) {
                         if (typeof project_task_datatable != 'undefined') {
                             project_task_datatable.ajax.reload();
                         }
-    
                         if (typeof archive_datatable != 'undefined') {
                             archive_datatable.ajax.reload();
                         }
-
                         if (typeof my_task_datatable != 'undefined') {
                             my_task_datatable.ajax.reload();
                         }
@@ -477,8 +473,6 @@ $(document).on('click', '.change_status_of_project_task', function () {
     });
 });
 
-
-
 //update task status form submission
 $(document).on('submit', 'form#change_status', function (e) {
     e.preventDefault();
@@ -501,7 +495,50 @@ $(document).on('submit', 'form#change_status', function (e) {
                 if (typeof archive_datatable != 'undefined') {
                     archive_datatable.ajax.reload();
                 }
+                if (typeof my_task_datatable != 'undefined') {
+                    my_task_datatable.ajax.reload();
+                }
+            } else {
+                toastr.error(result.msg);
+            }
+        },
+    });
+});
+// update project task for change project
+$(document).on('click', '.change_project_of_project_task', function () {
+    var url = $(this).data('href');
+    $.ajax({
+        method: 'GET',
+        dataType: 'html',
+        url: url,
+        success: function (result) {
+            $('.view_modal').html(result).modal('show');
+        },
+    });
+});
 
+//update task project chenge form submission
+$(document).on('submit', 'form#change_project', function (e) {
+    e.preventDefault();
+    var url = $('form#change_project').attr('action');
+    var method = $('form#change_project').attr('method');
+    var data = $('form#change_project').serialize();
+    $.ajax({
+        method: method,
+        dataType: 'json',
+        url: url,
+        data: data,
+        success: function (result) {
+            if (result.success) {
+                $('.view_modal').modal('hide');
+                toastr.success(result.msg);
+
+                if (typeof project_task_datatable != 'undefined') {
+                    project_task_datatable.ajax.reload();
+                }
+                if (typeof archive_datatable != 'undefined') {
+                    archive_datatable.ajax.reload();
+                }
                 if (typeof my_task_datatable != 'undefined') {
                     my_task_datatable.ajax.reload();
                 }
@@ -535,59 +572,54 @@ $('.view_project_task_model').on('shown.bs.modal', function (e) {
 //toggle description edit btn
 $(document).on('click', '.edit_task_description', function () {
     tinymce.init({
-        selector: 'textarea#edit_description_of_task',
-        plugins: 'image code',
-        toolbar: 'undo redo | link image | code',
-        /* enable title field in the Image dialog*/
+        selector: 'textarea#description',
+
+        image_class_list: [{ title: 'img-responsive', value: 'img-responsive' }],
+        height: 500,
+        setup: function (editor) {
+            editor.on('init change', function () {
+                editor.save();
+            });
+        },
+        plugins: [
+            'advlist autolink lists link image charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table paste',
+        ],
+        toolbar:
+            'insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code ',
+
         image_title: true,
-        /* enable automatic uploads of images represented by blob or data URIs*/
         automatic_uploads: true,
-        /*
-          URL of our upload handler (for more details check: https://www.tiny.cloud/docs/configure/file-image-upload/#images_upload_url)
-          images_upload_url: 'postAcceptor.php',
-          here we add custom filepicker only to Image dialog
-        */
+        images_upload_url: '/upload',
         file_picker_types: 'image',
-        /* and here's our custom image picker*/
+        // images_upload_base_path: '/some/basepath',
         file_picker_callback: function (cb, value, meta) {
             var input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'image/*');
-
-            /*
-            Note: In modern browsers input[type="file"] is functional without
-            even adding it to the DOM, but that might not be the case in some older
-            or quirky browsers like IE, so you might want to add it to the DOM
-            just in case, and visually hide it. And do not forget do remove it
-            once you do not need it anymore.
-          */
-
             input.onchange = function () {
                 var file = this.files[0];
 
                 var reader = new FileReader();
+                reader.readAsDataURL(file);
                 reader.onload = function () {
-                    /*
-                Note: Now we need to register the blob in TinyMCEs image blob
-                registry. In the next release this part hopefully won't be
-                necessary, as we are looking to handle it internally.
-              */
                     var id = 'blobid' + new Date().getTime();
                     var blobCache = tinymce.activeEditor.editorUpload.blobCache;
                     var base64 = reader.result.split(',')[1];
                     var blobInfo = blobCache.create(id, file, base64);
                     blobCache.add(blobInfo);
-
-                    /* call the callback and populate the Title field with the file name */
-                    cb(blobInfo.blobUri(), { title: file.name });
+                    // Instead of setting the blob URI directly, set the absolute URL
+                    cb("{{ asset('storage') }}/" + file.name, { title: file.name });
+                    // cb(blobInfo.blobUri(), { title: file.name });
+                    // This will immediately display the uploaded image in the editor
+                    var img = new Image();
+                    img.src = reader.result;
+                    tinymce.activeEditor.insertContent(img.outerHTML);
                 };
-                reader.readAsDataURL(file);
             };
-
             input.click();
         },
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-   
     });
     $('.toggle_description_fields').hide();
     $('form#update_task_description').show();
@@ -681,7 +713,7 @@ function initialize_dropzone() {
     });
 }
 
-//project task comment form submit
+//project task comment form submit and change for comment count reload automatically
 $(document).on('submit', 'form#add_comment_form', function (e) {
     e.preventDefault();
     var url = $('form#add_comment_form').attr('action');
@@ -702,16 +734,16 @@ $(document).on('submit', 'form#add_comment_form', function (e) {
                 $('form#add_comment_form')[0].reset();
                 $('.direct-chat-messages').prepend(result.comment_html);
                 toastr.success(result.msg);
+                initializeTaskKanbanBoard();
                 if (typeof project_task_datatable !== 'undefined') {
                     project_task_datatable.ajax.reload();
                 }
                 if (typeof archive_datatable !== 'undefined') {
                     archive_datatable.ajax.reload();
                 }
-                if (typeof my_task_datatable != 'undefined') {
+                if (typeof project_task_datatable !== 'undefined') {
                     my_task_datatable.ajax.reload();
                 }
-                initializeTaskKanbanBoard();
             } else {
                 toastr.error(result.msg);
             }
@@ -814,12 +846,6 @@ $(document).on(
             if (typeof project_task_datatable !== 'undefined') {
                 project_task_datatable.ajax.reload();
             }
-            if (typeof archive_datatable !== 'undefined') {
-                archive_datatable.ajax.reload();
-            }
-            if (typeof my_task_datatable != 'undefined') {
-                my_task_datatable.ajax.reload();
-            }
         }
     }
 );
@@ -872,6 +898,7 @@ function initializeMyTaskDataTable() {
             aaSorting: [[7, 'asc']],
             columns: [
                 { data: 'action', name: 'action' },
+                { data: 'created_at', name: 'created_at' },
                 { data: 'project' },
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
@@ -880,10 +907,19 @@ function initializeMyTaskDataTable() {
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
+                { data: 'updated_at', name: 'updated_at' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function(data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (typeof my_task_datatable != 'undefined' && task_view == 'list_view') {
@@ -1089,14 +1125,16 @@ $(document).on('click', '.view_a_project_invoice', function () {
 $(document).on('change', '.task_view', function () {
     if ($(this).val() == 'kanban' && $('.custom-kanban-board').hasClass('hide')) {
         $('.table-responsive, .status_filter').addClass('hide');
-        $('.custom-kanban-board').removeClass('hide');
+        $('.archive-table').addClass('hide');
+        $('.custom-kanban-board, #taskFilter').removeClass('hide');
         initializeTaskKanbanBoard();
     } else if ($(this).val() == 'list_view') {
-        $('.custom-kanban-board, .archive-table').addClass('hide');
-        $('.table-responsive, .status_filter').removeClass('hide');
+        $('.custom-kanban-board').addClass('hide');
+        $('.archive-table').addClass('hide');
+        $('.table-responsive, .status_filter, #taskFilter').removeClass('hide');
         initializeProjectTaskDatatable();
     } else if ($(this).val() == 'archive') {
-        $('.custom-kanban-board, .table-responsive').addClass('hide');
+        $('.custom-kanban-board, .table-responsive, #taskFilter').addClass('hide');
         $('.archive-table').removeClass('hide');
         initializeArchiveDatatable();
     }
@@ -1147,7 +1185,6 @@ function updateProjectTaskStatusForKanban(data, el) {
     });
 }
 
-
 function initializeProjectTaskDatatable() {
     var task_view = $("[name='task_view']:checked").val();
     if (typeof project_task_datatable == 'undefined' && task_view == 'list_view') {
@@ -1175,6 +1212,7 @@ function initializeProjectTaskDatatable() {
             aaSorting: [[6, 'asc']],
             columns: [
                 { data: 'action', name: 'action' },
+                { data: 'created_at', name: 'created_at' },
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
@@ -1182,11 +1220,19 @@ function initializeProjectTaskDatatable() {
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
                 { data: 'updated_at', name: 'updated_at' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function(data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (task_view == 'list_view') {
@@ -1195,7 +1241,6 @@ function initializeProjectTaskDatatable() {
         initializeTaskKanbanBoard();
     }
 }
-
 function initializeArchiveDatatable() {
     var task_view = $("[name='task_view']:checked").val();
     if (typeof archive_datatable == 'undefined' && task_view == 'archive') {
@@ -1223,6 +1268,7 @@ function initializeArchiveDatatable() {
             aaSorting: [[6, 'asc']],
             columns: [
                 { data: 'action', name: 'action' },
+                { data: 'created_at', name: 'created_at' },
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
@@ -1230,19 +1276,25 @@ function initializeArchiveDatatable() {
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
                 { data: 'updated_at', name: 'updated_at' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function(data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (task_view == 'archive') {
         archive_datatable.ajax.reload();
     }
 }
-
-
 function initializeTimeLogDatatable() {
     if (typeof time_logs_data_table == 'undefined') {
         time_logs_data_table = $('#time_logs_table').DataTable({
@@ -1664,7 +1716,7 @@ $(document).on('click', '.delete-task-comment', function (e) {
                     if (result.success) {
                         toastr.success(result.msg);
                         element.closest('.direct-chat-msg').remove();
-
+                        initializeTaskKanbanBoard();
                         if (typeof project_task_datatable !== 'undefined') {
                             project_task_datatable.ajax.reload();
                         }
@@ -1674,7 +1726,6 @@ $(document).on('click', '.delete-task-comment', function (e) {
                         if (typeof my_task_datatable != 'undefined') {
                             my_task_datatable.ajax.reload();
                         }
-                        initializeTaskKanbanBoard();
                     } else {
                         toastr.error(result.msg);
                     }
@@ -1704,4 +1755,135 @@ $(document).on('click', '.add_time_log', function () {
             $('form#time_log_form').validate();
         },
     });
+});
+// settings blank field handaling
+$(document).on('submit', '#settings_form', function (event) {
+    event.preventDefault();
+    var ladda = Ladda.create(document.querySelector('#settings_form button'));
+    ladda.start();
+    var error = false;
+
+    // Check if any status is checked and its input field is empty
+    if ($('#not_started_id').is(':checked') && $('#not_started').val() == '') {
+        $('#not_started').css('border-color', 'red');
+        error = true;
+    } else {
+        $('#not_started').css('border-color', 'gray');
+    }
+
+    if ($('#in_progress_id').is(':checked') && $('#in_progress').val() == '') {
+        $('#in_progress').css('border-color', 'red');
+        error = true;
+    } else {
+        $('#in_progress').css('border-color', 'gray');
+    }
+
+    if ($('#on_hold_id').is(':checked') && $('#on_hold').val() == '') {
+        $('#on_hold').css('border-color', 'red');
+        error = true;
+    } else {
+        $('#on_hold').css('border-color', 'gray');
+    }
+
+    if ($('#cancelled_id').is(':checked') && $('#cancelled').val() == '') {
+        $('#cancelled').css('border-color', 'red');
+        error = true;
+    } else {
+        $('#cancelled').css('border-color', 'gray');
+    }
+
+    if ($('#completed_id').is(':checked') && $('#completed').val() == '') {
+        $('#completed').css('border-color', 'red');
+        error = true;
+    } else {
+        $('#completed').css('border-color', 'gray');
+    }
+
+    // If no errors, submit the form
+    if (!error) {
+        $('#settings_form')[0].submit();
+    } else {
+        ladda.stop();
+    }
+});
+$(document).ready(function() {
+
+    $('#project_model, #time_log_model, .project_task_model, .view_project_task_model, .payment_modal, .edit_payment_modal').on('click', function(e) {
+        // Check if the clicked element is outside the modal
+        if (!$(e.target).closest('.modal-dialog').length) {
+          // Show the animation alert message
+          $('#alertMessage').fadeIn().delay(2000).fadeOut();
+        }
+    });
+    
+
+
+    // Prevent form submission when the plus icon button is clicked
+    $('#entries').on('click', '.add-entry', function(e) {
+        e.preventDefault();
+        addEntry();
+    });
+
+
+    // Add new entry function
+    function addEntry() {
+        var newEntry = `<div class="entry">
+        <div class="row">
+            <div class="col-md-4">
+                <input class="form-control" type="text" name="level_name[]" placeholder="Level Name">
+            </div>
+            <div class="col-md-2">
+                <input class="form-control" type="color" name="color[]" value="#000000">
+            </div>
+            <div class="col-md-2">
+                <input class="form-control" type="color" name="bg[]" value="#FFFFFF">
+            </div>
+            <div class="col-md-2">
+                <button class="remove-entry form-control">-</button>
+            </div>
+        </div>
+    </div>`;
+        $('#entries').append(newEntry);
+    }
+
+    // Remove entry
+    $('#entries').on('click', '.remove-entry', function() {
+        $(this).closest('.entry').remove();
+    });
+
+    // Get values as array
+    function getEntriesArray() {
+        var entriesArray = [];
+        $('#entries .entry').each(function() {
+            var levelName = $(this).find('input[name="level_name[]"]').val();
+            var color = $(this).find('input[name="color[]"]').val();
+            var bg = $(this).find('input[name="bg[]"]').val();
+            entriesArray.push({ levelName: levelName, color: color, bg: bg });
+        });
+        return entriesArray;
+    }
+
+    // Example usage: print array to console
+    $('#save-button').on('click', function() {
+        var entriesArray = getEntriesArray();
+        console.log(entriesArray);
+    });
+
+    // Handle form submission when the update button is clicked
+    $('#update-button').on('click', function() {
+        // Submit the form
+        $('#settings_form').submit();
+    });
+});
+// Subject limit set
+$(document).on('keyup', 'input[name="subject"]', function() {
+    var maxLength = 180; // Maximum length allowed
+    var length = $(this).val().length; // Current length of the input value
+
+    // Show or hide the message based on the input length
+    if (length > maxLength) {
+        $('#subject-limit-message').show();
+    } else {
+        $('#subject-limit-message').hide();
+    }
 });

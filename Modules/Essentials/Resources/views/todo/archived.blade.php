@@ -5,73 +5,20 @@
 @section('content')
     @include('essentials::layouts.nav_essentials')
     <section class="content">
-        @component('components.filters', ['title' => __('report.filters'), 'class' => 'box-solid'])
-            @can('essentials.assign_todos')
-                <div class="col-md-3">
-                    <div class="form-group">
-                        {!! Form::label('user_id_filter', __('essentials::lang.assigned_to') . ':') !!}
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                <i class="fa fa-user"></i>
-                            </span>
-                            {!! Form::select('user_id_filter', $users, null, [
-                                'class' => 'form-control select2',
-                                'placeholder' => __('messages.all'),
-                            ]) !!}
-                        </div>
-                    </div>
-                </div>
-            @endcan
-            <div class="col-md-3">
-                <div class="form-group">
-                    {!! Form::label('priority_filter', __('essentials::lang.priority') . ':') !!}
-                    {!! Form::select('priority_filter', $priorities, null, [
-                        'class' => 'form-control select2',
-                        'placeholder' => __('messages.all'),
-                    ]) !!}
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    {!! Form::label('status_filter', __('sale.status') . ':') !!}
-                    {!! Form::select('status_filter', $task_statuses, null, [
-                        'class' => 'form-control select2',
-                        'placeholder' => __('messages.all'),
-                    ]) !!}
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    {!! Form::label('date_range_filter', __('report.date_range') . ':') !!}
-                    {!! Form::text('date_range_filter', null, [
-                        'placeholder' => __('lang_v1.select_a_date_range'),
-                        'class' => 'form-control',
-                        'readonly',
-                    ]) !!}
-                </div>
-            </div>
-        @endcomponent
+      
         @component('components.widget', [
-            'title' => __('essentials::lang.todo_list'),
-            'icon' => '<i class="ion ion-clipboard"></i>',
+            'title' => ' Archived Tasks ',
+            'icon' => '<i class="fas fa-file-archive"></i> &nbsp; ',
             'class' => 'box-solid',
         ])
             @slot('tool')
-                @can('essentials.add_todos')
-                    <div class="box-tools">
-                        <button class="btn btn-block btn-primary btn-modal"
-                            data-href="{{ action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'create']) }}"
-                            data-container="#task_modal">
-                            <i class="fa fa-plus"></i> @lang('messages.add')</a>
-                        </button>
-                    </div>
-                @endcan
+               
             @endslot
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="task_table">
                     <thead>
                         <tr>
-                            <th>@lang('lang_v1.added_on')</th>
+                            <th>@lang('messages.updated_at')</th>
                             <th> @lang('essentials::lang.task_id')</th>
                             <th class="col-md-2"> @lang('essentials::lang.task')</th>
                             <th> @lang('sale.status')</th>
@@ -89,7 +36,6 @@
     </section>
     @include('essentials::todo.update_task_status_modal')
 @endsection
-
 @section('javascript')
     <script type="text/javascript">
         $(document).ready(function() {
@@ -124,9 +70,10 @@
                 aaSorting: [
                     [0, 'desc']
                 ],
-                columns: [{
-                        data: 'created_at',
-                        name: 'created_at'
+                columns: [
+                    {
+                        data: 'updated_at',
+                        name: 'updated_at'
                     },
                     {
                         data: 'task_id',

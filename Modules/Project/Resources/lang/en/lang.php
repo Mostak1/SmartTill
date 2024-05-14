@@ -2,6 +2,7 @@
 
 return [
     'archive' => 'Archive',
+    'level' => 'Level',
     'project' => 'Project',
     'projects' => 'Projects',
     'all_projects' => 'All Projects',
@@ -94,6 +95,7 @@ return [
     'assigned_to' => 'Assigned To',
     'assigned_by' => 'Assigned By',
     'change_status' => 'Change Status',
+    'change_project' => 'Change Project',
     'add_comment' => ' Add Comment',
     'activity' => 'Activity',
     'invoices' => 'Invoices',

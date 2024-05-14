@@ -120,7 +120,7 @@ LANG = {
     'this_card_has_a_description' : 'This card has a description',
     'this_card_has_comments' : 'This card has comments',
     'this_card_has_media'   : 'this card has media',
-    'archive' : 'Archive',
+    'archive':'Archive',
     'more' : ' more',
     'lead' : 'Lead',
     'project' : 'Project',

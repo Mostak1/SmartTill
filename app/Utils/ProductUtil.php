@@ -1941,6 +1941,7 @@ class ProductUtil extends Util
 
         $output = [
             'variation' => $product_name,
+            'product_id' => 'p.id',
             'unit' => $purchase_details->unit,
             'second_unit' => $purchase_details->second_unit,
             'total_purchase' => $purchase_details->total_purchase,

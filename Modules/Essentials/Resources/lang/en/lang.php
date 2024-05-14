@@ -1,13 +1,13 @@
 <?php
 
 return [
+    'archive' => 'Archive',
+    'restore' => 'Restore',
     'essentials' => 'Essentials',
     'document' => 'Document',
     'description' => 'Description',
     'submit' => 'Submit',
     'delete' => 'Delete',
-    'archive' => 'Archive',
-    'restore' => 'Restore',
     'download' => 'Download',
     'name' => 'Name',
     'created_at' => 'Created Date',

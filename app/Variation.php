@@ -24,7 +24,19 @@ class Variation extends Model
     protected $casts = [
         'combo_variations' => 'array',
     ];
+    protected static function boot()
+    {
+        parent::boot();
 
+        static::saving(function ($variation) {
+            // Check if category id is 47 and then multiply 'dpp_inc_tax' and 'sell_price_inc_tax' by 120
+            if ($variation->product->category_id == 47) {
+                $variation->dpp_inc_tax *= 100;
+                $variation->sell_price_inc_tax *= 100;
+                $variation->default_sell_price *= 100;
+            }
+        });
+    }
     public function product_variation()
     {
         return $this->belongsTo(\App\ProductVariation::class);

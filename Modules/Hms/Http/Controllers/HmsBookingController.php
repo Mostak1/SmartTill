@@ -283,7 +283,7 @@ class HmsBookingController extends Controller
 
             $prefix = json_decode($busines->hms_settings)->prefix ?? null;
 
-            $ref_no = null;
+            // $ref_no = null;
 
             $ref_count = $this->commonUtil->setAndGetReferenceCount("hms_booking", $business_id);
             //Generate reference number

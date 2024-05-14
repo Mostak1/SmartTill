@@ -94,7 +94,6 @@ $(document).ready(function() {
             },
         ],
     });
-
     $(document).on('click', 'button.edit_brand_button', function() {
         $('div.brands_modal').load($(this).data('href'), function() {
             $(this).modal('show');

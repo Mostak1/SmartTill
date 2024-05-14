@@ -98,7 +98,7 @@
                             </label>
                             <div class="dropzone" id="fileupload"></div>
                         </div>
-                        <input type="hidden" id="comment_media" name="file_name[]">
+                        <input type="hidden" id="comment_media" name="file_name[]" >
                     </div>
                 </div>
                 <button type="button" class="btn btn-info btn-sm upload_doc">

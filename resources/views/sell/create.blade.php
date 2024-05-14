@@ -298,7 +298,6 @@
 		        			$label_3 .= '*';
 		        		}
 		        	@endphp
-
 		        	<div class="col-md-4">
 				        <div class="form-group">
 				            {!! Form::label('custom_field_3', $label_3 ) !!}

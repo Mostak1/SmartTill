@@ -128,7 +128,7 @@
                         @else
                             '' @endif"
                             id="project_task">
-                            <div class="row">
+                            <div class="row " id="taskFilter">
                                 <div class="col-md-3">
                                     <div class="form-group">
                                         {!! Form::label('assigned_to_filter', __('project::lang.assigned_to') . ':') !!}
@@ -227,10 +227,15 @@
             </div>
         </div>
         <div class="modal fade project_task_model" tabindex="-1" role="dialog" data-backdrop="static"></div>
-        <div class="modal fade" tabindex="-1" role="dialog" id="time_log_model"></div>
+        <div class="modal fade" tabindex="-1" role="dialog" id="time_log_model" data-backdrop="static"></div>
         <div class="modal fade view_project_task_model" tabindex="-1" role="dialog" data-backdrop="static"></div>
-        <div class="modal fade payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
-        <div class="modal fade edit_payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel">
+        <div class="modal fade payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel" data-backdrop="static"></div>
+        <div class="modal fade edit_payment_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel" data-backdrop="static"
+        >
+        </div>
+        <!-- Animation alert message -->
+        <div class="alert-message" id="alertMessage" style="display: none;">
+            Clicked outside the modal!
         </div>
     </section>
     <link rel="stylesheet" href="{{ asset('modules/project/sass/project.css?v=' . $asset_v) }}">

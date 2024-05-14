@@ -9,7 +9,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Passport\HasApiTokens;
-use Modules\Essentials\Entities\ToDo;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -48,6 +47,10 @@ class User extends Authenticatable
     /**
      * Get the business that owns the user.
      */
+    public function todos()
+    {
+        return $this->belongsToMany(\Modules\Essentials\Entities\ToDo::class, 'essentials_todos_users', 'user_id', 'todo_id');
+    }
     public function business()
     {
         return $this->belongsTo(\App\Business::class);
@@ -74,11 +77,6 @@ class User extends Authenticatable
     public function documentsAndnote()
     {
         return $this->morphMany(\App\DocumentAndNote::class, 'notable');
-    }
-
-    public function todos()
-    {
-        return $this->belongsToMany(\Modules\Essentials\Entities\ToDo::class, 'essentials_todos_users', 'user_id', 'todo_id');
     }
 
     /**

@@ -17,9 +17,12 @@ npm-debug.log
 /public/uploads/invoice_logos
 /public/uploads/UltimatePOS
 /public/uploads/temp
+/public/css/
 /public/fonts/
 /public/images/
 /public/mix-manifest.json
 .scribe
 /public/docs
 /public/js/skins/
+!/public/js/vendor.js
+!/public/modules/project/js/project.js

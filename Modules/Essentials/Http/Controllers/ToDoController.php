@@ -9,6 +9,7 @@ use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Modules\Essentials\Entities\EssentialsTodoComment;
 use Modules\Essentials\Entities\ToDo;
@@ -82,7 +83,6 @@ class ToDoController extends Controller
             if (!empty($request->status)) {
                 $todos->where('status', $request->status);
             }
-
             //If not admin show only assigned task
             if (!$is_admin) {
                 $todos->where(function ($query) use ($auth_id) {
@@ -92,8 +92,11 @@ class ToDoController extends Controller
                         });
                 });
             }
-
-            //Filter by user id.
+            //Filter by Assigned By
+            if (!empty($request->assigned)) {
+                $user_id = Auth::user()->id;
+                $todos->where('created_by', $user_id);
+            }
             if (!empty($request->user_id)) {
                 $user_id = $request->user_id;
                 $todos->whereHas('users', function ($q) use ($user_id) {
@@ -126,25 +129,39 @@ class ToDoController extends Controller
                             $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'destroy'], [$row->id]) . '" class="delete_task" ><i class="fas fa-file-archive"></i> ' . __('essentials::lang.archive') . '</a></li>';
                         }
 
-                        $html .= '<li><a href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" ><i class="fa fa-eye"></i> ' . __('messages.view') . '</a></li>';
+                        $html .= '<li><a href="#" class="btn-modal" data-container="#task_modal" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" ><i class="fa fa-eye"></i> ' . __('messages.view') . '</a></li>';
 
                         $html .= '<li><a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><i class="fas fa-check-circle"></i> ' . __('essentials::lang.change_status') . '</a></li>';
-
                         $html .= '</ul></div>';
-
                         return $html;
                     }
                 )
                 ->editColumn('task', function ($row) use ($priorities) {
-                    $html = '<a href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" >' . $row->task . '</a> <br>
-                        <a data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'viewSharedDocs'], [$row->id]) . '" class="btn btn-primary btn-xs view-shared-docs">' . __('essentials::lang.docs') . '</a>';
 
+                    $comment_count = EssentialsTodoComment::where('task_id', $row->id)->count();
+                    $media_count = Media::where('model_id', $row->id)->count();
+
+                    $html = '<a href="#" class="btn-modal" data-container="#task_modal" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" >' . $row->task . ' <br>
+                        ';
+
+                    // Check if comment count is greater than 0
+                    if ($comment_count > 0) {
+                        $html .= '<span class="label-default label-default-bt" title="This card has comment"><i class="fas fa-comment ctn"><sup>' . $comment_count . '</sup></i></span>';
+
+                    }
+
+                    // Check if media count is greater than 0
+                    if ($media_count > 0) {
+                        $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
+
+                    }
                     if (!empty($row->priority)) {
                         $bg_color = !empty($this->priority_colors[$row->priority]) ? $this->priority_colors[$row->priority] : 'bg-gray';
 
                         $html .= ' &nbsp; <span class="label ' . $bg_color . '"> ' . $priorities[$row->priority] . '</span>';
                     }
 
+                    $html .= '</a>';
                     return $html;
                 })
                 ->addColumn('assigned_by', function ($row) {
@@ -159,6 +176,7 @@ class ToDoController extends Controller
                     return implode(', ', $users);
                 })
                 ->editColumn('created_at', '{{@format_datetime($created_at)}}')
+                ->editColumn('updated_at', '{{@format_datetime($updated_at)}}')
                 ->editColumn('date', '{{@format_datetime($date)}}')
                 ->editColumn('end_date', '@if(!empty($end_date)) {{@format_datetime($end_date)}} @endif')
                 ->editColumn('status', function ($row) use ($task_statuses) {
@@ -168,151 +186,19 @@ class ToDoController extends Controller
 
                         $html = '<a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><span class="label ' . $bg_color . '"> ' . $task_statuses[$row->status] . '</span></a>';
                     }
-
                     return $html;
                 })
                 ->removeColumn('id')
                 ->rawColumns(['task', 'action', 'status'])
                 ->make(true);
         }
-
         $users = [];
+        $usersBy = [];
         if (auth()->user()->can('essentials.assign_todos')) {
             $users = ToDo::userTodoDropdown($business_id, false);
+            $usersBy = ToDo::userTodoDropdownAssignedBy($business_id, false);
         }
-
-        return view('essentials::todo.index')->with(compact('users', 'task_statuses', 'priorities'));
-    }
-
-    public function archived(Request $request)
-    {
-        $business_id = request()->session()->get('user.business_id');
-        if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'essentials_module'))) {
-            abort(403, 'Unauthorized action.');
-        }
-        $is_admin = $this->moduleUtil->is_admin(auth()->user(), $business_id);
-        $auth_id = auth()->user()->id;
-
-        $task_statuses = ToDo::getTaskStatus();
-        $priorities = ToDo::getTaskPriorities();
-
-        if (request()->ajax()) {
-
-            $todos = ToDo::onlyTrashed()->where('business_id', $business_id)
-                ->with(['users', 'assigned_by'])
-                ->select('*');
-
-            if (!empty($request->priority)) {
-                $todos->where('priority', $request->priority);
-            }
-
-            if (!empty($request->status)) {
-                $todos->where('status', $request->status);
-            }
-
-            //If not admin show only assigned task
-            if (!$is_admin) {
-                $todos->where(function ($query) use ($auth_id) {
-                    $query->where('created_by', $auth_id)
-                        ->orWhereHas('users', function ($q) use ($auth_id) {
-                            $q->where('user_id', $auth_id);
-                        });
-                });
-            }
-
-            //Filter by user id.
-            if (!empty($request->user_id)) {
-                $user_id = $request->user_id;
-                $todos->whereHas('users', function ($q) use ($user_id) {
-                    $q->where('user_id', $user_id);
-                });
-            }
-
-            //Filter by date.
-            if (!empty($request->start_date) && !empty($request->end_date)) {
-                $start = $request->start_date;
-                $end = $request->end_date;
-                $todos->whereDate('date', '>=', $start)
-                    ->whereDate('date', '<=', $end);
-            }
-
-            return Datatables::of($todos)
-                ->addColumn(
-                    'action',
-                    function ($row) {
-                        $html = '<div class="btn-group">
-                            <button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-expanded="false">' . __('messages.actions') . '<span class="caret"></span><span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-right" role="menu">';
-
-                        if (auth()->user()->can('essentials.edit_todos')) {
-                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'edit'], [$row->id]) . '" class="btn-modal" data-container="#task_modal"><i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '</a></li>';
-                        }
-
-                        if (auth()->user()->can('essentials.restore')) {
-                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'restore'], [$row->id]) . '" class="restore_task"><i class="fas fa-trash-restore"></i> ' . __('essentials::lang.restore') . '</a></li>';
-                        }
-
-                        if (auth()->user()->can('superadmin')) {
-                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'permanentDelete'], [$row->id]) . '" class="permanent_delete_task"><i class="fas fa-trash"></i> ' . __('essentials::lang.delete') . '</a></li>';
-                        }
-
-                        $html .= '<li><a href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" ><i class="fa fa-eye"></i> ' . __('messages.view') . '</a></li>';
-
-                        $html .= '<li><a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><i class="fas fa-check-circle"></i> ' . __('essentials::lang.change_status') . '</a></li>';
-
-                        $html .= '</ul></div>';
-
-                        return $html;
-                    }
-                )
-                ->editColumn('task', function ($row) use ($priorities) {
-                    $html = '<a href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" >' . $row->task . '</a> <br>
-                        <a data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'viewSharedDocs'], [$row->id]) . '" class="btn btn-primary btn-xs view-shared-docs">' . __('essentials::lang.docs') . '</a>';
-
-                    if (!empty($row->priority)) {
-                        $bg_color = !empty($this->priority_colors[$row->priority]) ? $this->priority_colors[$row->priority] : 'bg-gray';
-
-                        $html .= ' &nbsp; <span class="label ' . $bg_color . '"> ' . $priorities[$row->priority] . '</span>';
-                    }
-
-                    return $html;
-                })
-                ->addColumn('assigned_by', function ($row) {
-                    return $row->assigned_by?->user_full_name;
-                })
-                ->editColumn('users', function ($row) {
-                    $users = [];
-                    foreach ($row->users as $user) {
-                        $users[] = $user->user_full_name;
-                    }
-
-                    return implode(', ', $users);
-                })
-                ->editColumn('created_at', '{{@format_datetime($created_at)}}')
-                ->editColumn('date', '{{@format_datetime($date)}}')
-                ->editColumn('end_date', '@if(!empty($end_date)) {{@format_datetime($end_date)}} @endif')
-                ->editColumn('status', function ($row) use ($task_statuses) {
-                    $html = '';
-                    if (!empty($task_statuses[$row->status])) {
-                        $bg_color = !empty($this->status_colors[$row->status]) ? $this->status_colors[$row->status] : 'bg-gray';
-
-                        $html = '<a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><span class="label ' . $bg_color . '"> ' . $task_statuses[$row->status] . '</span></a>';
-                    }
-
-                    return $html;
-                })
-                ->removeColumn('id')
-                ->rawColumns(['task', 'action', 'status'])
-                ->make(true);
-        }
-
-        $users = [];
-        if (auth()->user()->can('essentials.assign_todos')) {
-            $users = ToDo::userTodoDropdown($business_id, false);
-        }
-
-        return view('essentials::todo.archived')->with(compact('users', 'task_statuses', 'priorities'));
+        return view('essentials::todo.index')->with(compact('usersBy','users', 'task_statuses', 'priorities'));
     }
 
     /**
@@ -327,7 +213,6 @@ class ToDoController extends Controller
         if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'essentials_module')) && !auth()->user()->can('essentials.add_todos')) {
             abort(403, 'Unauthorized action.');
         }
-
         $users = [];
         if (auth()->user()->can('essentials.assign_todos')) {
             $users = User::forDropdown($business_id, false);
@@ -335,10 +220,8 @@ class ToDoController extends Controller
         if (!empty(request()->input('from_calendar'))) {
             $users = [];
         }
-
         $task_statuses = ToDo::getTaskStatus();
         $priorities = ToDo::getTaskPriorities();
-
         return view('essentials::todo.create')->with(compact('users', 'task_statuses', 'priorities'));
     }
 
@@ -435,6 +318,155 @@ class ToDoController extends Controller
         $priorities = ToDo::getTaskPriorities();
 
         return view('essentials::todo.edit')->with(compact('users', 'todo', 'task_statuses', 'priorities'));
+    }
+    public function archived(Request $request)
+    {
+        $business_id = request()->session()->get('user.business_id');
+        if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'essentials_module'))) {
+            abort(403, 'Unauthorized action.');
+        }
+        $is_admin = $this->moduleUtil->is_admin(auth()->user(), $business_id);
+        $auth_id = auth()->user()->id;
+
+        $task_statuses = ToDo::getTaskStatus();
+        $priorities = ToDo::getTaskPriorities();
+
+        if (request()->ajax()) {
+
+            $todos = ToDo::onlyTrashed()->where('business_id', $business_id)
+                ->with(['users', 'assigned_by'])
+                ->select('*');
+
+            if (!empty($request->priority)) {
+                $todos->where('priority', $request->priority);
+            }
+
+            if (!empty($request->status)) {
+                $todos->where('status', $request->status);
+            }
+
+            //If not admin show only assigned task
+            if (!$is_admin) {
+                $todos->where(function ($query) use ($auth_id) {
+                    $query->where('created_by', $auth_id)
+                        ->orWhereHas('users', function ($q) use ($auth_id) {
+                            $q->where('user_id', $auth_id);
+                        });
+                });
+            }
+
+            //Filter by user id.
+            if (!empty($request->user_id)) {
+                $user_id = $request->user_id;
+                $todos->whereHas('users', function ($q) use ($user_id) {
+                    $q->where('user_id', $user_id);
+                });
+            }
+
+            //Filter by date.
+            if (!empty($request->start_date) && !empty($request->end_date)) {
+                $start = $request->start_date;
+                $end = $request->end_date;
+                $todos->whereDate('date', '>=', $start)
+                    ->whereDate('date', '<=', $end);
+            }
+
+            return Datatables::of($todos)
+                ->addColumn(
+                    'action',
+                    function ($row) {
+                        $html = '<div class="btn-group">
+                            <button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-expanded="false">' . __('messages.actions') . '<span class="caret"></span><span class="sr-only">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu">';
+
+                        if (auth()->user()->can('essentials.edit_todos')) {
+                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'edit'], [$row->id]) . '" class="btn-modal" data-container="#task_modal"><i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('essentials.restore')) {
+                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'restore'], [$row->id]) . '" class="restore_task"><i class="fas fa-trash-restore"></i> ' . __('essentials::lang.restore') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('superadmin')) {
+                            $html .= '<li><a href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'permanentDelete'], [$row->id]) . '" class="permanent_delete_task"><i class="fas fa-trash"></i> ' . __('essentials::lang.delete') . '</a></li>';
+                        }
+
+                        $html .= '<li><a class="btn-modal" data-container="#task_modal" href="#" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" ><i class="fa fa-eye"></i> ' . __('messages.view') . '</a></li>';
+
+                        $html .= '<li><a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><i class="fas fa-check-circle"></i> ' . __('essentials::lang.change_status') . '</a></li>';
+
+                        $html .= '</ul></div>';
+
+                        return $html;
+                    }
+                )
+                ->editColumn('task', function ($row) use ($priorities) {
+
+                    $comment_count = EssentialsTodoComment::where('task_id', $row->id)->count();
+                    $media_count = Media::where('model_id', $row->id)->count();
+
+                    $html = '<a href="#" class="btn-modal" data-container="#task_modal" data-href="' . action([\Modules\Essentials\Http\Controllers\ToDoController::class, 'show'], [$row->id]) . '" >' . $row->task . ' <br>
+                        ';
+
+                    // Check if comment count is greater than 0
+                    if ($comment_count > 0) {
+                        $html .= '<span class="label-default label-default-bt" title="This card has comment"><i class="fas fa-comment ctn"><sup>' . $comment_count . '</sup></i></span>';
+
+                    }
+
+                    // Check if media count is greater than 0
+                    if ($media_count > 0) {
+                        $html .= '<span class="label-default label-default-bt" title="This card has media"><i class="fas fa-paperclip ctn"><sup>' . $media_count . '</sup></i></span>';
+
+                    }
+
+
+                    if (!empty($row->priority)) {
+                        $bg_color = !empty($this->priority_colors[$row->priority]) ? $this->priority_colors[$row->priority] : 'bg-gray';
+
+                        $html .= ' &nbsp; <span class="label ' . $bg_color . '"> ' . $priorities[$row->priority] . '</span>';
+                    }
+
+                    $html .= '</a>';
+                    return $html;
+                })
+                ->addColumn('assigned_by', function ($row) {
+                    return $row->assigned_by?->user_full_name;
+                })
+                ->editColumn('users', function ($row) {
+                    $users = [];
+                    foreach ($row->users as $user) {
+                        $users[] = $user->user_full_name;
+                    }
+
+                    return implode(', ', $users);
+                })
+                ->editColumn('created_at', '{{@format_datetime($created_at)}}')
+                ->editColumn('updated_at', '{{@format_datetime($updated_at)}}')
+                ->editColumn('date', '{{@format_datetime($date)}}')
+                ->editColumn('end_date', '@if(!empty($end_date)) {{@format_datetime($end_date)}} @endif')
+                ->editColumn('status', function ($row) use ($task_statuses) {
+                    $html = '';
+                    if (!empty($task_statuses[$row->status])) {
+                        $bg_color = !empty($this->status_colors[$row->status]) ? $this->status_colors[$row->status] : 'bg-gray';
+
+                        $html = '<a href="#" class="change_status" data-status="' . $row->status . '" data-task_id="' . $row->id . '"><span class="label ' . $bg_color . '"> ' . $task_statuses[$row->status] . '</span></a>';
+                    }
+
+                    return $html;
+                })
+                ->removeColumn('id')
+                ->rawColumns(['task', 'action', 'status'])
+                ->make(true);
+        }
+
+        $users = [];
+        if (auth()->user()->can('essentials.assign_todos')) {
+            $users = ToDo::userTodoDropdown($business_id, false);
+        }
+
+        return view('essentials::todo.archived')->with(compact('users', 'task_statuses', 'priorities'));
     }
 
     /**
@@ -851,7 +883,6 @@ class ToDoController extends Controller
                 ->with(compact('sheets', 'todo'));
         }
     }
-
     public function restore($id)
     {
         $todo = ToDo::withTrashed()->findOrFail($id);
@@ -901,4 +932,5 @@ class ToDoController extends Controller
             return $output;
         }
     }
+
 }

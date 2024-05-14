@@ -2,6 +2,7 @@
 
 namespace Modules\Project\Http\Controllers;
 
+use App\Charts\CommonChart;
 use App\Contact;
 use App\User;
 use App\Utils\ModuleUtil;
@@ -63,7 +64,7 @@ class ProjectController extends Controller
             $project_view = request()->get('project_view');
         }
 
-        if (! (auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module'))) {
+        if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module'))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -72,25 +73,25 @@ class ProjectController extends Controller
                 $projects = Project::with('customer', 'members', 'lead', 'categories')->where('business_id', $business_id);
 
                 //if not admin get assigned project only
-                if (! $is_admin) {
+                if (!$is_admin) {
                     $projects->whereHas('members', function ($q) use ($user_id) {
                         $q->where('user_id', $user_id);
                     });
                 }
 
                 // filter by status
-                if (! empty(request()->get('status'))) {
+                if (!empty(request()->get('status'))) {
                     $projects->where('status', request()->get('status'));
                 }
 
                 // filter by end date
-                if (! empty(request()->get('end_date'))) {
+                if (!empty(request()->get('end_date'))) {
                     if (request()->get('end_date') == 'overdue') {
                         $projects->where('end_date', '<', Carbon::today())
-                                ->where('status', '!=', 'completed');
+                            ->where('status', '!=', 'completed');
                     } elseif (request()->get('end_date') == 'today') {
                         $projects->where('end_date', Carbon::today())
-                                ->where('status', '!=', 'completed');
+                            ->where('status', '!=', 'completed');
                     } elseif (request()->get('end_date') == 'less_than_one_week') {
                         $projects->whereBetween('end_date', [Carbon::today(), Carbon::today()->addWeek()])
                             ->where('status', '!=', 'completed');
@@ -98,7 +99,7 @@ class ProjectController extends Controller
                 }
 
                 // filter by category id
-                if (! empty(request()->get('category_id'))) {
+                if (!empty(request()->get('category_id'))) {
                     $category_id = request()->get('category_id');
                     $projects->whereHas('categories', function ($q) use ($category_id) {
                         $q->where('id', $category_id);
@@ -107,7 +108,7 @@ class ProjectController extends Controller
 
                 if ($project_view == 'list_view') {
                     $projects = $projects->latest()
-                                ->simplePaginate(10);
+                        ->simplePaginate(10);
 
                     //check if user is lead/admin for the project
                     foreach ($projects as $key => $project) {
@@ -121,14 +122,14 @@ class ProjectController extends Controller
 
                     //dynamically render projects
                     $projects_html = view('project::project.partials.index')
-                    ->with(compact('projects'))
-                    ->render();
+                        ->with(compact('projects'))
+                        ->render();
                 } elseif ($project_view == 'kanban') {
                     $projects = $projects->get()->groupBy('status');
                     //sort projects based on status
                     $sorted_projects = [];
                     foreach ($statuses as $key => $value) {
-                        if (! isset($projects[$key])) {
+                        if (!isset($projects[$key])) {
                             $sorted_projects[$key] = [];
                         } else {
                             $sorted_projects[$key] = $projects[$key];
@@ -152,20 +153,20 @@ class ProjectController extends Controller
 
                             $view = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]);
 
-                            $overviewTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=overview';
+                            $overviewTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=overview';
 
-                            $activitiesTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=activities';
+                            $activitiesTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=activities';
 
-                            $taskTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_task';
+                            $taskTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=project_task';
 
                             $timeLogTabUrl = '';
                             if (isset($project->settings['enable_timelog']) && $project->settings['enable_timelog']) {
-                                $timeLogTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=time_log';
+                                $timeLogTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=time_log';
                             }
 
                             $docNoteTabUrl = '';
                             if (isset($project->settings['enable_notes_documents']) && $project->settings['enable_notes_documents']) {
-                                $docNoteTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=documents_and_notes';
+                                $docNoteTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=documents_and_notes';
                             }
 
                             // check if user is lead
@@ -173,17 +174,15 @@ class ProjectController extends Controller
 
                             $invoiceTabUrl = '';
                             if ((isset($project->settings['enable_invoice']) && $project->settings['enable_invoice']) && ($is_lead || $is_admin)) {
-                                $invoiceTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_invoices';
+                                $invoiceTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=project_invoices';
                             }
-
                             $archiveUrl = '';
-                            if ((isset($project->settings['enable_archive']) && $project->settings['enable_archive']) && ($is_lead || $is_admin)) {
-                                $archiveUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_archives';
+                            if ((isset($project->settings['enable_archive'])) && ($project->settings['enable_archive']) && ($is_lead || $is_admin)) {
+                                $archiveUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=project_archives';
                             }
-
                             $settingsTabUrl = '';
                             if ($is_lead || $is_admin) {
-                                $settingsTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]).'?view=project_settings';
+                                $settingsTabUrl = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], [$project->id]) . '?view=project_settings';
                             }
 
                             //if member then get their avatar
@@ -193,7 +192,7 @@ class ProjectController extends Controller
                                     if (isset($member->media->display_url)) {
                                         $assigned_to[$member->user_full_name] = $member->media->display_url;
                                     } else {
-                                        $assigned_to[$member->user_full_name] = 'https://ui-avatars.com/api/?name='.$member->first_name;
+                                        $assigned_to[$member->user_full_name] = 'https://ui-avatars.com/api/?name=' . $member->first_name;
                                     }
                                 }
                             }
@@ -215,10 +214,10 @@ class ProjectController extends Controller
                                 'deleteUrl' => $delete,
                                 'deleteUrlClass' => 'delete_a_project',
                                 'assigned_to' => $assigned_to,
-                                'hasDescription' => ! empty($project->description) ?: false,
+                                'hasDescription' => !empty($project->description) ?: false,
                                 'endDate' => $project->end_date,
                                 'tags' => $tags,
-                                'customer' => ! empty($project->customer) ? $project->customer->name : '',
+                                'customer' => !empty($project->customer) ? $project->customer->name : '',
                                 'lead' => $project->lead->user_full_name,
                                 'overviewTabUrl' => $overviewTabUrl,
                                 'activitiesTabUrl' => $activitiesTabUrl,
@@ -233,7 +232,7 @@ class ProjectController extends Controller
                         //get all the card & board title for particular board(status)
                         $projects_html[] = [
                             'id' => $key,
-                            'title' => __('project::lang.'.$key),
+                            'title' => __('project::lang.' . $key),
                             'cards' => $cards,
                         ];
                     }
@@ -245,7 +244,7 @@ class ProjectController extends Controller
                     'msg' => __('lang_v1.success'),
                 ];
             } catch (Exception $e) {
-                \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+                \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
                 $output = [
                     'success' => false,
@@ -258,7 +257,7 @@ class ProjectController extends Controller
 
         //project statistics by status
         $project_stats = new Project;
-        if (! $is_admin) {
+        if (!$is_admin) {
             $project_stats = $project_stats->whereHas('members', function ($q) use ($user_id) {
                 $q->where('user_id', $user_id);
             });
@@ -284,7 +283,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.create_project')))) {
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.create_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -305,9 +304,10 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
+
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.create_project')))) {
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.create_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -315,15 +315,15 @@ class ProjectController extends Controller
             DB::beginTransaction();
 
             $input = $request->only('name', 'description', 'contact_id', 'status', 'lead_id');
-            $input['start_date'] = ! empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
-            $input['end_date'] = ! empty($request->input('end_date')) ? $this->commonUtil->uf_date($request->input('end_date')) : null;
+            $input['start_date'] = !empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
+            $input['end_date'] = !empty($request->input('end_date')) ? $this->commonUtil->uf_date($request->input('end_date')) : null;
             $input['business_id'] = $business_id;
             $input['created_by'] = $request->user()->id;
 
             // default settings for project
             $input['settings'] = [
                 'enable_timelog' => 1,
-                'enable_invoice' => 1,
+                'enable_invoice' => 0,
                 'enable_notes_documents' => 1,
                 'enable_archive' => 'archive',
                 'members_crud_task' => 0,
@@ -331,6 +331,26 @@ class ProjectController extends Controller
                 'members_crud_timelog' => 0,
                 'task_view' => 'list_view',
                 'task_id_prefix' => '#',
+                'not_started' => [
+                    'id' => 1,
+                    'name' => 'Not Started',
+                ],
+                'in_progress' => [
+                    'id' => 1,
+                    'name' => 'In Progress',
+                ],
+                'on_hold' => [
+                    'id' => 1,
+                    'name' => 'On Hold',
+                ],
+                'cancelled' => [
+                    'id' => 0,
+                    'name' => 'Cancelled',
+                ],
+                'completed' => [
+                    'id' => 1,
+                    'name' => 'Completed',
+                ],
             ];
 
             $members = $request->input('user_id');
@@ -344,7 +364,7 @@ class ProjectController extends Controller
             $project->categories()->sync($categories);
 
             // send notification to project members
-            if (! empty($project_members['attached'])) {
+            if (!empty($project_members['attached'])) {
                 //check if user is a creator then don't notify him
                 foreach ($project_members['attached'] as $key => $value) {
                     if ($value == $project->created_by) {
@@ -375,7 +395,7 @@ class ProjectController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
 
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             $output = [
                 'success' => false,
@@ -395,7 +415,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module'))) {
+        if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module'))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -403,21 +423,22 @@ class ProjectController extends Controller
 
         //Get time project details.
         $query = Project::with('customer', 'members', 'categories')
-                        ->withCount(['tasks as incomplete_task' => function ($query) {
-                            $query->where('status', '!=', 'completed');
-                        },
-                            'documentsAndnote as note_and_documents_count' => function ($query) use ($user_id) {
-                                $query->where('is_private', 0)
-                                ->orWhere(function ($query) use ($user_id) {
-                                    $query->where('is_private', 1)
-                                        ->where('created_by', $user_id);
-                                });
-                            },
-                        ])
-                        ->where('business_id', $business_id);
+            ->withCount([
+                'tasks as incomplete_task' => function ($query) {
+                    $query->where('status', '!=', 'completed');
+                },
+                'documentsAndnote as note_and_documents_count' => function ($query) use ($user_id) {
+                    $query->where('is_private', 0)
+                        ->orWhere(function ($query) use ($user_id) {
+                            $query->where('is_private', 1)
+                                ->where('created_by', $user_id);
+                        });
+                },
+            ])
+            ->where('business_id', $business_id);
 
         //if not admin, check if project is assigned to user or not
-        if (! $this->commonUtil->is_admin(auth()->user(), $business_id)) {
+        if (!$this->commonUtil->is_admin(auth()->user(), $business_id)) {
             $query->whereHas('members', function ($q) use ($user_id) {
                 $q->where('user_id', $user_id);
             });
@@ -428,7 +449,7 @@ class ProjectController extends Controller
         //Get time log details.
         $timelog = ProjectTimeLog::where('project_id', $id)
             ->select(DB::raw('SUM(TIMESTAMPDIFF(SECOND, start_datetime, end_datetime)) as total_seconds'))
-           ->first();
+            ->first();
 
         //Invoice paid.
         $invoice = ProjectTransaction::leftJoin('transaction_payments as TP', 'transactions.id', '=', 'TP.transaction_id')
@@ -461,8 +482,20 @@ class ProjectController extends Controller
 
         $due_dates = ProjectTask::dueDatesDropdown();
         $project_members = ProjectMember::projectMembersDropdown($id, $user_id);
-        $statuses = ProjectTask::taskStatuses();
+        $project_members_card = ProjectMember::projectMembersCard($id, $user_id);
+        $statuses = ProjectTask::taskStatuses($id);
         $priorities = ProjectTask::prioritiesDropdown();
+        $values = [];
+        $labels = [];
+
+        foreach ($project_members_card as $member) {
+            $values[] = $member['task_count'];
+            $labels[] = $member['name'];
+        }
+
+        $chart = new CommonChart;
+        $chart->labels($labels)
+            ->dataset('Task Count', 'column', $values);
 
         //if view is NULL, set default to overview
         if (is_null(request()->get('view'))) {
@@ -470,9 +503,8 @@ class ProjectController extends Controller
         } else {
             $tab_view = request()->get('view');
         }
-
         return view('project::project.show')
-            ->with(compact('project', 'project_members', 'statuses', 'due_dates', 'priorities', 'timelog', 'can_crud_task', 'can_crud_docus_note', 'can_crud_timelog', 'is_lead_or_admin', 'transaction', 'invoice', 'tab_view'));
+            ->with(compact('project', 'chart', 'project_members_card', 'project_members', 'statuses', 'due_dates', 'priorities', 'timelog', 'can_crud_task', 'can_crud_docus_note', 'can_crud_timelog', 'is_lead_or_admin', 'transaction', 'invoice', 'tab_view'));
     }
 
     /**
@@ -484,7 +516,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.edit_project')))) {
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.edit_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -493,8 +525,8 @@ class ProjectController extends Controller
         $statuses = Project::statusDropdown();
         $categories = ProjectCategory::forDropdown($business_id, 'project');
         $project = Project::with('members', 'categories')
-                        ->where('business_id', $business_id)
-                        ->findOrFail($id);
+            ->where('business_id', $business_id)
+            ->findOrFail($id);
 
         return view('project::project.edit')
             ->with(compact('users', 'customers', 'statuses', 'project', 'categories'));
@@ -510,7 +542,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.edit_project')))) {
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.edit_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -518,13 +550,13 @@ class ProjectController extends Controller
             DB::beginTransaction();
 
             $input = $request->only('name', 'description', 'contact_id', 'status', 'lead_id');
-            $input['start_date'] = ! empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
-            $input['end_date'] = ! empty($request->input('end_date')) ? $this->commonUtil->uf_date($request->input('end_date')) : null;
+            $input['start_date'] = !empty($request->input('start_date')) ? $this->commonUtil->uf_date($request->input('start_date')) : null;
+            $input['end_date'] = !empty($request->input('end_date')) ? $this->commonUtil->uf_date($request->input('end_date')) : null;
             $members = $request->input('user_id');
             array_push($members, $request->input('lead_id'));
 
             $project = Project::where('business_id', $business_id)
-                            ->findOrFail($id);
+                ->findOrFail($id);
 
             $project->update($input);
             $project_members = $project->members()->sync($members);
@@ -534,11 +566,11 @@ class ProjectController extends Controller
             $project->categories()->sync($categories);
 
             // send notification to project members
-            if (! empty($project_members['attached'])) {
+            if (!empty($project_members['updated'])) {
                 //check if user is a creator then don't notify him
-                foreach ($project_members['attached'] as $key => $value) {
+                foreach ($project_members['updated'] as $key => $value) {
                     if ($value == $project->created_by) {
-                        unset($project_members['attached'][$key]);
+                        unset($project_members['updated'][$key]);
                     }
                 }
 
@@ -553,7 +585,7 @@ class ProjectController extends Controller
                 );
                 $project['link'] = action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'], ['id' => $project->id]);
 
-                $this->projectUtil->notifyUsersAboutAssignedProject($project_members['attached'], $project);
+                $this->projectUtil->notifyUsersAboutAssignedProject($project_members['updated'], $project);
             }
 
             DB::commit();
@@ -565,7 +597,7 @@ class ProjectController extends Controller
         } catch (Exception $e) {
             DB::rollBack();
 
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             $output = [
                 'success' => false,
@@ -585,13 +617,13 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (! (auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
         try {
             $project = Project::where('business_id', $business_id)
-                            ->findOrFail($id);
+                ->findOrFail($id);
 
             $project->delete();
 
@@ -600,7 +632,7 @@ class ProjectController extends Controller
                 'msg' => __('lang_v1.success'),
             ];
         } catch (Exception $e) {
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             $output = [
                 'success' => false,
@@ -621,21 +653,72 @@ class ProjectController extends Controller
     {
         try {
             $input = $request->only('task_view');
-            $input['enable_timelog'] = ! empty($request->enable_timelog) ? 1 : 0;
-            $input['enable_notes_documents'] = ! empty($request->enable_notes_documents) ? 1 : 0;
-            $input['enable_invoice'] = ! empty($request->enable_invoice) ? 1 : 0;
-            $input['enable_archive'] = ! empty($request->enable_archive) ? 'archive' : 0;
-            $input['members_crud_task'] = ! empty($request->members_crud_task) ? 1 : 0;
-            $input['members_crud_note'] = ! empty($request->members_crud_note) ? 1 : 0;
-            $input['members_crud_timelog'] = ! empty($request->members_crud_timelog) ? 1 : 0;
+            $input['enable_timelog'] = !empty($request->enable_timelog) ? 1 : 0;
+            $input['enable_notes_documents'] = !empty($request->enable_notes_documents) ? 1 : 0;
+            $input['enable_invoice'] = !empty($request->enable_invoice) ? 1 : 0;
+            $input['enable_archive'] = !empty($request->enable_archive) ? 'archive' : 0;
+            $input['members_crud_task'] = !empty($request->members_crud_task) ? 1 : 0;
+            $input['members_crud_note'] = !empty($request->members_crud_note) ? 1 : 0;
+            $input['members_crud_timelog'] = !empty($request->members_crud_timelog) ? 1 : 0;
 
-            $input['task_id_prefix'] = ! empty($request->task_id_prefix) ? $request->task_id_prefix : '#';
+            $input['task_id_prefix'] = !empty($request->task_id_prefix) ? $request->task_id_prefix : '#';
+            // Status Dynamically Setting
 
+            $input['not_started'] = ['id' => !empty($request->not_started_id) ? 1 : 0, 'name' => $request->not_started];
+            $input['in_progress'] = ['id' => !empty($request->in_progress_id) ? 1 : 0, 'name' => $request->in_progress];
+            $input['on_hold'] = ['id' => !empty($request->on_hold_id) ? 1 : 0, 'name' => $request->on_hold];
+            $input['cancelled'] = ['id' => !empty($request->cancelled_id) ? 1 : 0, 'name' => $request->cancelled];
+            $input['completed'] = ['id' => !empty($request->completed_id) ? 1 : 0, 'name' => $request->completed];
+            
+            // Store level name, color, and background color as arrays
+            $levelNames = $request->get('level_name');
+            $colors = $request->get('color');
+            $bgs = $request->get('bg');
+
+            $levelData = [];
+            foreach ($levelNames as $index => $name) {
+                if (!empty($name)) {
+                    $levelData[] = [
+                        'name' => $name,
+                        'color' => $colors[$index],
+                        'bg' => $bgs[$index]
+                    ];
+                }
+            }
+
+            $input['levels']=$levelData;
+            
             $project_id = $request->get('project_id');
             $business_id = request()->session()->get('user.business_id');
             $project = Project::where('business_id', $business_id)
-                        ->findOrFail($project_id);
+                ->findOrFail($project_id);
+            //status filter set
+            $projectTaskCounts = ProjectTask::where('project_id', $project_id)
+                ->select('status', \DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status');
 
+            $notStartedCount = $projectTaskCounts->get('not_started', 0);
+            $inProgressCount = $projectTaskCounts->get('in_progress', 0);
+            $onHoldCount = $projectTaskCounts->get('on_hold', 0);
+            $cancelledCount = $projectTaskCounts->get('cancelled', 0);
+            $completedCount = $projectTaskCounts->get('completed', 0);
+
+            if (($notStartedCount > 0 && is_null($request->not_started_id)) ||
+                ($inProgressCount > 0 && is_null($request->in_progress_id)) ||
+                ($onHoldCount > 0 && is_null($request->on_hold_id)) ||
+                ($cancelledCount > 0 && is_null($request->cancelled_id)) ||
+                ($completedCount > 0 && is_null($request->completed_id))
+            ) {
+                $output = [
+                    'success' => false,
+                    'msg' => 'Cannot disable Status with existing tasks.',
+                ];
+                return redirect()->action(
+                    [\Modules\Project\Http\Controllers\ProjectController::class, 'show'],
+                    [$project_id]
+                )->with('status', $output);
+            }
             DB::beginTransaction();
 
             //Log activity
@@ -655,7 +738,7 @@ class ProjectController extends Controller
             ];
         } catch (Exception $e) {
             DB::rollBack();
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             $output = [
                 'success' => false,
@@ -663,9 +746,10 @@ class ProjectController extends Controller
             ];
         }
 
-        return redirect()->action([\Modules\Project\Http\Controllers\ProjectController::class, 'show'],
+        return redirect()->action(
+            [\Modules\Project\Http\Controllers\ProjectController::class, 'show'],
             [$project_id]
-            )->with('status', $output);
+        )->with('status', $output);
     }
 
     /**
@@ -680,7 +764,7 @@ class ProjectController extends Controller
             $status = request()->get('status');
 
             $project = Project::where('business_id', $business_id)
-                            ->findOrFail($id);
+                ->findOrFail($id);
 
             $project->status = $status;
             $project->save();
@@ -690,7 +774,7 @@ class ProjectController extends Controller
                 'msg' => __('lang_v1.success'),
             ];
         } catch (Exception $e) {
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             $output = [
                 'success' => false,
