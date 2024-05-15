@@ -2028,6 +2028,7 @@ class ProductUtil extends Util
                     'type' => 'sell',
                     'type_label' => __('sale.sale'),
                     'ref_no' => $stock_line->invoice_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'sell_secondary_unit_quantity' => ! empty($stock_line->sell_secondary_unit_quantity) ? $this->roundQuantity($stock_line->sell_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
@@ -2044,6 +2045,7 @@ class ProductUtil extends Util
                     'type' => 'purchase',
                     'type_label' => __('lang_v1.purchase'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'purchase_secondary_unit_quantity' => ! empty($stock_line->purchase_secondary_unit_quantity) ? $this->roundQuantity($stock_line->purchase_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
@@ -2056,6 +2058,7 @@ class ProductUtil extends Util
                     'type' => 'stock_adjustment',
                     'type_label' => __('stock_adjustment.stock_adjustment'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'opening_stock') {
@@ -2068,6 +2071,7 @@ class ProductUtil extends Util
                     'type' => 'opening_stock',
                     'type_label' => __('report.opening_stock'),
                     'ref_no' => $stock_line->ref_no ?? '',
+                    'sele_id' => $stock_line->transaction_id,
                     'additional_notes' => $stock_line->additional_notes,
                     'purchase_secondary_unit_quantity' => ! empty($stock_line->purchase_secondary_unit_quantity) ? $this->roundQuantity($stock_line->purchase_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
@@ -2084,6 +2088,7 @@ class ProductUtil extends Util
                     'type' => 'sell_transfer',
                     'type_label' => __('lang_v1.stock_transfers').' ('.__('lang_v1.out').')',
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'purchase_transfer') {
@@ -2099,6 +2104,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_transfer',
                     'type_label' => __('lang_v1.stock_transfers').' ('.__('lang_v1.in').')',
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'production_sell') {
@@ -2112,7 +2118,8 @@ class ProductUtil extends Util
                     'stock' => $this->roundQuantity($stock),
                     'type' => 'sell',
                     'type_label' => __('manufacturing::lang.ingredient'),
-                    'ref_no' => '',
+                    'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'production_purchase') {
@@ -2124,6 +2131,7 @@ class ProductUtil extends Util
                     'type' => 'production_purchase',
                     'type_label' => __('manufacturing::lang.manufactured'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'purchase_return') {
@@ -2135,6 +2143,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_return',
                     'type_label' => __('lang_v1.purchase_return'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'sell_return') {
@@ -2146,6 +2155,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_transfer',
                     'type_label' => __('lang_v1.sell_return'),
                     'ref_no' => $stock_line->invoice_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             }

@@ -1927,8 +1927,15 @@ $(document).ready(function() {
           $('#alertMessage').fadeIn().delay(2000).fadeOut();
         }
     });
-    
 
+    // Attach click event handler to status cards
+    $(document).on('click', '.project_stats', function() {
+        // Get the status from the data attribute of the clicked card
+        var status = $(this).data('status');
+
+        // Set the selected status in the status filter dropdown and trigger change event
+        $('#project_status_filter').val(status).trigger('change');
+    });
 
     // Prevent form submission when the plus icon button is clicked
     $('#entries').on('click', '.add-entry', function(e) {

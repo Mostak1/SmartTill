@@ -136,8 +136,15 @@
 					@endif
 					<td>{{@format_datetime($history['date'])}}</td>
 					<td>
+						@if ($history['type_label'] == 'Sell')
+						<a href="#" data-href="{{action([\App\Http\Controllers\SellController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
+						@elseif ($history['type_label'] == 'Purchase')
+						<a href="#" data-href="{{action([\App\Http\Controllers\PurchaseController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
+						@elseif ($history['type_label'] == 'Manufactured')
+						<a href="#" data-href="{{action([\Modules\Manufacturing\Http\Controllers\RecipeController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
+						@else
 						{{$history['ref_no']}}
-
+						@endif
 						@if(!empty($history['additional_notes']))
 							@if(!empty($history['ref_no']))
 							<br>
@@ -161,4 +168,8 @@
 			</tbody>
 		</table>
 	</div>
+</div>
+
+<div class="modal fade" id="recipe_modal" role="dialog" 
+    aria-labelledby="gridSystemModalLabel">
 </div>

@@ -134,7 +134,17 @@
 								<br>
 								<i class="fas fa-check-circle"></i>
 								@lang('sale.status'):
-								@lang('project::lang.'.$project->status)
+								<span style="padding: 2px 8px; border-radius: 5px;" class="@if($project->status == 'not_started')
+									bg-red
+								@elseif($project->status == 'on_hold')
+									bg-yellow
+								@elseif($project->status == 'cancelled')
+									bg-red
+								@elseif($project->status == 'in_progress')
+									bg-aqua
+								@elseif($project->status == 'completed')
+									bg-green
+								@endif">@lang('project::lang.'.$project->status)</span>
 								<br>
 								@if(isset($project->start_date))
 								<i class="fas fa-calendar-check"></i>

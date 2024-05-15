@@ -12,51 +12,49 @@
 <!-- Main content -->
 <section class="content">
     @if($project_view == 'list_view')
-		<div class="row">
-			@foreach($project_stats as $project)
-			<div class="col-md-3 col-sm-6 col-xs-12 col-custom project_stats">
-				<div class="info-box info-box-new-style">
-					<span class="info-box-icon
-						@if($project->status == 'not_started')
-							bg-red
-						@elseif($project->status == 'on_hold')
-							bg-yellow
-						@elseif($project->status == 'cancelled')
-							bg-red
-						@elseif($project->status == 'in_progress')
-							bg-aqua
-						@elseif($project->status == 'completed')
-							bg-green
-						@endif
-					">
-						<i class="fas
-						@if($project->status == 'not_started')
-							fa-exclamation
-						@elseif($project->status == 'on_hold')
-							fa-exclamation-triangle
-						@elseif($project->status == 'cancelled')
-							fa-times-circle
-						@elseif($project->status == 'in_progress')
-							fa-sync
-						@elseif($project->status == 'completed')
-							fa-check
-						@endif
-						"></i>
+	<div class="row">
+		@foreach($project_stats as $project)
+		<div class="col-md-3 col-sm-6 col-xs-12 col-custom project_stats" data-status="{{ $project->status }}">
+			<div class="info-box info-box-new-style">
+				<span class="info-box-icon
+					@if($project->status == 'not_started')
+						bg-red
+					@elseif($project->status == 'on_hold')
+						bg-yellow
+					@elseif($project->status == 'cancelled')
+						bg-red
+					@elseif($project->status == 'in_progress')
+						bg-aqua
+					@elseif($project->status == 'completed')
+						bg-green
+					@endif
+				">
+					<i class="fas
+					@if($project->status == 'not_started')
+						fa-exclamation
+					@elseif($project->status == 'on_hold')
+						fa-exclamation-triangle
+					@elseif($project->status == 'cancelled')
+						fa-times-circle
+					@elseif($project->status == 'in_progress')
+						fa-sync
+					@elseif($project->status == 'completed')
+						fa-check
+					@endif
+					"></i>
+				</span>
+				<div class="info-box-content">
+					<span class="info-box-text">
+						{{$statuses[$project->status]}}
 					</span>
-					<div class="info-box-content">
-						<span class="info-box-text">
-							{{$statuses[$project->status]}}
-						</span>
-						<span class="info-box-number">
-							{{$project->count}}
-						</span>
-					</div>
-					<!-- /.info-box-content -->
+					<span class="info-box-number">
+						{{$project->count}}
+					</span>
 				</div>
-				<!-- /.info-box -->
 			</div>
-			@endforeach
 		</div>
+		@endforeach
+	</div>	
 	@endif
 	<div class="box box-solid">
 		<div class="box-header with-border">
@@ -88,7 +86,7 @@
 		</div>
 		<div class="box-body">
 			<div class="row">
-				@if($project_view == 'list_view' || $project_view == 'archive')
+				@if($project_view == 'list_view')
 					<div class="col-md-3 project_status_filter">
 					    <div class="form-group">
 					        {!! Form::label('project_status_filter', __('sale.status') . ':') !!}
@@ -96,18 +94,22 @@
 					    </div>
 					</div>
 				@endif
-				<div class="col-md-3">
-				    <div class="form-group">
-				        {!! Form::label('project_end_date_filter', __('project::lang.end_date') . ':') !!}
-				        {!! Form::select('project_end_date_filter', $due_dates, null, ['class' => 'form-control select2', 'placeholder' => __('messages.all'), 'style' => 'width: 100%;']); !!}
-				    </div>
-				</div>
-				<div class="col-md-3">
-					<div class="form-group">
-						{!! Form::label('project_categories_filter', __('project::lang.category') . ':') !!}
-						{!! Form::select('project_categories_filter', $categories, null, ['class' => 'form-controll select2', 'placeholder' => __('messages.all'), 'style' => 'width:100%;']); !!}
+				@if ($project_view != 'archive')
+					<div class="col-md-3">
+						<div class="form-group">
+							{!! Form::label('project_end_date_filter', __('project::lang.end_date') . ':') !!}
+							{!! Form::select('project_end_date_filter', $due_dates, null, ['class' => 'form-control select2', 'placeholder' => __('messages.all'), 'style' => 'width: 100%;']); !!}
+						</div>
 					</div>
-				</div>
+				@endif
+				@if ($project_view != 'archive')
+					<div class="col-md-3">
+						<div class="form-group">
+							{!! Form::label('project_categories_filter', __('project::lang.category') . ':') !!}
+							{!! Form::select('project_categories_filter', $categories, null, ['class' => 'form-controll select2', 'placeholder' => __('messages.all'), 'style' => 'width:100%;']); !!}
+						</div>
+					</div>
+				@endif
 			</div>
 			@if($project_view == 'list_view')
 				<div class="project_html">
