@@ -13,6 +13,7 @@
 <!-- Main content -->
 <section class="content">
     <div class="print_section"><h2>{{session()->get('business.name')}} - @lang( 'report.purchase_sell' )</h2></div>
+    <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
     <div class="row no-print">
         <div class="col-md-3 col-md-offset-7 col-xs-6">
             <div class="input-group">

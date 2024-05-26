@@ -108,7 +108,7 @@ class ProjectController extends Controller
 
                 if ($project_view == 'list_view') {
                     $projects = $projects->latest()
-                        ->simplePaginate(10);
+                        ->simplePaginate(9);
 
                     //check if user is lead/admin for the project
                     foreach ($projects as $key => $project) {
@@ -127,7 +127,7 @@ class ProjectController extends Controller
                 }
                 elseif ($project_view == 'archive') {
                     $projects = $projects->onlyTrashed()->latest()
-                        ->simplePaginate(10);
+                        ->simplePaginate(9);
 
                     //check if user is lead/admin for the project
                     foreach ($projects as $key => $project) {
@@ -350,7 +350,7 @@ class ProjectController extends Controller
                 'members_crud_task' => 0,
                 'members_crud_note' => 0,
                 'members_crud_timelog' => 0,
-                'task_view' => 'list_view',
+                'task_view' => 'kanban',
                 'task_id_prefix' => '#',
                 'not_started' => [
                     'id' => 1,

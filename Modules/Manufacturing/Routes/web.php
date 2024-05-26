@@ -9,6 +9,7 @@ Route::middleware('web', 'authh', 'SetSessionData', 'auth', 'language', 'timezon
     Route::get('/is-recipe-exist/{variation_id}', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'isRecipeExist']);
     Route::get('/ingredient-group-form', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'getIngredientGroupForm']);
     Route::get('/get-recipe-details', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'getRecipeDetails']);
+    Route::get('/recipe-show/{id}', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'recipeShow'])->name('recipe.show');
     Route::get('/get-ingredient-row/{variation_id}', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'getIngredientRow']);
     Route::get('/add-ingredient', [Modules\Manufacturing\Http\Controllers\RecipeController::class, 'addIngredients']);
     Route::resource('/recipe', 'Modules\Manufacturing\Http\Controllers\RecipeController')->except('edit', 'update');

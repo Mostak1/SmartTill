@@ -48,8 +48,9 @@
                 <th> @lang('messages.action')</th>
                 <th> @lang('messages.created_at')</th>
                 <th class="col-md-4"> @lang('project::lang.subject')</th>
-                <th class="col-md-2"> @lang('project::lang.assigned_to')</th>
+                <th> @lang('project::lang.assigned_to')</th>
                 <th> @lang('project::lang.priority')</th>
+                <th>Estimated Hours</th>
                 <th> @lang('business.start_date')</th>
                 <th>@lang('project::lang.due_date')</th>
                 <th>@lang('sale.status')</th>
@@ -82,8 +83,9 @@
                 <th> @lang('messages.action')</th>
                 <th> @lang('messages.created_at')</th>
                 <th class="col-md-4"> @lang('project::lang.subject')</th>
-                <th class="col-md-2"> @lang('project::lang.assigned_to')</th>
+                <th> @lang('project::lang.assigned_to')</th>
                 <th> @lang('project::lang.priority')</th>
+                <th>Estimated Hours</th>
                 <th> @lang('business.start_date')</th>
                 <th>@lang('project::lang.due_date')</th>
                 <th>@lang('sale.status')</th>

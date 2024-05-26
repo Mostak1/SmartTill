@@ -65,6 +65,32 @@
             </div>
     @endcomponent
 
+    <div class="container mt-5">
+        <h4 style="padding: 7px 0;" class="text-center bg-green">Category Rate History</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Updated At</th>
+                    <th>Rate</th>
+                    <th>Updated By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($PriceHistory as $history)
+                    <tr>
+                        <td>{{ Carbon::parse($history->updated_at)->format('d-m-Y, h:i A') }}</td>
+                        <td>{{ number_format($history->new_price, 2) }}</td>
+                        <td>{{ \App\User::find($history->updated_by)->first_name }} {{ \App\User::find($history->updated_by)->last_name }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4">No rate history available for this Category.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
     <div class="modal fade category_modal" tabindex="-1" role="dialog" 
     	aria-labelledby="gridSystemModalLabel">
     </div>

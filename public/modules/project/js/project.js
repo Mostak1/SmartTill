@@ -41,23 +41,32 @@ $(document).on('click', 'button.add_new_project', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('#project_model').html(result).modal('show');
+            $('#project_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
             $('#project_model').find('.select2').select2();
         },
     });
 });
 
+
 // project - edit form model
 $(document).on('click', '.edit_a_project', function () {
     var url = $(this).data('href');
+    
     $.ajax({
         method: 'GET',
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('#project_model').html(result).modal('show');
+            $('#project_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
+    
 });
 
 //initialize ck editor, date picker and form validation when model is opened
@@ -160,6 +169,9 @@ $(document).on('submit', 'form#project_form', function (e) {
                     } else if (project_view == 'list_view') {
                         location.reload();
                     }
+                    else{
+                        location.reload();
+                    }
                 } else {
                     toastr.error(result.msg);
                 }
@@ -173,6 +185,7 @@ $(document).on('submit', 'form#project_form', function (e) {
 $(document).on('click', '.delete_a_project', function (e) {
     e.preventDefault();
     var url = $(this).data('href');
+    var redirect = $(this).data('redirect');
     swal({
         title: LANG.sure,
         icon: 'warning',
@@ -194,8 +207,11 @@ $(document).on('click', '.delete_a_project', function (e) {
                             initializeProjectKanbanBoard();
                         } else if (project_view == 'list_view') {
                             location.reload();
-                        } else if (project_view == 'archive'){
+                        } else if (project_view == 'archive') {
                             location.reload();
+                        }
+                        else {
+                            window.location.href = redirect;
                         }
                     } else {
                         toastr.error(result.msg);
@@ -232,7 +248,7 @@ $(document).on('click', '.restore_a_project', function (e) {
                         } else if (project_view == 'list_view') {
                             location.reload();
                         }
-                        else if (project_view == 'archive'){
+                        else if (project_view == 'archive') {
                             location.reload();
                         }
                     } else {
@@ -271,7 +287,7 @@ $(document).on('click', '.permanentDelete_a_project', function (e) {
                         } else if (project_view == 'list_view') {
                             location.reload();
                         }
-                        else if (project_view == 'archive'){
+                        else if (project_view == 'archive') {
                             location.reload();
                         }
                     } else {
@@ -295,7 +311,10 @@ $(document).on('click', '.task_btn', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -308,7 +327,10 @@ $(document).on('click', '.edit_a_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -365,7 +387,10 @@ $(document).on('click', '.edit_a_task_from_view_task', function () {
         url: url,
         async: false,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -547,7 +572,10 @@ $(document).on('click', '.change_status_of_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.view_modal').html(result).modal('show');
+            $('.view_modal').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -636,7 +664,10 @@ $(document).on('click', '.view_a_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.view_project_task_model').html(result).modal('show');
+            $('.view_project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -982,6 +1013,7 @@ function initializeMyTaskDataTable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                { data: 'custom_field_2', name: 'custom_field_2' },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -990,7 +1022,7 @@ function initializeMyTaskDataTable() {
                 {
                     data: 'custom_field_1',
                     name: 'custom_field_1',
-                    render: function(data, type, row) {
+                    render: function (data, type, row) {
                         // Create a temporary element to parse the HTML content
                         var tempElement = $('<div>').html(data);
                         // Extract the text content from the temporary element
@@ -1328,6 +1360,7 @@ function initializeProjectTaskDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                { data: 'custom_field_2', name: 'custom_field_2' },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -1336,7 +1369,7 @@ function initializeProjectTaskDatatable() {
                 {
                     data: 'custom_field_1',
                     name: 'custom_field_1',
-                    render: function(data, type, row) {
+                    render: function (data, type, row) {
                         // Create a temporary element to parse the HTML content
                         var tempElement = $('<div>').html(data);
                         // Extract the text content from the temporary element
@@ -1384,6 +1417,7 @@ function initializeArchiveDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                { data: 'custom_field_2', name: 'custom_field_2' },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -1392,7 +1426,7 @@ function initializeArchiveDatatable() {
                 {
                     data: 'custom_field_1',
                     name: 'custom_field_1',
-                    render: function(data, type, row) {
+                    render: function (data, type, row) {
                         // Create a temporary element to parse the HTML content
                         var tempElement = $('<div>').html(data);
                         // Extract the text content from the temporary element
@@ -1918,18 +1952,10 @@ $(document).on('submit', '#settings_form', function (event) {
         ladda.stop();
     }
 });
-$(document).ready(function() {
-
-    $('#project_model, #time_log_model, .project_task_model, .view_project_task_model, .payment_modal, .edit_payment_modal').on('click', function(e) {
-        // Check if the clicked element is outside the modal
-        if (!$(e.target).closest('.modal-dialog').length) {
-          // Show the animation alert message
-          $('#alertMessage').fadeIn().delay(2000).fadeOut();
-        }
-    });
+$(document).ready(function () {
 
     // Attach click event handler to status cards
-    $(document).on('click', '.project_stats', function() {
+    $(document).on('click', '.project_stats', function () {
         // Get the status from the data attribute of the clicked card
         var status = $(this).data('status');
 
@@ -1938,7 +1964,7 @@ $(document).ready(function() {
     });
 
     // Prevent form submission when the plus icon button is clicked
-    $('#entries').on('click', '.add-entry', function(e) {
+    $('#entries').on('click', '.add-entry', function (e) {
         e.preventDefault();
         addEntry();
     });
@@ -1949,31 +1975,73 @@ $(document).ready(function() {
         var newEntry = `<div class="entry">
         <div class="row">
             <div class="col-md-4">
-                <input class="form-control" type="text" name="level_name[]" placeholder="Level Name">
+                <input class="form-control" type="text" name="level_name[]" placeholder="Label Name">
+            </div>
+            <div hidden class="col-md-2">
+                <input class="form-control color-picker" type="text" name="color[]" value="#000000">
             </div>
             <div class="col-md-2">
-                <input class="form-control" type="color" name="color[]" value="#000000">
+                <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
             </div>
+            <!-- Add a remove button if needed -->
             <div class="col-md-2">
-                <input class="form-control" type="color" name="bg[]" value="#FFFFFF">
-            </div>
-            <div class="col-md-2">
-                <button class="remove-entry form-control">-</button>
+                <button class="remove-entry form-control btn btn-info">close -</button>
             </div>
         </div>
     </div>`;
         $('#entries').append(newEntry);
+
+        // Initialize Spectrum for the newly added color and background color input fields
+        $('.color-picker').spectrum({
+            showPalette: true,
+            palette: [
+                ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
+                ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
+                ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
+                ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
+                ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
+                ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
+                ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
+                ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+            ],
+            showInput: true,
+            allowEmpty: true,
+            showInitial: true,
+            preferredFormat: "hex"
+        });
+        $('.bg-picker').spectrum({
+            showPalette: true,
+            palette: [
+                ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
+                ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
+                ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
+                ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
+                ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
+                ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
+                ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
+                ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+            ],
+            showInput: true,
+            allowEmpty: true,
+            showInitial: true,
+            preferredFormat: "hex",
+            change: function (color) {
+                var bgColor = color.toHexString();
+                var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
+                $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+            }
+        });
     }
 
     // Remove entry
-    $('#entries').on('click', '.remove-entry', function() {
+    $('#entries').on('click', '.remove-entry', function () {
         $(this).closest('.entry').remove();
     });
 
     // Get values as array
     function getEntriesArray() {
         var entriesArray = [];
-        $('#entries .entry').each(function() {
+        $('#entries .entry').each(function () {
             var levelName = $(this).find('input[name="level_name[]"]').val();
             var color = $(this).find('input[name="color[]"]').val();
             var bg = $(this).find('input[name="bg[]"]').val();
@@ -1983,19 +2051,19 @@ $(document).ready(function() {
     }
 
     // Example usage: print array to console
-    $('#save-button').on('click', function() {
+    $('#save-button').on('click', function () {
         var entriesArray = getEntriesArray();
         console.log(entriesArray);
     });
 
     // Handle form submission when the update button is clicked
-    $('#update-button').on('click', function() {
+    $('#update-button').on('click', function () {
         // Submit the form
         $('#settings_form').submit();
     });
 });
 // Subject limit set
-$(document).on('keyup', 'input[name="subject"]', function() {
+$(document).on('keyup', 'input[name="subject"]', function () {
     var maxLength = 180; // Maximum length allowed
     var length = $(this).val().length; // Current length of the input value
 
@@ -2005,4 +2073,68 @@ $(document).on('keyup', 'input[name="subject"]', function() {
     } else {
         $('#subject-limit-message').hide();
     }
+});
+
+$(document).ready(function () {
+    // Function to determine if a color is light or dark
+    function isLightColor(hexColor) {
+        var c = hexColor.substring(1); // strip #
+        var rgb = parseInt(c, 16); // convert rrggbb to decimal
+        var r = (rgb >> 16) & 0xff; // extract red
+        var g = (rgb >> 8) & 0xff; // extract green
+        var b = (rgb >> 0) & 0xff; // extract blue
+
+        var luma = 0.2126 * r + 0.7152 * g + 0.0722 * b; // per ITU-R BT.709
+        return luma > 128; // returns true if light color
+    }
+
+    // Initialize Spectrum for color input fields
+    $(".color-picker").spectrum({
+        showPalette: true,
+        palette: [
+            ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
+            ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
+            ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
+            ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
+            ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
+            ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
+            ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
+            ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+        ],
+        showInput: true,
+        allowEmpty: true,
+        showInitial: true,
+        preferredFormat: "hex"
+    });
+
+    // Initialize Spectrum for background color input fields
+    $(".bg-picker").spectrum({
+        showPalette: true,
+        palette: [
+            ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
+            ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
+            ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
+            ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
+            ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
+            ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
+            ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
+            ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+        ],
+        showInput: true,
+        allowEmpty: true,
+        showInitial: true,
+        preferredFormat: "hex",
+        change: function (color) {
+            var bgColor = color.toHexString();
+            var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
+            $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+        }
+    });
+
+    // Manually trigger change on load to set initial text color based on initial background color
+    $('.bg-picker').each(function () {
+        var bgColor = $(this).spectrum('get').toHexString();
+        var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
+        $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+    });
 });

@@ -145,9 +145,9 @@
                     <a title="Edit" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'edit'], [$project->id])}}" class="cursor-pointer edit_a_project">
                         <i class="fa fa-edit"></i>
                     </a>
-                    {{-- <a title="Archive" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'destroy'], [$project->id])}}" class="cursor-pointer delete_a_project">
+                    <a title="Archive" data-redirect="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=list_view'}}" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'destroy'], [$project->id])}}" class="cursor-pointer delete_a_project">
                         <i class="fas fa-file-archive"></i>
-                    </a> --}}
+                    </a>
                     
                 </h4>
             </div>
@@ -277,9 +277,5 @@
 </div>
 
 <!-- /.box -->
-<div class="modal fade" tabindex="-1" role="dialog" id="project_model" data-backdrop="static"  data-backdrop='static'></div>
+<div class="modal fade" tabindex="-1" role="dialog" id="project_model"></div>
 
-<!-- Animation alert message -->
-<div class="alert-message" id="alertMessage" style="display: none;">
-Clicked outside the modal!
-</div>

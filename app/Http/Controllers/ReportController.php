@@ -1689,7 +1689,7 @@ class ReportController extends Controller
      */
     public function getproductSellReport(Request $request)
     {
-        if (! auth()->user()->can('purchase_n_sell_report.view')) {
+        if (!auth()->user()->can('purchase_n_sell_report.view')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1718,6 +1718,8 @@ class ReportController extends Controller
                 ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
                 ->join('contacts as c', 't.contact_id', '=', 'c.id')
                 ->join('products as p', 'pv.product_id', '=', 'p.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
+                ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
                 ->leftjoin('tax_rates', 'transaction_sell_lines.tax_id', '=', 'tax_rates.id')
                 ->leftjoin('units as u', 'p.unit_id', '=', 'u.id')
                 ->where('t.business_id', $business_id)
@@ -1747,16 +1749,18 @@ class ReportController extends Controller
                     'tax_rates.name as tax',
                     'u.short_name as unit',
                     'transaction_sell_lines.parent_sell_line_id',
+                    DB::raw('IFNULL(cat.name, "Uncategorized") as category_name'),
+                    DB::raw('IFNULL(b.name, "No Brand") as brand_name'),
                     DB::raw('((transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) * transaction_sell_lines.unit_price_inc_tax) as subtotal')
                 )
                 ->groupBy('transaction_sell_lines.id');
 
-            if (! empty($variation_id)) {
+            if (!empty($variation_id)) {
                 $query->where('transaction_sell_lines.variation_id', $variation_id);
             }
             $start_date = $request->get('start_date');
             $end_date = $request->get('end_date');
-            if (! empty($start_date) && ! empty($end_date)) {
+            if (!empty($start_date) && !empty($end_date)) {
                 $query->where('t.transaction_date', '>=', $start_date)
                     ->where('t.transaction_date', '<=', $end_date);
             }
@@ -1767,28 +1771,28 @@ class ReportController extends Controller
             }
 
             $location_id = $request->get('location_id', null);
-            if (! empty($location_id)) {
+            if (!empty($location_id)) {
                 $query->where('t.location_id', $location_id);
             }
 
             $customer_id = $request->get('customer_id', null);
-            if (! empty($customer_id)) {
+            if (!empty($customer_id)) {
                 $query->where('t.contact_id', $customer_id);
             }
 
             $customer_group_id = $request->get('customer_group_id', null);
-            if (! empty($customer_group_id)) {
+            if (!empty($customer_group_id)) {
                 $query->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
-                ->where('CG.id', $customer_group_id);
+                    ->where('CG.id', $customer_group_id);
             }
 
             $category_id = $request->get('category_id', null);
-            if (! empty($category_id)) {
+            if (!empty($category_id)) {
                 $query->where('p.category_id', $category_id);
             }
 
             $brand_id = $request->get('brand_id', null);
-            if (! empty($brand_id)) {
+            if (!empty($brand_id)) {
                 $query->where('p.brand_id', $brand_id);
             }
 
@@ -1801,10 +1805,10 @@ class ReportController extends Controller
 
                     return $product_name;
                 })
-                 ->editColumn('invoice_no', function ($row) {
-                     return '<a data-href="'.action([\App\Http\Controllers\SellController::class, 'show'], [$row->transaction_id])
+                ->editColumn('invoice_no', function ($row) {
+                    return '<a data-href="'.action([\App\Http\Controllers\SellController::class, 'show'], [$row->transaction_id])
                             .'" href="#" data-container=".view_modal" class="btn-modal">'.$row->invoice_no.'</a>';
-                 })
+                })
                 ->editColumn('transaction_date', '{{@format_datetime($transaction_date)}}')
                 ->editColumn('unit_sale_price', function ($row) {
                     return '<span class="unit_sale_price" data-orig-value="'.$row->unit_sale_price.'">'.
@@ -1818,13 +1822,13 @@ class ReportController extends Controller
                     data-unit="'.$row->unit.'" >'.
                     $this->transactionUtil->num_f($row->sell_qty, false, null, true).'</span> '.$row->unit;
                 })
-                 ->editColumn('subtotal', function ($row) {
-                     //ignore child sell line of combo product
-                     $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
+                ->editColumn('subtotal', function ($row) {
+                    //ignore child sell line of combo product
+                    $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
 
-                     return '<span class="'.$class.'"  data-orig-value="'.$row->subtotal.'">'.
+                    return '<span class="'.$class.'"  data-orig-value="'.$row->subtotal.'">'.
                     $this->transactionUtil->num_f($row->subtotal, true).'</span>';
-                 })
+                })
                 ->editColumn('unit_price', function ($row) {
                     return '<span class="unit_price" data-orig-value="'.$row->unit_price.'">'.
                     $this->transactionUtil->num_f($row->unit_price, true).'</span>';
@@ -1838,9 +1842,17 @@ class ReportController extends Controller
                     ')
                 ->editColumn('tax', function ($row) {
                     return $this->transactionUtil->num_f($row->item_tax, true)
-                     .'<br>'.'<span data-orig-value="'.$row->item_tax.'" 
-                     class="tax" data-unit="'.$row->tax.'"><small>('.$row->tax.')</small></span>';
+                    .'<br>'.'<span data-orig-value="'.$row->item_tax.'" 
+                    class="tax" data-unit="'.$row->tax.'"><small>('.$row->tax.')</small></span>';
                 })
+
+                ->addColumn('category_name', function ($row) {
+                    return $row->category_name;
+                }) 
+                ->addColumn('brand_name', function ($row) {
+                    return $row->brand_name;
+                })
+
                 ->addColumn('payment_methods', function ($row) use ($payment_types) {
                     $methods = array_unique($row->transaction->payment_lines->pluck('method')->toArray());
                     $count = count($methods);
@@ -1851,24 +1863,35 @@ class ReportController extends Controller
                         $payment_method = __('lang_v1.checkout_multi_pay');
                     }
 
-                    $html = ! empty($payment_method) ? '<span class="payment-method" data-orig-value="'.$payment_method.'" data-status-name="'.$payment_method.'">'.$payment_method.'</span>' : '';
+                    $html = !empty($payment_method) ? '<span class="payment-method" data-orig-value="'.$payment_method.'" data-status-name="'.$payment_method.'">'.$payment_method.'</span>' : '';
 
                     return $html;
                 })
                 ->editColumn('customer', '@if(!empty($supplier_business_name)) {{$supplier_business_name}},<br>@endif {{$customer}}')
-                ->rawColumns(['invoice_no', 'unit_sale_price', 'subtotal', 'sell_qty', 'discount_amount', 'unit_price', 'tax', 'customer', 'payment_methods'])
+                ->rawColumns(['invoice_no', 'unit_sale_price', 'subtotal', 'sell_qty', 'discount_amount', 'unit_price', 'tax', 'customer', 'payment_methods', 'category_name', 'brand_name'])
                 ->make(true);
         }
 
-        $business_locations = BusinessLocation::forDropdown($business_id);
-        $customers = Contact::customersDropdown($business_id);
+        $business_locations = BusinessLocation::forDropdown($business_id, true);
+
         $categories = Category::forDropdown($business_id, 'product');
+
         $brands = Brands::forDropdown($business_id);
-        $customer_group = CustomerGroup::forDropdown($business_id, false, true);
+
+        $customers = Contact::customersDropdown($business_id, false);
+
+        $customer_groups = CustomerGroup::forDropdown($business_id);
 
         return view('report.product_sell_report')
-            ->with(compact('business_locations', 'customers', 'categories', 'brands',
-                'customer_group', 'product_custom_field1', 'product_custom_field2'));
+            ->with(compact(
+                'business_locations',
+                'categories',
+                'brands',
+                'customers',
+                'customer_groups',
+                'product_custom_field1',
+                'product_custom_field2'
+            ));
     }
 
     /**

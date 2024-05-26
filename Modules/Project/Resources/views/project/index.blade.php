@@ -136,12 +136,8 @@
 		</div>			
 	</div>
 	<!-- /.box -->
-	<div class="modal fade" tabindex="-1" role="dialog" id="project_model" data-backdrop="static"  data-backdrop='static'></div>
+	<div class="modal fade" tabindex="-1" role="dialog" id="project_model"></div>
 
-	<!-- Animation alert message -->
-<div class="alert-message" id="alertMessage" style="display: none;">
-	Clicked outside the modal!
-  </div>
 </section>
 <link rel="stylesheet" href="{{ asset('modules/project/sass/project.css?v=' . $asset_v) }}">
 @endsection

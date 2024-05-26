@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use App\Events\ProductsCreatedOrModified;
+use App\VariationPriceHistory;
 
 class ProductController extends Controller
 {
@@ -133,8 +134,11 @@ class ProductController extends Controller
                 'products.alert_quantity',
                 DB::raw('SUM(vld.qty_available) as current_stock'),
                 DB::raw('MAX(v.sell_price_inc_tax) as max_price'),
+                DB::raw('MAX(v.foreign_s_price_inc_tex) as max_foreign_s_price'),
                 DB::raw('MIN(v.sell_price_inc_tax) as min_price'),
                 DB::raw('MAX(v.dpp_inc_tax) as max_purchase_price'),
+                DB::raw('MAX(v.foreign_p_price_inc_tex) as max_foreign_p_price'),
+                DB::raw('MAX(v.currency_rate) as foreign_currency_rate'),
                 DB::raw('MIN(v.dpp_inc_tax) as min_purchase_price')
                 );
 
@@ -287,10 +291,10 @@ class ProductController extends Controller
                 })
                 ->addColumn(
                     'purchase_price',
-                    '<div style="white-space: nowrap;">@if($category_id == 47) 
-                    $ {{$max_purchase_price}} </br>
-                    ৳ {{$category_description * $max_purchase_price}} <br>
-                    ৳ {{$category_description}}
+                    '<div style="white-space: nowrap;">@if($category_id == 66) 
+                    $ {{number_format($max_foreign_p_price, 2)}} </br>
+                    ৳ {{number_format($max_purchase_price, 2)}} <br>
+                    $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
                      @else
                       @format_currency($min_purchase_price) @if($max_purchase_price != $min_purchase_price && $type == "variable") -  @format_currency($max_purchase_price)@endif </div>  
                       @endif <span></span>
@@ -298,7 +302,12 @@ class ProductController extends Controller
                 )
                 ->addColumn(
                     'selling_price',
-                    '<div style="white-space: nowrap;">@format_currency($min_price) @if($max_price != $min_price && $type == "variable") -  @format_currency($max_price)@endif </div>'
+                    '<div style="white-space: nowrap;">@if($category_id == 66)
+                    $ {{number_format($max_foreign_s_price, 2)}} </br>
+                    ৳ {{number_format($min_price, 2)}} <br>
+                    $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
+                    @else
+                     @format_currency($min_price) @if($max_price != $min_price && $type == "variable") -  @format_currency($max_price)@endif </div> @endif '
                 )
                 ->filterColumn('products.sku', function ($query, $keyword) {
                     $query->whereHas('variations', function ($q) use ($keyword) {
@@ -428,8 +437,10 @@ class ProductController extends Controller
         //product screen view from module
         $pos_module_data = $this->moduleUtil->getModuleData('get_product_screen_top_view');
 
+        $variation = Variation::get();
+
         return view('product.create')
-            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data'));
+            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data', 'variation'));
     }
 
     private function product_types()
@@ -700,7 +711,6 @@ class ProductController extends Controller
                     $product->$column = $request->input($column);
                 }
             }
-
             $product->name = $product_details['name'];
             $product->brand_id = $product_details['brand_id'];
             $product->unit_id = $product_details['unit_id'];
@@ -807,8 +817,56 @@ class ProductController extends Controller
             }
 
             $product->product_locations()->sync($product_locations);
+            $foreign_cat = Category::where('id', 66)->first();
 
-            if ($product->type == 'single') {
+
+            if  ($product->type == 'single' && $product->category_id == 66){
+
+                $single_data = $request->only(['single_variation_id', 'single_dpp', 'single_dpp_inc_tax', 'single_dsp_inc_tax', 'profit_percent', 'single_dsp']);
+                $variation = Variation::find($single_data['single_variation_id']);
+
+                $variation->sub_sku = $product->sku;
+                $variation->default_purchase_price = $this->productUtil->num_uf($single_data['single_dpp']) * $foreign_cat->description;
+                $variation->dpp_inc_tax = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
+                $variation->profit_percent = $this->productUtil->num_uf($single_data['profit_percent']);
+                $variation->default_sell_price = $this->productUtil->num_uf($single_data['single_dsp']) * $foreign_cat->description;
+                $variation->sell_price_inc_tax = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description;
+
+                $variation->foreign_p_price = $this->productUtil->num_uf($single_data['single_dpp']);
+                $variation->foreign_p_price_inc_tex = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']);
+                $variation->currency_code = $foreign_cat->short_code;
+                $variation->currency_rate = $foreign_cat->description;
+                $variation->is_foreign = 1;
+                $variation->foreign_s_price = $this->productUtil->num_uf($single_data['single_dsp']);
+                $variation->foreign_s_price_inc_tex = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']);
+
+
+
+                $variation_history = Variation::findOrFail($id);
+                $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
+                $newPrice = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description;
+                $userId = auth()->id();
+
+                // Update the variation's price
+                if($variation_history->sell_price_inc_tax != $newPrice) 
+                {
+                    // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation->id,
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice,
+                        'updated_by' => $userId,
+                        'type' => 'product',
+                    ]);
+                }
+
+                $variation->save();
+
+                Media::uploadMedia($product->business_id, $variation, $request, 'variation_images');  
+            }
+
+
+            elseif ($product->type == 'single') {
                 $single_data = $request->only(['single_variation_id', 'single_dpp', 'single_dpp_inc_tax', 'single_dsp_inc_tax', 'profit_percent', 'single_dsp']);
                 $variation = Variation::find($single_data['single_variation_id']);
 
@@ -818,9 +876,29 @@ class ProductController extends Controller
                 $variation->profit_percent = $this->productUtil->num_uf($single_data['profit_percent']);
                 $variation->default_sell_price = $this->productUtil->num_uf($single_data['single_dsp']);
                 $variation->sell_price_inc_tax = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']);
+
+
+                $variation_history = Variation::findOrFail($id);
+                $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']);
+                $newPrice = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']);
+                $userId = auth()->id();
+
+                // Update the variation's price
+                if($variation_history->sell_price_inc_tax != $newPrice) 
+                {
+                    // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation->id,
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice,
+                        'updated_by' => $userId,
+                        'type' => 'product',
+                    ]);
+                }
+
                 $variation->save();
 
-                Media::uploadMedia($product->business_id, $variation, $request, 'variation_images');
+                Media::uploadMedia($product->business_id, $variation, $request, 'variation_images');            
             } elseif ($product->type == 'variable') {
                 //Update existing variations
                 $input_variations_edit = $request->get('product_variation_edit');
@@ -858,6 +936,30 @@ class ProductController extends Controller
                 $variation->profit_percent = $this->productUtil->num_uf($request->input('profit_percent'));
                 $variation->default_sell_price = $this->productUtil->num_uf($request->input('selling_price'));
                 $variation->sell_price_inc_tax = $this->productUtil->num_uf($request->input('selling_price_inc_tax'));
+
+
+                $variation_history = Variation::findOrFail($id);
+                $oldPrice = $this->productUtil->num_uf($request->input('purchase_price_inc_tax'));
+                $newPrice = $this->productUtil->num_uf($request->input('selling_price_inc_tax'));
+                $userId = auth()->id();
+
+                // Update the variation's price
+                if($variation_history->sell_price_inc_tax != $newPrice) 
+                {
+                    $variation_history->sell_price_inc_tax = $newPrice;
+                    $variation_history->save();
+
+                    // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation->id,
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice,
+                        'updated_by' => $userId,
+                        'type' => 'product',
+                    ]);
+                }
+
+                
                 $variation->combo_variations = $combo_variations;
                 $variation->save();
             }
@@ -1589,8 +1691,16 @@ class ProductController extends Controller
                 $combo_variations = $this->productUtil->__getComboProductDetails($product['variations'][0]->combo_variations, $business_id);
             }
 
+            // Get variation price history
+            // $variation = Variation::where('product_id', $product->id)->get();
+            $PriceHistory = VariationPriceHistory::where('variation_id', $product->id)
+            ->where('type', 'product')
+            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->get();
+
             return view('product.view-modal')->with(compact(
                 'product',
+                'PriceHistory',
                 'rack_details',
                 'allowed_group_prices',
                 'group_price_details',
@@ -2289,6 +2399,10 @@ class ProductController extends Controller
             //for ajax call $id is variation id else it is product id
             $stock_details = $this->productUtil->getVariationStockDetails($business_id, $id, request()->input('location_id'));
             $stock_history = $this->productUtil->getVariationStockHistory($business_id, $id, request()->input('location_id'));
+            $PriceHistory = VariationPriceHistory::where('variation_id', $id)
+            ->where('type', 'product')
+            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->get();
 
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
@@ -2300,7 +2414,7 @@ class ProductController extends Controller
             }
 
             return view('product.stock_history_details')
-                ->with(compact('stock_details', 'stock_history'));
+                ->with(compact('stock_details', 'stock_history', 'PriceHistory'));
         }
 
         $product = Product::where('business_id', $business_id)

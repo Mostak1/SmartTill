@@ -77,6 +77,36 @@
 		</table>
 	</div>
 </div>
+<hr>
+<div class="row">
+	<div class="col-md-12">
+		<h4 style="padding: 7px 0;" class="text-center"><b>Product Price History</b></h4>
+		<table class="table table-bordered table-striped">
+			<thead>
+				<tr>
+					<th>Purchase  Price</th>
+					<th>Selling Price</th>
+					<th>Updated By</th>
+					<th>Updated At</th>
+				</tr>
+			</thead>
+			<tbody>
+				@forelse($PriceHistory as $history)
+					<tr>
+						<td>{{ number_format($history->old_price, 2) }}</td>
+						<td>{{ number_format($history->new_price, 2) }}</td>
+						<td>{{ \App\User::find($history->updated_by)->first_name }} {{ \App\User::find($history->updated_by)->last_name }}</td>
+						<td>{{ Carbon::parse($history->updated_at)->format('d-m-Y, h:i A') }}</td>
+					</tr>
+				@empty
+					<tr>
+						<td colspan="4">No price history available for this Product.</td>
+					</tr>
+				@endforelse
+			</tbody>
+		</table>
+	</div>
+</div>
 <div class="row">
 	<div class="col-md-12">
 		<hr>
@@ -141,7 +171,8 @@
 						@elseif ($history['type_label'] == 'Purchase')
 						<a href="#" data-href="{{action([\App\Http\Controllers\PurchaseController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
 						@elseif ($history['type_label'] == 'Manufactured')
-						<a href="#" data-href="{{action([\Modules\Manufacturing\Http\Controllers\RecipeController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
+
+						<a href="#" data-href="{{action([\Modules\Manufacturing\Http\Controllers\RecipeController::class, 'recipeShow'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal" data-target="#recipe_modal">{{$history['ref_no']}}</a>
 						@else
 						{{$history['ref_no']}}
 						@endif
@@ -170,6 +201,4 @@
 	</div>
 </div>
 
-<div class="modal fade" id="recipe_modal" role="dialog" 
-    aria-labelledby="gridSystemModalLabel">
-</div>
+<div class="modal fade" id="recipe_modal" role="dialog" aria-labelledby="gridSystemModalLabel"></div>

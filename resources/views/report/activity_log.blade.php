@@ -10,7 +10,6 @@
 
 <!-- Main content -->
 <section class="content">
-
     <div class="row">
         <div class="col-md-12">
             @component('components.filters', ['title' => __('report.filters')])

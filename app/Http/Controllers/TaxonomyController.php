@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Category;
 use App\Utils\ModuleUtil;
+use App\Variation;
+use App\VariationPriceHistory;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -33,45 +35,50 @@ class TaxonomyController extends Controller
     public function index()
     {
         $category_type = request()->get('type');
-        if ($category_type == 'product' && ! auth()->user()->can('category.view') && ! auth()->user()->can('category.create')) {
+        if ($category_type == 'product' && !auth()->user()->can('category.view') && !auth()->user()->can('category.create')) {
             abort(403, 'Unauthorized action.');
         }
 
         if (request()->ajax()) {
             $can_edit = true;
-            if ($category_type == 'product' && ! auth()->user()->can('category.update')) {
+            if ($category_type == 'product' && !auth()->user()->can('category.update')) {
                 $can_edit = false;
             }
 
             $can_delete = true;
-            if ($category_type == 'product' && ! auth()->user()->can('category.delete')) {
+            if ($category_type == 'product' && !auth()->user()->can('category.delete')) {
                 $can_delete = false;
             }
 
             $business_id = request()->session()->get('user.business_id');
 
             $category = Category::where('business_id', $business_id)
-                            ->where('category_type', $category_type)
-                            ->select(['name', 'short_code', 'description', 'id', 'parent_id']);
+                ->where('category_type', $category_type)
+                ->select(['name', 'short_code', 'description', 'id', 'parent_id']);
 
             return Datatables::of($category)
                 ->addColumn(
-                    'action', function ($row) use ($can_edit, $can_delete, $category_type) {
+                    'action',
+                    function ($row) use ($can_edit, $can_delete, $category_type) {
                         $html = '';
-                        if ($can_edit) {
-                            $html .= '<button data-href="'.action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]).'?type='.$category_type.'" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>'.__('messages.edit').'</button>';
+                        if ($row->id != 66 && $can_edit) {
+                            $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
-
-                        if ($can_delete) {
-                            $html .= '&nbsp;<button data-href="'.action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]).'" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> '.__('messages.delete').'</button>';
+                        elseif (auth()->user()->can('superadmin')) {
+                            $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
-
+                        if ($row->id != 66 && $can_delete) {
+                                $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                        }
+                        elseif (auth()->user()->can('superadmin')) {
+                                $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                        }
                         return $html;
                     }
                 )
                 ->editColumn('name', function ($row) {
                     if ($row->parent_id != 0) {
-                        return '--'.$row->name;
+                        return '--' . $row->name;
                     } else {
                         return $row->name;
                     }
@@ -84,7 +91,12 @@ class TaxonomyController extends Controller
 
         $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
 
-        return view('taxonomy.index')->with(compact('module_category_data', 'module_category_data'));
+        $PriceHistory = VariationPriceHistory::where('variation_id', 66)
+            ->where('type', 'category')
+            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->get();
+
+        return view('taxonomy.index')->with(compact('module_category_data', 'module_category_data', 'PriceHistory'));
     }
 
     /**
@@ -95,7 +107,7 @@ class TaxonomyController extends Controller
     public function create()
     {
         $category_type = request()->get('type');
-        if ($category_type == 'product' && ! auth()->user()->can('category.create')) {
+        if ($category_type == 'product' && !auth()->user()->can('category.create')) {
             abort(403, 'Unauthorized action.');
         }
         $business_id = request()->session()->get('user.business_id');
@@ -103,20 +115,20 @@ class TaxonomyController extends Controller
         $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
 
         $categories = Category::where('business_id', $business_id)
-                        ->where('parent_id', 0)
-                        ->where('category_type', $category_type)
-                        ->select(['name', 'short_code', 'id'])
-                        ->get();
+            ->where('parent_id', 0)
+            ->where('category_type', $category_type)
+            ->select(['name', 'short_code', 'id'])
+            ->get();
 
         $parent_categories = [];
-        if (! empty($categories)) {
+        if (!empty($categories)) {
             foreach ($categories as $category) {
                 $parent_categories[$category->id] = $category->name;
             }
         }
 
         return view('taxonomy.create')
-                    ->with(compact('parent_categories', 'module_category_data', 'category_type'));
+            ->with(compact('parent_categories', 'module_category_data', 'category_type'));
     }
 
     /**
@@ -128,13 +140,13 @@ class TaxonomyController extends Controller
     public function store(Request $request)
     {
         $category_type = request()->input('category_type');
-        if ($category_type == 'product' && ! auth()->user()->can('category.create')) {
+        if ($category_type == 'product' && !auth()->user()->can('category.create')) {
             abort(403, 'Unauthorized action.');
         }
 
         try {
             $input = $request->only(['name', 'short_code', 'category_type', 'description']);
-            if (! empty($request->input('add_as_sub_cat')) && $request->input('add_as_sub_cat') == 1 && ! empty($request->input('parent_id'))) {
+            if (!empty($request->input('add_as_sub_cat')) && $request->input('add_as_sub_cat') == 1 && !empty($request->input('parent_id'))) {
                 $input['parent_id'] = $request->input('parent_id');
             } else {
                 $input['parent_id'] = 0;
@@ -143,14 +155,16 @@ class TaxonomyController extends Controller
             $input['created_by'] = $request->session()->get('user.id');
 
             $category = Category::create($input);
-            $output = ['success' => true,
+            $output = [
+                'success' => true,
                 'data' => $category,
                 'msg' => __('category.added_success'),
             ];
         } catch (\Exception $e) {
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-            $output = ['success' => false,
+            $output = [
+                'success' => false,
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
@@ -178,7 +192,7 @@ class TaxonomyController extends Controller
     public function edit($id)
     {
         $category_type = request()->get('type');
-        if ($category_type == 'product' && ! auth()->user()->can('category.update')) {
+        if ($category_type == 'product' && !auth()->user()->can('category.update')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -189,10 +203,10 @@ class TaxonomyController extends Controller
             $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
 
             $parent_categories = Category::where('business_id', $business_id)
-                                        ->where('parent_id', 0)
-                                        ->where('category_type', $category_type)
-                                        ->where('id', '!=', $id)
-                                        ->pluck('name', 'id');
+                ->where('parent_id', 0)
+                ->where('category_type', $category_type)
+                ->where('id', '!=', $id)
+                ->pluck('name', 'id');
             $is_parent = false;
 
             if ($category->parent_id == 0) {
@@ -223,28 +237,73 @@ class TaxonomyController extends Controller
 
                 $category = Category::where('business_id', $business_id)->findOrFail($id);
 
-                if ($category->category_type == 'product' && ! auth()->user()->can('category.update')) {
+                if ($category->category_type == 'product' && !auth()->user()->can('category.update')) {
                     abort(403, 'Unauthorized action.');
                 }
 
                 $category->name = $input['name'];
-                $category->description = $input['description'];
                 $category->short_code = $request->input('short_code');
 
-                if (! empty($request->input('add_as_sub_cat')) && $request->input('add_as_sub_cat') == 1 && ! empty($request->input('parent_id'))) {
+                if (!empty($request->input('add_as_sub_cat')) && $request->input('add_as_sub_cat') == 1 && !empty($request->input('parent_id'))) {
                     $category->parent_id = $request->input('parent_id');
                 } else {
                     $category->parent_id = 0;
                 }
-                $category->save();
+                
+                if ($category->id == 66) {  
 
-                $output = ['success' => true,
+                    if($category->description != $input['description'])
+                    {
+                        // Create a new price history entry
+                        VariationPriceHistory::create([
+                            'variation_id' => $category->id,
+                            'old_price' => $category->description,
+                            'new_price' => $input['description'],
+                            'updated_by' => auth()->id(),
+                            'type' => 'category',
+                        ]);
+                    }
+                    $category->description = $input['description'];
+                    $category->save();
+
+                    $foreign_variations = Variation::where('is_foreign', 1)->get();
+
+                    foreach ($foreign_variations as $foreign_variation) {
+                        $foreign_variation->currency_rate = $category->description;
+                        $foreign_variation->default_purchase_price = $foreign_variation->foreign_p_price * $category->description;
+                        $foreign_variation->dpp_inc_tax = $foreign_variation->foreign_p_price_inc_tex * $category->description;
+                        $foreign_variation->default_sell_price = $foreign_variation->foreign_s_price * $category->description;
+
+                        // Update the variation's price
+                        $newPrice = $foreign_variation->foreign_s_price_inc_tex * $category->description;
+                        if ($foreign_variation->sell_price_inc_tax != $newPrice) {
+                            // Create a new price history entry
+                            VariationPriceHistory::create([
+                                'variation_id' => $foreign_variation->id,
+                                'old_price' => $foreign_variation->foreign_p_price_inc_tex * $category->description,
+                                'new_price' => $foreign_variation->foreign_s_price_inc_tex * $category->description,
+                                'updated_by' => auth()->id(),
+                                'type' => 'product',
+                            ]);
+                        }
+                        $foreign_variation->sell_price_inc_tax = $foreign_variation->foreign_s_price_inc_tex * $category->description;
+
+                        $foreign_variation->save();
+                    }
+                }
+                else{
+                    $category->save();
+                }
+
+                $output = [
+                    'success' => true,
                     'msg' => __('category.updated_success'),
                 ];
             } catch (\Exception $e) {
-                \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+                \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-                $output = ['success' => false,
+                $output = [
+                    'success' => false,
                     'msg' => __('messages.something_went_wrong'),
                 ];
             }
@@ -267,19 +326,21 @@ class TaxonomyController extends Controller
 
                 $category = Category::where('business_id', $business_id)->findOrFail($id);
 
-                if ($category->category_type == 'product' && ! auth()->user()->can('category.delete')) {
+                if ($category->category_type == 'product' && !auth()->user()->can('category.delete')) {
                     abort(403, 'Unauthorized action.');
                 }
 
                 $category->delete();
 
-                $output = ['success' => true,
+                $output = [
+                    'success' => true,
                     'msg' => __('category.deleted_success'),
                 ];
             } catch (\Exception $e) {
-                \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+                \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-                $output = ['success' => false,
+                $output = [
+                    'success' => false,
                     'msg' => __('messages.something_went_wrong'),
                 ];
             }
@@ -297,7 +358,7 @@ class TaxonomyController extends Controller
 
             $categories = Category::catAndSubCategories($api_settings->business_id);
         } catch (\Exception $e) {
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
             return $this->respondWentWrong($e);
         }

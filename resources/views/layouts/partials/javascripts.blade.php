@@ -133,3 +133,7 @@
         });
     });
 </script>
+
+<!-- Spectrum JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script>
+

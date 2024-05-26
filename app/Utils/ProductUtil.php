@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Business;
 use App\BusinessLocation;
+use App\Category;
 use App\Discount;
 use App\Media;
 use App\Product;
@@ -18,6 +19,7 @@ use App\Unit;
 use App\Variation;
 use App\VariationGroupPrice;
 use App\VariationLocationDetails;
+use App\VariationPriceHistory;
 use App\VariationTemplate;
 use App\VariationValueTemplate;
 use Illuminate\Support\Facades\DB;
@@ -49,18 +51,63 @@ class ProductUtil extends Util
         ];
         $product_variation = $product->product_variations()->create($product_variation_data);
 
-        //create variations
-        $variation_data = [
-            'name' => 'DUMMY',
-            'product_id' => $product->id,
-            'sub_sku' => $sku,
-            'default_purchase_price' => $this->num_uf($purchase_price),
-            'dpp_inc_tax' => $this->num_uf($dpp_inc_tax),
-            'profit_percent' => $this->num_uf($profit_percent),
-            'default_sell_price' => $this->num_uf($selling_price),
-            'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax),
-            'combo_variations' => $combo_variations,
-        ];
+        $foreign_cat = Category::where('id', 66)->first();
+
+        if($product->category_id == 66)
+        {
+            //create variations
+            $variation_data = [
+                'name' => 'DUMMY',
+                'product_id' => $product->id,
+                'sub_sku' => $sku,
+                'default_purchase_price' => $this->num_uf($purchase_price) * $foreign_cat->description,
+                'dpp_inc_tax' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
+                'profit_percent' => $this->num_uf($profit_percent),
+                'default_sell_price' => $this->num_uf($selling_price) * $foreign_cat->description,
+                'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
+                'combo_variations' => $combo_variations,
+                'foreign_p_price' => $this->num_uf($purchase_price),
+                'foreign_p_price_inc_tex' => $this->num_uf($dpp_inc_tax),
+                'foreign_s_price' => $this->num_uf($selling_price),
+                'foreign_s_price_inc_tex' => $this->num_uf($selling_price_inc_tax),
+                'currency_code' => $foreign_cat->short_code,
+                'currency_rate' => $foreign_cat->description,
+                'is_foreign' => 1,
+            ];
+
+            // Create a new price history entry
+            VariationPriceHistory::create([
+                'variation_id' => $product->id,
+                'old_price' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
+                'new_price' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
+                'updated_by' => auth()->id(),
+                'type' => 'product',
+            ]);
+        }
+        else{
+            //create variations
+            $variation_data = [
+                'name' => 'DUMMY',
+                'product_id' => $product->id,
+                'sub_sku' => $sku,
+                'default_purchase_price' => $this->num_uf($purchase_price),
+                'dpp_inc_tax' => $this->num_uf($dpp_inc_tax),
+                'profit_percent' => $this->num_uf($profit_percent),
+                'default_sell_price' => $this->num_uf($selling_price),
+                'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax),
+                'combo_variations' => $combo_variations,
+            ];
+
+            // Create a new price history entry
+            VariationPriceHistory::create([
+                'variation_id' => $product->id,
+                'old_price' => $this->num_uf($dpp_inc_tax),
+                'new_price' => $this->num_uf($selling_price_inc_tax),
+                'updated_by' => auth()->id(),
+                'type' => 'product',
+            ]);
+        }
+
         $variation = $product_variation->variations()->create($variation_data);
 
         Media::uploadMedia($product->business_id, $variation, request(), 'variation_images');
@@ -170,6 +217,14 @@ class ProductUtil extends Util
                     ];
                     $c++;
                     $images[] = 'variation_images_'.$key.'_'.$k;
+                            // Create a new price history entry
+                            VariationPriceHistory::create([
+                                'variation_id' => $product->id,
+                                'old_price' => $this->num_uf($v['default_purchase_price']),
+                                'new_price' => $this->num_uf($v['default_sell_price']),
+                                'updated_by' => auth()->id(),
+                                'type' => 'product',
+                            ]);
                 }
                 $variations = $product_variation->variations()->createMany($variation_data);
 
@@ -215,6 +270,16 @@ class ProductUtil extends Util
                         'default_sell_price' => $this->num_uf($v['default_sell_price']),
                         'sell_price_inc_tax' => $this->num_uf($v['sell_price_inc_tax']),
                     ];
+
+                        // Create a new price history entry
+                        VariationPriceHistory::create([
+                            'variation_id' => $product->id,
+                            'old_price' => $this->num_uf($v['default_purchase_price']),
+                            'new_price' => $this->num_uf($v['default_sell_price']),
+                            'updated_by' => auth()->id(),
+                            'type' => 'product',
+                        ]);
+
                     if (! empty($v['sub_sku'])) {
                         $data['sub_sku'] = $v['sub_sku'];
                     }
@@ -270,6 +335,15 @@ class ProductUtil extends Util
                     ];
                     $c++;
                     $media[] = 'variation_images_'.$key.'_'.$k;
+
+                    // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $product->id,
+                        'old_price' => $this->num_uf($v['default_purchase_price']),
+                        'new_price' => $this->num_uf($v['default_sell_price']),
+                        'updated_by' => auth()->id(),
+                        'type' => 'product',
+                    ]);
                 }
                 $new_variations = $product_variation->variations()->createMany($variation_data);
 

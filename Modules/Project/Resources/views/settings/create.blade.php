@@ -77,7 +77,7 @@
         <label>@lang('project::lang.members')</label>
     </div>
     <div class="col-md-3">
-        <label>Level, Color, Bacground Color</label>
+        <label>Custom Label Settings</label>
     </div>
 </div>
 <div class="row">
@@ -119,18 +119,17 @@
                     <div class="entry">
                         <div class="row">
                             <div class="col-md-4">
-                                <input class="form-control" type="text" name="level_name[]" placeholder="Level Name"
-                                    value="{{ $level['name'] }}">
+                                <input class="form-control" type="text" name="level_name[]" placeholder="Label Name" value="{{ $level['name'] }}">
                             </div>
-                            <div class="col-md-2"> 
-                                <input class="form-control" type="color" name="color[]" value="{{ $level['color'] }}">
+                            <div hidden class="col-md-2">
+                                <input class="form-control color-picker" type="text" name="color[]" value="{{ $level['color'] }}">
                             </div>
                             <div class="col-md-2">
-                                <input class="form-control" type="color" name="bg[]" value="{{ $level['bg'] }}">
+                                <input class="form-control bg-picker" type="text" name="bg[]" value="{{ $level['bg'] }}">
                             </div>
                             <!-- Add a remove button if needed -->
                             <div class="col-md-2">
-                                <button class="remove-entry form-control">-</button>
+                                <button class="remove-entry form-control btn btn-info">close -</button>
                             </div>
                         </div>
                     </div>
@@ -139,16 +138,16 @@
             <div class="entry">
                 <div class="row">
                     <div class="col-md-4">
-                        <input class="form-control" type="text" name="level_name[]" placeholder="Level Name">
+                        <input class="form-control" type="text" name="level_name[]" placeholder="Label Name">
+                    </div>
+                    <div hidden class="col-md-2">
+                        <input class="form-control color-picker" type="text" name="color[]" value="#000000">
                     </div>
                     <div class="col-md-2">
-                        <input class="form-control" type="color" name="color[]" value="#000000">
+                        <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
                     </div>
                     <div class="col-md-2">
-                        <input class="form-control" type="color" name="bg[]" value="#FFFFFF">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="add-entry form-control">+</button>
+                        <button class="add-entry form-control btn btn-info">Add +</button>
                     </div>
                 </div>
             </div>
