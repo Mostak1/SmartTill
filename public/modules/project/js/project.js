@@ -1013,7 +1013,13 @@ function initializeMyTaskDataTable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
+                { 
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        return data + ' hours';
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -1360,7 +1366,13 @@ function initializeProjectTaskDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
+                { 
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        return data + ' hours';
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -1417,7 +1429,13 @@ function initializeArchiveDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
+                { 
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        return data + ' hours';
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
@@ -1954,6 +1972,37 @@ $(document).on('submit', '#settings_form', function (event) {
 });
 $(document).ready(function () {
 
+    $('.c-close').on('click', function() {
+        $('#c-popup').hide();
+    });
+
+    $(document).on('click', function(event) {
+        if ($(event.target).is('#c-popup')) {
+            $('#c-popup').hide();
+        }
+    });
+
+    // Function to initialize Spectrum color picker
+    function initializeSpectrum(element) {
+        element.spectrum({
+            showPalette: true,
+            palette: [
+                ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+                ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+                ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+                ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+                ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+                ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+                ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+                ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
+            ],
+            showInput: true,
+            allowEmpty: true,
+            showInitial: true,
+            preferredFormat: "hex"
+        });
+    }
+
     // Attach click event handler to status cards
     $(document).on('click', '.project_stats', function () {
         // Get the status from the data attribute of the clicked card
@@ -1985,52 +2034,17 @@ $(document).ready(function () {
             </div>
             <!-- Add a remove button if needed -->
             <div class="col-md-2">
-                <button class="remove-entry form-control btn btn-info">close -</button>
+                <span class="remove-entry bg-white text-red"><i class="fas fa-minus-circle fa-2x"></i></span>
             </div>
         </div>
     </div>`;
         $('#entries').append(newEntry);
 
-        // Initialize Spectrum for the newly added color and background color input fields
-        $('.color-picker').spectrum({
-            showPalette: true,
-            palette: [
-                ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
-                ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
-                ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
-                ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
-                ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
-                ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
-                ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
-                ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
-            ],
-            showInput: true,
-            allowEmpty: true,
-            showInitial: true,
-            preferredFormat: "hex"
-        });
-        $('.bg-picker').spectrum({
-            showPalette: true,
-            palette: [
-                ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
-                ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
-                ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
-                ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
-                ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
-                ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
-                ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
-                ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
-            ],
-            showInput: true,
-            allowEmpty: true,
-            showInitial: true,
-            preferredFormat: "hex",
-            change: function (color) {
-                var bgColor = color.toHexString();
-                var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
-                $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
-            }
-        });
+        // Initialize Spectrum on the new color picker
+        initializeSpectrum($('.color-picker').last());
+
+        // Initialize Spectrum on the new color picker
+        initializeSpectrum($('.bg-picker').last());
     }
 
     // Remove entry
@@ -2092,14 +2106,14 @@ $(document).ready(function () {
     $(".color-picker").spectrum({
         showPalette: true,
         palette: [
-            ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
-            ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
-            ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
-            ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
-            ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
-            ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
-            ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
-            ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+            ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+            ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+            ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+            ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+            ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+            ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+            ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+            ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
         ],
         showInput: true,
         allowEmpty: true,
@@ -2111,14 +2125,14 @@ $(document).ready(function () {
     $(".bg-picker").spectrum({
         showPalette: true,
         palette: [
-            ['#000000', '#FFFFFF', '#FF0000', '#FFA500', '#FFFF00', '#008000'],
-            ['#0000FF', '#EE82EE', '#F00', '#0F0', '#00F', '#FF0'],
-            ['#F0F', '#0FF', '#FF6600', '#FFCC00', '#CCFF00', '#66FF00'],
-            ['#00FF00', '#00FF66', '#00FFCC', '#00FFFF', '#00CCFF', '#0066FF'],
-            ['#6600FF', '#CC00FF', '#FF00FF', '#FF00CC', '#FF0066', '#FF0033'],
-            ['#33FF00', '#33CCFF', '#3366FF', '#3300FF', '#660033', '#9966FF'],
-            ['#00FF99', '#00FF33', '#CCFF66', '#FFFF33', '#FFCC33', '#FF9933'],
-            ['#FF6633', '#FF3333', '#CC3333', '#993333', '#663333', '#333333']
+            ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+            ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+            ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+            ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+            ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+            ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+            ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+            ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
         ],
         showInput: true,
         allowEmpty: true,
@@ -2136,5 +2150,26 @@ $(document).ready(function () {
         var bgColor = $(this).spectrum('get').toHexString();
         var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
         $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+    });
+
+    // Add event listener to the dynamically added thumbnails
+    $(document).on('click', '.c-thumbnail', function() {
+        var src = $(this).attr('src');
+        var alt = $(this).attr('alt');
+        $('#c-popup-img').attr('src', src);
+        $('#c-caption').text(alt);
+        $('#c-popup').show();
+    });
+
+    // Add event listener to close button
+    $('.c-close').on('click', function() {
+        $('#c-popup').hide();
+    });
+
+    // Close the popup when clicking outside of the image
+    $(document).on('click', function(event) {
+        if ($(event.target).is('#c-popup')) {
+            $('#c-popup').hide();
+        }
     });
 });

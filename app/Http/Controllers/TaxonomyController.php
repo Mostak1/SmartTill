@@ -68,10 +68,13 @@ class TaxonomyController extends Controller
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
                         if ($row->id != 66 && $can_delete) {
-                                $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
                         }
-                        elseif (auth()->user()->can('superadmin')) {
-                                $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                        elseif(auth()->user()->can('superadmin') && $row->id != 66){
+                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                        }
+                        if ($row->id == 66 && $can_edit) {
+                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'getRate']) . '" class="btn btn-xs btn-info rate_category_button"><i class="fas fa-history"></i> ' . __('History') . '</button>';  
                         }
                         return $html;
                     }
@@ -381,5 +384,15 @@ class TaxonomyController extends Controller
             return view('taxonomy.ajax_index')
                 ->with(compact('module_category_data', 'category_type'));
         }
+    }
+
+    public function getRate()
+    {
+        $PriceHistory = VariationPriceHistory::where('variation_id', 66)
+            ->where('type', 'category')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('taxonomy.rate')->with(compact('PriceHistory'));
     }
 }

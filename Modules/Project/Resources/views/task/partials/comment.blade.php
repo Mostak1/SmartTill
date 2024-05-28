@@ -19,28 +19,24 @@
             @endif
             @if ($comment->media->count() > 0)
                 <br><br>
-
-                @foreach ($comment->media as $media)
-                    @php
-                        // Extract file extension from the media URL
-                        $fileExtension = pathinfo($media->display_url, PATHINFO_EXTENSION);
-                        // Define an array of allowed image extensions
-                        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
-                    @endphp
-
-                    @if (in_array(strtolower($fileExtension), $allowedExtensions))
-                        <!-- If media is an image, display the image -->
-                        <img style="width: 200px; height: auto; margin-bottom: 10px;" src="{{ $media->display_url }}" alt="{{ $media->display_name }}">
-                    @else
-                        <!-- If media is not an image, provide a download link -->
-                        <a href="{{ $media->display_url }}" download="{{ $media->display_name }}">
-                            <i class="fa fa-download"></i> {{ $media->display_name }}
-                        </a>
-                    @endif
-                    &nbsp;&nbsp;
-                @endforeach
+                <div class="c-gallery">
+                    @foreach ($comment->media as $media)
+                        @php
+                            $fileExtension = pathinfo($media->display_url, PATHINFO_EXTENSION);
+                            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+                        @endphp
+            
+                        @if (in_array(strtolower($fileExtension), $allowedExtensions))
+                            <img class="c-thumbnail" src="{{ $media->display_url }}" alt="{{ $media->display_name }}">
+                        @else
+                            <a href="{{ $media->display_url }}" download="{{ $media->display_name }}">
+                                <i class="fa fa-download"></i> {{ $media->display_name }}
+                            </a>
+                        @endif
+                        &nbsp;&nbsp;
+                    @endforeach
+                </div>
             @endif
         </div>
-        <!-- /.direct-chat-text -->
     </div>
 @endforeach

@@ -15,6 +15,8 @@ class VariationPriceHistory extends Model
         'new_price',
         'updated_by',
         'type',
+        'h_type',
+        'ref_no',
     ];
 
     public function variation()

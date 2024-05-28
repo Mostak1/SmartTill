@@ -82,6 +82,7 @@ class ProductUtil extends Util
                 'new_price' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
                 'updated_by' => auth()->id(),
                 'type' => 'product',
+                'h_type' => 'Opening'
             ]);
         }
         else{
@@ -105,6 +106,7 @@ class ProductUtil extends Util
                 'new_price' => $this->num_uf($selling_price_inc_tax),
                 'updated_by' => auth()->id(),
                 'type' => 'product',
+                'h_type' => 'Opening'
             ]);
         }
 
@@ -224,6 +226,7 @@ class ProductUtil extends Util
                                 'new_price' => $this->num_uf($v['default_sell_price']),
                                 'updated_by' => auth()->id(),
                                 'type' => 'product',
+                                'h_type' => 'Opening'
                             ]);
                 }
                 $variations = $product_variation->variations()->createMany($variation_data);
@@ -278,6 +281,7 @@ class ProductUtil extends Util
                             'new_price' => $this->num_uf($v['default_sell_price']),
                             'updated_by' => auth()->id(),
                             'type' => 'product',
+                            'h_type' => 'Edited',
                         ]);
 
                     if (! empty($v['sub_sku'])) {
@@ -343,6 +347,7 @@ class ProductUtil extends Util
                         'new_price' => $this->num_uf($v['default_sell_price']),
                         'updated_by' => auth()->id(),
                         'type' => 'product',
+                        'h_type' => 'Edited'
                     ]);
                 }
                 $new_variations = $product_variation->variations()->createMany($variation_data);
@@ -395,6 +400,7 @@ class ProductUtil extends Util
             if ($is_variation_delatable) {
                 Variation::where('id', $removed_variation_id)
                     ->delete();
+                VariationPriceHistory::where('variation_id', $removed_variation_id)->delete();
             } else {
                 throw new \Exception(__('lang_v1.purchase_already_exist'));
             }

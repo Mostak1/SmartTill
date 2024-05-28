@@ -30,10 +30,17 @@
           <p class="help-block">{!! $category_code_help_text !!}</p>
       </div>
       @endif
+      @if ($category->id == 66)
+      <div class="form-group">
+        {!! Form::label('description', __( 'lang_v1.description' ) . ':') !!}
+        {!! Form::number('description', $category->description, ['class' => 'form-control', 'placeholder' => __( 'lang_v1.description'), 'rows' => 3]); !!}
+      </div>
+      @else
       <div class="form-group">
         {!! Form::label('description', __( 'lang_v1.description' ) . ':') !!}
         {!! Form::textarea('description', $category->description, ['class' => 'form-control', 'placeholder' => __( 'lang_v1.description'), 'rows' => 3]); !!}
       </div>
+      @endif
       @if(!empty($parent_categories) && $enable_sub_category)
           <div class="form-group">
             <div class="checkbox">

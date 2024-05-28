@@ -76,9 +76,6 @@
     <div class="col-md-3">
         <label>@lang('project::lang.members')</label>
     </div>
-    <div class="col-md-3">
-        <label>Custom Label Settings</label>
-    </div>
 </div>
 <div class="row">
     <div class="col-md-3">
@@ -114,6 +111,14 @@
     </div>
     <div class="col-md-6">
         <div id="entries">
+            <div class="entry">
+                <div class="row">
+                    <div class="col-md-7"><label>Custom Label Settings</label></div>
+                    <div class="col-md-2">
+                        <button class="add-entry form-control btn btn-primary">Add +</button>
+                    </div>
+                </div>
+            </div>
             @if (isset($project->settings['levels']))
                 @foreach ($project->settings['levels'] as $level)
                     <div class="entry">
@@ -129,7 +134,7 @@
                             </div>
                             <!-- Add a remove button if needed -->
                             <div class="col-md-2">
-                                <button class="remove-entry form-control btn btn-info">close -</button>
+                                <span class="remove-entry bg-white text-red"><i class="fas fa-minus-circle fa-2x"></i></span>
                             </div>
                         </div>
                     </div>
@@ -145,9 +150,6 @@
                     </div>
                     <div class="col-md-2">
                         <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
-                    </div>
-                    <div class="col-md-2">
-                        <button class="add-entry form-control btn btn-info">Add +</button>
                     </div>
                 </div>
             </div>

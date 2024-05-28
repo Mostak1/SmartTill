@@ -857,6 +857,7 @@ class ProductController extends Controller
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
                         'type' => 'product',
+                        'h_type' => 'Edited'
                     ]);
                 }
 
@@ -893,6 +894,7 @@ class ProductController extends Controller
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
                         'type' => 'product',
+                        'h_type' => 'Edited'
                     ]);
                 }
 
@@ -956,6 +958,7 @@ class ProductController extends Controller
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
                         'type' => 'product',
+                        'h_type' => 'Edited'
                     ]);
                 }
 
@@ -1105,6 +1108,7 @@ class ProductController extends Controller
                         $product->delete();
                         event(new ProductsCreatedOrModified($product, 'deleted'));
                         DB::commit();
+                        VariationPriceHistory::where('variation_id' ,$id)->delete();
                     }
 
                     $output = ['success' => true,
@@ -2406,8 +2410,7 @@ class ProductController extends Controller
 
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
-                VariationLocationDetails::where('variation_id',
-                                            $id)
+                VariationLocationDetails::where('variation_id', $id)
                                     ->where('location_id', request()->input('location_id'))
                                     ->update(['qty_available' => $stock_history[0]['stock']]);
                 $stock_details['current_stock'] = $stock_history[0]['stock'];

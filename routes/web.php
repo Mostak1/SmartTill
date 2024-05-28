@@ -154,6 +154,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::resource('contacts', ContactController::class);
 
     Route::get('taxonomies-ajax-index-page', [TaxonomyController::class, 'getTaxonomyIndexPage']);
+    Route::get('rate-history', [TaxonomyController::class, 'getRate']);
     Route::resource('taxonomies', TaxonomyController::class);
 
     Route::resource('variation-templates', VariationTemplateController::class);

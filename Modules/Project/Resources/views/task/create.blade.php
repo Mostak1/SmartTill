@@ -114,7 +114,7 @@
                             <span class="input-group-addon">
                                 <i class="fas fa-clock"></i>
                             </span>
-                            {!! Form::text('custom_field_2', null, ['class' => 'form-control']); !!}
+                            {!! Form::number('custom_field_2', null, ['class' => 'form-control']); !!}
                         </div>
                     </div>
                 </div>

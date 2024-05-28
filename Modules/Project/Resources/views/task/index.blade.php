@@ -96,3 +96,9 @@
         </thead>
     </table>
 </div>
+
+<div id="c-popup" class="c-popup">
+    <span class="c-close">&times;</span>
+    <img class="c-popup-content" id="c-popup-img">
+    <div id="c-caption"></div>
+</div>

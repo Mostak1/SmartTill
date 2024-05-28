@@ -85,7 +85,7 @@
                     <div class="col-md-12">
                         <div class="form-group">
                             {!! Form::label('comment', __('project::lang.comment') . ':*') !!}
-                            {!! Form::textarea('comment', null, ['class' => 'form-control ', 'rows' => '3', 'required']); !!}
+                            {!! Form::textarea('comment', null, ['class' => 'form-control', 'rows' => '3', 'required', 'id' => 'comment']); !!}
                         </div>
                         <input type="hidden" name="project_task_id" value="{{$project_task->id}}">
                     </div>
