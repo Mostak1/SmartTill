@@ -941,7 +941,7 @@ class PurchaseController extends Controller
             }
 
             $business_id = request()->session()->get('user.business_id');
-            $q = Product::leftJoin(
+            $q = Product::with('brand')->leftJoin(
                 'variations',
                 'products.id',
                 '=',
@@ -958,6 +958,7 @@ class PurchaseController extends Controller
                 ->select(
                     'products.id as product_id',
                     'products.name',
+                    'products.brand_id',
                     'products.type',
                     // 'products.sku as sku',
                     'variations.id as variation_id',
@@ -976,9 +977,11 @@ class PurchaseController extends Controller
 
             $products_array = [];
             foreach ($products as $product) {
+                $brand = $product->brand_id ? $product->brand->name : null;
                 $products_array[$product->product_id]['name'] = $product->name;
                 $products_array[$product->product_id]['sku'] = $product->sub_sku;
                 $products_array[$product->product_id]['type'] = $product->type;
+                $products_array[$product->product_id]['brand'] = $brand;
                 $products_array[$product->product_id]['variations'][]
                 = [
                     'variation_id' => $product->variation_id,
@@ -994,7 +997,7 @@ class PurchaseController extends Controller
                 foreach ($products_array as $key => $value) {
                     if ($no_of_records > 1 && $value['type'] != 'single' && ! $only_variations) {
                         $result[] = ['id' => $i,
-                            'text' => $value['name'].' - '.$value['sku'],
+                            'text' => $value['name'].' - '.$value['sku'] . '</br>Brand: '. $value['brand'],
                             'variation_id' => 0,
                             'product_id' => $key,
                         ];
@@ -1007,7 +1010,7 @@ class PurchaseController extends Controller
                         }
                         $i++;
                         $result[] = ['id' => $i,
-                            'text' => $text.' - '.$variation['sub_sku'],
+                            'text' => $text.' - '.$variation['sub_sku']. '</br>Brand: '. $value['brand'],
                             'product_id' => $key,
                             'variation_id' => $variation['variation_id'],
                         ];

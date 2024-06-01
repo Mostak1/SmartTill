@@ -417,6 +417,16 @@ class SellController extends Controller
                                     '</a></li>';
                                 }
 
+
+                                // $sell_icon = Transaction::where('id', $row->id)->get();
+
+                                // $activities = Activity::forSubject($sell_icon)
+                                // ->with(['causer', 'subject'])
+                                // ->latest()
+                                // ->get();
+
+                                // $is_edit = $activities;
+           
                                 if (auth()->user()->can('sell.payments') ||
                                     auth()->user()->can('edit_sell_payment') ||
                                     auth()->user()->can('delete_sell_payment')) {

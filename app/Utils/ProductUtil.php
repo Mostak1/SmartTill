@@ -63,8 +63,8 @@ class ProductUtil extends Util
                 'default_purchase_price' => $this->num_uf($purchase_price) * $foreign_cat->description,
                 'dpp_inc_tax' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
                 'profit_percent' => $this->num_uf($profit_percent),
-                'default_sell_price' => $this->num_uf($selling_price) * $foreign_cat->description,
-                'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
+                'default_sell_price' => ceil(($this->num_uf($selling_price) * $foreign_cat->description)/10)*10,
+                'sell_price_inc_tax' => ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
                 'combo_variations' => $combo_variations,
                 'foreign_p_price' => $this->num_uf($purchase_price),
                 'foreign_p_price_inc_tex' => $this->num_uf($dpp_inc_tax),
@@ -1648,7 +1648,7 @@ class ProductUtil extends Util
      */
     public function filterProduct($business_id, $search_term, $location_id = null, $not_for_selling = null, $price_group_id = null, $product_types = [], $search_fields = [], $check_qty = false, $search_type = 'like')
     {
-        $query = Product::join('variations', 'products.id', '=', 'variations.product_id')
+        $query = Product::with('brand')->join('variations', 'products.id', '=', 'variations.product_id')
                 ->active()
                 ->whereNull('variations.deleted_at')
                 ->leftjoin('units as U', 'products.unit_id', '=', 'U.id')
@@ -1766,6 +1766,7 @@ class ProductUtil extends Util
                 'products.id as product_id',
                 'products.name',
                 'products.type',
+                'products.brand_id',
                 'products.enable_stock',
                 'variations.id as variation_id',
                 'variations.name as variation',

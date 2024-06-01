@@ -829,8 +829,8 @@ class ProductController extends Controller
                 $variation->default_purchase_price = $this->productUtil->num_uf($single_data['single_dpp']) * $foreign_cat->description;
                 $variation->dpp_inc_tax = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
                 $variation->profit_percent = $this->productUtil->num_uf($single_data['profit_percent']);
-                $variation->default_sell_price = $this->productUtil->num_uf($single_data['single_dsp']) * $foreign_cat->description;
-                $variation->sell_price_inc_tax = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description;
+                $variation->default_sell_price = ceil(($this->productUtil->num_uf($single_data['single_dsp']) * $foreign_cat->description)/10)*10;
+                $variation->sell_price_inc_tax = ceil(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description)/10)*10;
 
                 $variation->foreign_p_price = $this->productUtil->num_uf($single_data['single_dpp']);
                 $variation->foreign_p_price_inc_tex = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']);
@@ -842,7 +842,7 @@ class ProductController extends Controller
 
 
 
-                $variation_history = Variation::findOrFail($id);
+                $variation_history = Variation::find($single_data['single_variation_id']);
                 $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
                 $newPrice = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description;
                 $userId = auth()->id();
@@ -852,7 +852,7 @@ class ProductController extends Controller
                 {
                     // Create a new price history entry
                     VariationPriceHistory::create([
-                        'variation_id' => $variation->id,
+                        'variation_id' => $id,
                         'old_price' => $oldPrice,
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
@@ -879,7 +879,7 @@ class ProductController extends Controller
                 $variation->sell_price_inc_tax = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']);
 
 
-                $variation_history = Variation::findOrFail($id);
+                $variation_history = Variation::find($single_data['single_variation_id']);
                 $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']);
                 $newPrice = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']);
                 $userId = auth()->id();
@@ -889,7 +889,7 @@ class ProductController extends Controller
                 {
                     // Create a new price history entry
                     VariationPriceHistory::create([
-                        'variation_id' => $variation->id,
+                        'variation_id' => $id,
                         'old_price' => $oldPrice,
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
@@ -953,7 +953,7 @@ class ProductController extends Controller
 
                     // Create a new price history entry
                     VariationPriceHistory::create([
-                        'variation_id' => $variation->id,
+                        'variation_id' => $id,
                         'old_price' => $oldPrice,
                         'new_price' => $newPrice,
                         'updated_by' => $userId,
@@ -1660,6 +1660,12 @@ class ProductController extends Controller
      */
     public function view($id)
     {
+        // $variation = Variation::where('product_id', $product->id)->get();
+        $PriceHistory = VariationPriceHistory::where('variation_id', $id)
+        ->where('type', 'product')
+        ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+        ->get();
+
         if (! auth()->user()->can('product.view')) {
             abort(403, 'Unauthorized action.');
         }
@@ -1696,11 +1702,6 @@ class ProductController extends Controller
             }
 
             // Get variation price history
-            // $variation = Variation::where('product_id', $product->id)->get();
-            $PriceHistory = VariationPriceHistory::where('variation_id', $product->id)
-            ->where('type', 'product')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
-            ->get();
 
             return view('product.view-modal')->with(compact(
                 'product',
@@ -2392,6 +2393,11 @@ class ProductController extends Controller
 
     public function productStockHistory($id)
     {
+        $priceHistory = VariationPriceHistory::where('variation_id', $id)
+        ->where('type', 'product')
+        ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+        ->get();
+
         if (! auth()->user()->can('product.view')) {
             abort(403, 'Unauthorized action.');
         }
@@ -2403,10 +2409,6 @@ class ProductController extends Controller
             //for ajax call $id is variation id else it is product id
             $stock_details = $this->productUtil->getVariationStockDetails($business_id, $id, request()->input('location_id'));
             $stock_history = $this->productUtil->getVariationStockHistory($business_id, $id, request()->input('location_id'));
-            $PriceHistory = VariationPriceHistory::where('variation_id', $id)
-            ->where('type', 'product')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
-            ->get();
 
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
@@ -2415,9 +2417,8 @@ class ProductController extends Controller
                                     ->update(['qty_available' => $stock_history[0]['stock']]);
                 $stock_details['current_stock'] = $stock_history[0]['stock'];
             }
-
             return view('product.stock_history_details')
-                ->with(compact('stock_details', 'stock_history', 'PriceHistory'));
+                ->with(compact('stock_details', 'stock_history', 'priceHistory'));
         }
 
         $product = Product::where('business_id', $business_id)
@@ -2426,9 +2427,9 @@ class ProductController extends Controller
 
         //Get all business locations
         $business_locations = BusinessLocation::forDropdown($business_id);
-
+        // dd($priceHistory);
         return view('product.stock_history')
-                ->with(compact('product', 'business_locations'));
+                ->with(compact('product', 'business_locations', 'priceHistory'));
     }
 
     /**

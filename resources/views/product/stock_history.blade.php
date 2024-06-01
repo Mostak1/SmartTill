@@ -10,6 +10,9 @@
 
 <!-- Main content -->
 <section class="content">
+    {{-- @php
+    dd($priceHistory);
+    @endphp --}}
 <div class="row">
     <div class="col-md-12">
     @component('components.widget', ['title' => $product->name])
@@ -49,8 +52,45 @@
     @endcomponent
     </div>
 </div>
-
 </section>
+
+<div class="row box box-solid">
+	<div style="margin-left: 20px" class="col-md-12">
+		<h4 style="padding: 7px 0;" class="text-center"><b>Product Price History</b></h4>
+		<table class="table table-bordered table-striped box-body">
+			<thead>
+				<tr>
+					<th>Type</th>
+					<th>Purchase  Price</th>
+					<th>Selling Price</th>
+					<th>Updated By</th>
+					<th>Reference No.</th>
+					<th>Updated At</th>
+				</tr>
+			</thead>
+			<tbody>
+				@forelse($priceHistory as $history)
+					<tr>
+						<td>{{$history->h_type}}</td>
+						<td>
+							@can('view_purchase_price')
+								{{ number_format($history->old_price, 2) }}
+							@endcan
+						</td>
+						<td>{{ number_format($history->new_price, 2) }}</td>
+						<td>{{ \App\User::find($history->updated_by)->first_name }} {{ \App\User::find($history->updated_by)->last_name }}</td>
+						<td>{{$history->ref_no}}</td>
+						<td>{{ Carbon::parse($history->updated_at)->format('d-m-Y, h:i A') }}</td>
+					</tr>
+				@empty
+					<tr>
+						<td colspan="4">No price history available for this Product.</td>
+					</tr>
+				@endforelse
+			</tbody>
+		</table>
+	</div>
+</div>
 <!-- /.content -->
 @endsection
 

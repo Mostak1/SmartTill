@@ -857,6 +857,7 @@ $(document).ready(function() {
                 );
                 product_sell_report.ajax.reload();
                 product_sell_grouped_report.ajax.reload();
+                product_sell_grouped_report_single.ajax.reload();
                 product_sell_report_with_purchase_table.ajax.reload();
                 $('.nav-tabs li.active').find('a[data-toggle="tab"]').trigger('shown.bs.tab');
             }
@@ -865,6 +866,7 @@ $(document).ready(function() {
             $('#product_sr_date_filter').val('');
             product_sell_report.ajax.reload();
             product_sell_grouped_report.ajax.reload();
+            product_sell_grouped_report_single.ajax.reload();
             product_sell_report_with_purchase_table.ajax.reload();
             $('.nav-tabs li.active').find('a[data-toggle="tab"]').trigger('shown.bs.tab');
         });
@@ -876,6 +878,7 @@ $(document).ready(function() {
             product_sell_report.ajax.reload();
             product_sell_report_with_purchase_table.ajax.reload();
             product_sell_grouped_report.ajax.reload();
+            product_sell_grouped_report_single.ajax.reload();
             $('.nav-tabs li.active').find('a[data-toggle="tab"]').trigger('shown.bs.tab');
         });
 
@@ -1043,7 +1046,7 @@ $(document).ready(function() {
         },
     });
 
-    product_sell_grouped_report = $('table#product_sell_grouped_single_report_table').DataTable({
+    product_sell_grouped_report_single = $('table#product_sell_grouped_single_report_table').DataTable({
         processing: true,
         serverSide: true,
         aaSorting: [[1, 'desc']],
@@ -1079,20 +1082,20 @@ $(document).ready(function() {
         columns: [
             { data: 'product_name', name: 'p.name' },
             { data: 'sub_sku', name: 'v.sub_sku' },
-            { data: 'category_name', name: 'category_name' },
-            { data: 'brand_name', name: 'brand_name' },
+            { data: 'category_name', name: 'cat.name' },
+            { data: 'brand_name', name: 'b.name' },
             { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
             { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
             { data: 'subtotal', name: 'subtotal', searchable: false },
         ],
         fnDrawCallback: function(oSettings) {
-            $('#footer_grouped_subtotal').text(
-                sum_table_col($('#product_sell_grouped_report_table'), 'row_subtotal')
-            );
-            $('#footer_total_grouped_sold').html(
-                __sum_stock($('#product_sell_grouped_report_table'), 'sell_qty')
-            );
-            __currency_convert_recursively($('#product_sell_grouped_report_table'));
+            // $('#footer_grouped_subtotal').text(
+            //     sum_table_col($('#product_sell_grouped_report_table'), 'row_subtotal')
+            // );
+            // $('#footer_total_grouped_sold').html(
+            //     __sum_stock($('#product_sell_grouped_report_table'), 'sell_qty')
+            // );
+            // __currency_convert_recursively($('#product_sell_grouped_report_table'));
         },
     });
 
@@ -1101,6 +1104,7 @@ $(document).ready(function() {
     ).change(function() {
         product_sell_report.ajax.reload();
         product_sell_grouped_report.ajax.reload();
+        product_sell_grouped_report_single.ajax.reload();
         product_sell_report_with_purchase_table.ajax.reload();
     });
 

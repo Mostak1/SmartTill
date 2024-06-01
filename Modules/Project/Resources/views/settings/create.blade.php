@@ -72,51 +72,38 @@
 <div class="row">
     <div class="col-md-3">
         <label>@lang('user.permissions')</label>
+        <div>
+            <label for="members_crud_task">@lang('project::lang.add_a_task')</label>
+        </div>
+        <div>
+            <label for="members_crud_timelog">@lang('project::lang.add_time_log')</label>
+        </div>
+        <div>
+            <label for="members_crud_note">@lang('project::lang.add_notes_docs')</label>
+        </div>
     </div>
     <div class="col-md-3">
         <label>@lang('project::lang.members')</label>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_task">
-            @lang('project::lang.add_a_task')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_task" name="members_crud_task" value="1"
-            @if (isset($project->settings['members_crud_task']) && $project->settings['members_crud_task']) checked @endif>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_timelog">
-            @lang('project::lang.add_time_log')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_timelog" name="members_crud_timelog" value="1"
-            @if (isset($project->settings['members_crud_timelog']) && $project->settings['members_crud_timelog']) checked @endif>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_note">
-            @lang('project::lang.add_notes_docs')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_note" name="members_crud_note" value="1"
-            @if (isset($project->settings['members_crud_note']) && $project->settings['members_crud_note']) checked @endif>
+        <div>
+            <input type="checkbox" id="members_crud_task" name="members_crud_task" value="1"
+                @if (isset($project->settings['members_crud_task']) && $project->settings['members_crud_task']) checked @endif>
+        </div>
+        <div>
+            <input type="checkbox" id="members_crud_timelog" name="members_crud_timelog" value="1"
+                @if (isset($project->settings['members_crud_timelog']) && $project->settings['members_crud_timelog']) checked @endif>
+        </div>
+        <div>
+            <input type="checkbox" id="members_crud_note" name="members_crud_note" value="1"
+                @if (isset($project->settings['members_crud_note']) && $project->settings['members_crud_note']) checked @endif>
+        </div>
     </div>
     <div class="col-md-6">
+        <label>Custom Label Settings</label>
         <div id="entries">
-            <div class="entry">
-                <div class="row">
-                    <div class="col-md-7"><label>Custom Label Settings</label></div>
-                    <div class="col-md-2">
-                        <button class="add-entry form-control btn btn-primary">Add +</button>
-                    </div>
+            <div class="row">
+                <div class="col-md-6"></div>
+                <div class="col-md-2">
+                    <button type="button" class="add-entry btn btn-primary btn-sm">Add +</button>
                 </div>
             </div>
             @if (isset($project->settings['levels']))
@@ -129,12 +116,11 @@
                             <div hidden class="col-md-2">
                                 <input class="form-control color-picker" type="text" name="color[]" value="{{ $level['color'] }}">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-2" style="padding-right: 0; width: 12%;">
                                 <input class="form-control bg-picker" type="text" name="bg[]" value="{{ $level['bg'] }}">
                             </div>
-                            <!-- Add a remove button if needed -->
-                            <div class="col-md-2">
-                                <span class="remove-entry bg-white text-red"><i class="fas fa-minus-circle fa-2x"></i></span>
+                            <div class="col-md-2" style="padding-left: 0;">
+                                <span style="font-size: 20px;" class="remove-entry bg-white text-red"><i class="fas fa-minus-circle"></i></span>
                             </div>
                         </div>
                     </div>
@@ -148,7 +134,7 @@
                     <div hidden class="col-md-2">
                         <input class="form-control color-picker" type="text" name="color[]" value="#000000">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-2" style="padding-right: 0; width: 12%;">
                         <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
                     </div>
                 </div>
@@ -276,7 +262,8 @@
 <div class="row">
     <div style="margin-top: 40px" class="col-md-12 text-center">
         <!-- Add an id attribute to the update button -->
-        <button id="update-button" style="padding:10px 20px; font-size: 20px" type="button" class="btn btn-primary">
+        <button id="update-button" style="padding:10px 20px; font-size: 20px" type="button"
+            class="btn btn-primary">
             @lang('messages.update')
         </button>
     </div>

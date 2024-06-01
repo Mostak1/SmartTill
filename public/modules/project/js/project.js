@@ -1013,11 +1013,15 @@ function initializeMyTaskDataTable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { 
+                {
                     data: 'custom_field_2', 
                     name: 'custom_field_2',
                     render: function(data, type, row) {
-                        return data + ' hours';
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
                     }
                 },
                 { data: 'start_date', name: 'start_date' },
@@ -1366,11 +1370,15 @@ function initializeProjectTaskDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { 
+                {
                     data: 'custom_field_2', 
                     name: 'custom_field_2',
                     render: function(data, type, row) {
-                        return data + ' hours';
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
                     }
                 },
                 { data: 'start_date', name: 'start_date' },
@@ -1429,11 +1437,15 @@ function initializeArchiveDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
-                { 
+                {
                     data: 'custom_field_2', 
                     name: 'custom_field_2',
                     render: function(data, type, row) {
-                        return data + ' hours';
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
                     }
                 },
                 { data: 'start_date', name: 'start_date' },
@@ -2029,12 +2041,11 @@ $(document).ready(function () {
             <div hidden class="col-md-2">
                 <input class="form-control color-picker" type="text" name="color[]" value="#000000">
             </div>
-            <div class="col-md-2">
+            <div style="padding-right: 0px; width: 12%;" class="col-md-2">
                 <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
             </div>
-            <!-- Add a remove button if needed -->
-            <div class="col-md-2">
-                <span class="remove-entry bg-white text-red"><i class="fas fa-minus-circle fa-2x"></i></span>
+            <div style="padding-left: 0px;" class="col-md-2">
+                <span style="font-size: 20px" class="remove-entry bg-white text-red"><i class="fas fa-minus-circle"></i></span>
             </div>
         </div>
     </div>`;

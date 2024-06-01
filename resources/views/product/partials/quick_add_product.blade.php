@@ -58,7 +58,7 @@
         <div class="col-sm-4">
           <div class="form-group">
             {!! Form::label('category_id', __('product.category') . ':') !!}
-              {!! Form::select('category_id', $categories, null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2']); !!}
+            {!! Form::select('category_id', $categories, null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'id' => 'category_select']) !!}
           </div>
         </div>
 
@@ -308,4 +308,20 @@
       }
     });
   });
+
+  $(document).ready(function() {
+
+        // Event listener for category select change
+        $('#category_select').on('change', function() {
+            // Get the selected category ID
+            var selectedCategoryId = $(this).val();
+
+            // Update the label based on the selected category ID
+            if (selectedCategoryId == 66) {
+                $('#single_dpp_label').html("{{ trans('product.exc_of_tax') }}<span style='color: red;'> USD</span>:*");
+            } else {
+                $('#single_dpp_label').html("{{ trans('product.exc_of_tax') }}:*");
+            }
+        });
+    });
 </script>

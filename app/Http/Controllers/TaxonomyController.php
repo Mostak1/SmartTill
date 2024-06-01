@@ -64,7 +64,7 @@ class TaxonomyController extends Controller
                         if ($row->id != 66 && $can_edit) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
-                        elseif (auth()->user()->can('superadmin')) {
+                        elseif (auth()->user()->can('category.usa')) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
                         if ($row->id != 66 && $can_delete) {
@@ -73,7 +73,7 @@ class TaxonomyController extends Controller
                         elseif(auth()->user()->can('superadmin') && $row->id != 66){
                             $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
                         }
-                        if ($row->id == 66 && $can_edit) {
+                        if ($row->id == 66 && auth()->user()->can('category.history')) {
                             $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'getRate']) . '" class="btn btn-xs btn-info rate_category_button"><i class="fas fa-history"></i> ' . __('History') . '</button>';  
                         }
                         return $html;

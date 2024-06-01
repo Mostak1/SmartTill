@@ -78,6 +78,8 @@ class PermissionsTableSeeder extends Seeder
             ['name' => 'category.update'],
             ['name' => 'category.delete'],
             ['name' => 'expense.access'],
+            ['name' => 'category.usa'],
+            ['name' => 'category.history'],
 
             ['name' => 'access_all_locations'],
             ['name' => 'dashboard.data'],
