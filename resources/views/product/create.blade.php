@@ -87,7 +87,7 @@
         <div class="col-sm-4 @if(!session('business.enable_category')) hide @endif">
             <div class="form-group">
                 {!! Form::label('category_id', __('product.category') . ':') !!}
-                {!! Form::select('category_id', $categories, !empty($duplicate_product->category_id) ? $duplicate_product->category_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2']); !!}
+                {!! Form::select('category_id', $categories, !empty($duplicate_product->category_id) ? $duplicate_product->category_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'id' => 'category_id']); !!}
             </div>
         </div>
 
@@ -392,5 +392,22 @@
             // }
         });
     });
+
+    $(document).ready(function() {
+    $('#category_id').change(function() {
+        var selectedCategory = $(this).val();
+        var usCategoryId = 66; // Replace with the actual category ID for 'US Product'
+
+        if (selectedCategory == usCategoryId) {
+            $('#single_dpp_label').html('{{ trans("product.exc_of_tax") }} <span style="color: red">USD</span>:*');
+        } else {
+            $('#single_dpp_label').text('{{ trans("product.exc_of_tax") }} :*');
+        }
+    });
+
+    // Trigger change event on page load to set the correct label if a category is already selected
+    $('#category_id').trigger('change');
+});
+
 </script>
 @endsection

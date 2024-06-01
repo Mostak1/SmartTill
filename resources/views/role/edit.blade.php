@@ -1316,6 +1316,22 @@
               </label>
             </div>
           </div>
+          <div class="col-md-12">
+            <div class="checkbox">
+              <label>
+                {!! Form::checkbox('permissions[]', 'category.usa', in_array('category.usa', $role_permissions), 
+                [ 'class' => 'input-icheck']); !!} {{ __( 'role.category.usa' ) }}
+              </label>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="checkbox">
+              <label>
+                {!! Form::checkbox('permissions[]', 'category.history', in_array('category.history', $role_permissions), 
+                [ 'class' => 'input-icheck']); !!} {{ __( 'role.category.history' ) }}
+              </label>
+            </div>
+          </div>
         </div>
         </div>
         <hr>

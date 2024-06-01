@@ -72,42 +72,74 @@
 <div class="row">
     <div class="col-md-3">
         <label>@lang('user.permissions')</label>
+        <div>
+            <label for="members_crud_task">@lang('project::lang.add_a_task')</label>
+        </div>
+        <div>
+            <label for="members_crud_timelog">@lang('project::lang.add_time_log')</label>
+        </div>
+        <div>
+            <label for="members_crud_note">@lang('project::lang.add_notes_docs')</label>
+        </div>
     </div>
     <div class="col-md-3">
         <label>@lang('project::lang.members')</label>
+        <div>
+            <input type="checkbox" id="members_crud_task" name="members_crud_task" value="1"
+                @if (isset($project->settings['members_crud_task']) && $project->settings['members_crud_task']) checked @endif>
+        </div>
+        <div>
+            <input type="checkbox" id="members_crud_timelog" name="members_crud_timelog" value="1"
+                @if (isset($project->settings['members_crud_timelog']) && $project->settings['members_crud_timelog']) checked @endif>
+        </div>
+        <div>
+            <input type="checkbox" id="members_crud_note" name="members_crud_note" value="1"
+                @if (isset($project->settings['members_crud_note']) && $project->settings['members_crud_note']) checked @endif>
+        </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_task">
-            @lang('project::lang.add_a_task')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_task" name="members_crud_task" value="1"
-            @if (isset($project->settings['members_crud_task']) && $project->settings['members_crud_task']) checked @endif>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_timelog">
-            @lang('project::lang.add_time_log')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_timelog" name="members_crud_timelog" value="1"
-            @if (isset($project->settings['members_crud_timelog']) && $project->settings['members_crud_timelog']) checked @endif>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-3">
-        <label for="members_crud_note">
-            @lang('project::lang.add_notes_docs')
-        </label>
-    </div>
-    <div class="col-md-3">
-        <input type="checkbox" id="members_crud_note" name="members_crud_note" value="1"
-            @if (isset($project->settings['members_crud_note']) && $project->settings['members_crud_note']) checked @endif>
+    <div class="col-md-6">
+        <label>Custom Label Settings</label>
+        <div id="entries">
+            <div class="row">
+                <div class="col-md-6"></div>
+                <div class="col-md-2">
+                    <button type="button" class="add-entry btn btn-primary btn-sm">Add +</button>
+                </div>
+            </div>
+            @if (isset($project->settings['levels']))
+                @foreach ($project->settings['levels'] as $level)
+                    <div class="entry">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input class="form-control" type="text" name="level_name[]" placeholder="Label Name" value="{{ $level['name'] }}">
+                            </div>
+                            <div hidden class="col-md-2">
+                                <input class="form-control color-picker" type="text" name="color[]" value="{{ $level['color'] }}">
+                            </div>
+                            <div class="col-md-2" style="padding-right: 0; width: 12%;">
+                                <input class="form-control bg-picker" type="text" name="bg[]" value="{{ $level['bg'] }}">
+                            </div>
+                            <div class="col-md-2" style="padding-left: 0;">
+                                <span style="font-size: 20px;" class="remove-entry bg-white text-red"><i class="fas fa-minus-circle"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @endif
+            <div class="entry">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input class="form-control" type="text" name="level_name[]" placeholder="Label Name">
+                    </div>
+                    <div hidden class="col-md-2">
+                        <input class="form-control color-picker" type="text" name="color[]" value="#000000">
+                    </div>
+                    <div class="col-md-2" style="padding-right: 0; width: 12%;">
+                        <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <div class=""><br>
@@ -132,14 +164,18 @@
                 : __('project::lang.not_started');
         @endphp
         <div class="col-md-3">
-            {!! Form::label('not_started',__('project::lang.not_started'). ':') !!}
+            {!! Form::label('not_started', __('project::lang.not_started') . ':') !!}
         </div>
         <div class="col-md-3">
             <input type="checkbox" id="not_started_id" name="not_started_id" value="1"
                 @if (isset($project->settings['not_started']['id']) && $project->settings['not_started']['id']) checked @endif>
         </div>
         <div class="col-md-3">
-            {!! Form::text('not_started', $not_started, ['class' => 'form-control', 'placeholder' => 'Type To Rename','id'=>'not_started']) !!}
+            {!! Form::text('not_started', $not_started, [
+                'class' => 'form-control',
+                'placeholder' => 'Type To Rename',
+                'id' => 'not_started',
+            ]) !!}
         </div>
     </div>
     <div class="row">
@@ -149,14 +185,18 @@
                 : __('project::lang.in_progress');
         @endphp
         <div class="col-md-3">
-            {!! Form::label('in_progress', __('project::lang.in_progress') .':') !!}
+            {!! Form::label('in_progress', __('project::lang.in_progress') . ':') !!}
         </div>
         <div class="col-md-3">
             <input type="checkbox" id="in_progress_id" name="in_progress_id" value="1"
                 @if (isset($project->settings['in_progress']['id']) && $project->settings['in_progress']['id']) checked @endif>
         </div>
         <div class="col-md-3">
-            {!! Form::text('in_progress', $not_started, ['class' => 'form-control', 'placeholder' => 'Type To Rename', 'id'=>'in_progress']) !!}
+            {!! Form::text('in_progress', $not_started, [
+                'class' => 'form-control',
+                'placeholder' => 'Type To Rename',
+                'id' => 'in_progress',
+            ]) !!}
         </div>
     </div>
     <div class="row">
@@ -166,14 +206,18 @@
                 : __('project::lang.on_hold');
         @endphp
         <div class="col-md-3">
-            {!! Form::label('on_hold', __('project::lang.on_hold') .':') !!}
+            {!! Form::label('on_hold', __('project::lang.on_hold') . ':') !!}
         </div>
         <div class="col-md-3">
             <input type="checkbox" id="on_hold_id" name="on_hold_id" value="1"
                 @if (isset($project->settings['on_hold']['id']) && $project->settings['on_hold']['id']) checked @endif>
         </div>
         <div class="col-md-3">
-            {!! Form::text('on_hold', $not_started, ['class' => 'form-control','id'=>'on_hold', 'placeholder' => 'Type To Rename']) !!}
+            {!! Form::text('on_hold', $not_started, [
+                'class' => 'form-control',
+                'id' => 'on_hold',
+                'placeholder' => 'Type To Rename',
+            ]) !!}
         </div>
     </div>
     <div class="row">
@@ -183,14 +227,18 @@
                 : __('project::lang.cancelled');
         @endphp
         <div class="col-md-3">
-            {!! Form::label('cancelled',__('project::lang.cancelled') .':') !!}
+            {!! Form::label('cancelled', __('project::lang.cancelled') . ':') !!}
         </div>
         <div class="col-md-3">
             <input type="checkbox" id="cancelled_id" name="cancelled_id" value="1"
                 @if (isset($project->settings['cancelled']['id']) && $project->settings['cancelled']['id']) checked @endif>
         </div>
         <div class="col-md-3">
-            {!! Form::text('cancelled', $not_started, ['class' => 'form-control','id'=>'cancelled', 'placeholder' => 'Type To Rename']) !!}
+            {!! Form::text('cancelled', $not_started, [
+                'class' => 'form-control',
+                'id' => 'cancelled',
+                'placeholder' => 'Type To Rename',
+            ]) !!}
         </div>
     </div>
     <div class="row">
@@ -200,7 +248,7 @@
                 : __('project::lang.completed');
         @endphp
         <div class="col-md-3">
-            {!! Form::label('completed',__('project::lang.completed') .':') !!}
+            {!! Form::label('completed', __('project::lang.completed') . ':') !!}
         </div>
         <div class="col-md-3">
             <input type="checkbox" id="completed_id" name="completed_id" value="1"
@@ -212,8 +260,10 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-md-12">
-        <button type="submit" class="btn btn-primary btn-sm pull-right">
+    <div style="margin-top: 40px" class="col-md-12 text-center">
+        <!-- Add an id attribute to the update button -->
+        <button id="update-button" style="padding:10px 20px; font-size: 20px" type="button"
+            class="btn btn-primary">
             @lang('messages.update')
         </button>
     </div>

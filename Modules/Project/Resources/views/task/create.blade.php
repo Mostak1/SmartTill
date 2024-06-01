@@ -18,7 +18,8 @@
                 <div class="col-md-12">
                     <div class="form-group">
                         {!! Form::label('subject', __('project::lang.subject') . ':*') !!}
-                        {!! Form::text('subject', null, ['class' => 'form-control', 'required']) !!}
+                        {!! Form::text('subject', null, ['class' => 'form-control', 'required', 'maxlength' => '181']) !!}
+                        <small id="subject-limit-message" style="display: none; color: red;">Maximum 180 characters allowed</small>
                     </div>
                 </div>
             </div>
@@ -96,20 +97,28 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="form-group">
-                        {!! Form::label('custom_field_1', __('project::lang.task_custom_field_1') . ':') !!}
-                        {!! Form::text('custom_field_1', null, ['class' => 'form-control']) !!}
-                    </div>
+                    {!! Form::label('custom_field_1', __('Label') . ':') !!}
+                    <select name="custom_field_1" class="form-control">
+                        <option value="">Select Label</option>
+                        @foreach($levels as $level)
+                        <option class="select2" style="color: {{ $level['color'] }}; background-color: {{ $level['bg'] }};" value="{{ '<span title="Label" style="color: ' . $level['color'] . '; background-color: ' . $level['bg'] . '; border-radius: 10%; padding: 0px 4px 2px 4px; font-weight: bold;"><small>' . $level['name'] . '</small></span>' }}">{{ $level['name'] }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-4">
                     <div class="form-group">
-                        {!! Form::label('custom_field_2', __('project::lang.task_custom_field_2') . ':') !!}
-                        {!! Form::text('custom_field_2', null, ['class' => 'form-control']) !!}
+                        {!! Form::label('custom_field_2', __('Estimated Hours') . ':') !!}
+                        <div class="input-group">
+                            <span class="input-group-addon">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            {!! Form::number('custom_field_2', null, ['class' => 'form-control']); !!}
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                {{-- <div class="col-md-4">
                     <div class="form-group">
                         {!! Form::label('custom_field_3', __('project::lang.task_custom_field_3') . ':') !!}
                         {!! Form::text('custom_field_3', null, ['class' => 'form-control']) !!}
@@ -120,7 +129,7 @@
                         {!! Form::label('custom_field_4', __('project::lang.task_custom_field_4') . ':') !!}
                         {!! Form::text('custom_field_4', null, ['class' => 'form-control']) !!}
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
         <div class="modal-footer">

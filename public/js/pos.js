@@ -287,6 +287,9 @@ $(document).ready(function() {
                     var qty_available = __currency_trans_from_en(item.qty_available, false, false, __currency_precision, true);
                     string += ' - ' + qty_available + item.unit;
                 }
+                if(item.brand_id){
+                    string += '</br>Brand: ' + item.brand.name;
+                }
                 string += '</div>';
 
                 return $('<li>')

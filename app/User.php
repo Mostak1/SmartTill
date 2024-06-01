@@ -328,4 +328,10 @@ class User extends Authenticatable
 
         return $img_src;
     }
+
+    public function priceUpdates()
+    {
+        return $this->hasMany(VariationPriceHistory::class, 'updated_by');
+    }
+
 }

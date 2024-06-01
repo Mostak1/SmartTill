@@ -99,7 +99,7 @@
                             <span class="input-group-addon">
                                 <i class="fas fa-clock"></i>
                             </span>
-                            {!! Form::text('estimated_hours', $todo->estimated_hours, ['class' => 'form-control']) !!}
+                            {!! Form::number('estimated_hours', $todo->estimated_hours, ['class' => 'form-control']) !!}
                         </div>
                     </div>
                 </div>

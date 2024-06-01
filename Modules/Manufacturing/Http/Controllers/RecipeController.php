@@ -303,6 +303,31 @@ class RecipeController extends Controller
         return view('manufacturing::recipe.show', compact('recipe', 'ingredients'));
     }
 
+    public function recipeShow($id)
+{
+    $business_id = request()->session()->get('user.business_id');
+    if (!(auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'manufacturing_module')) || !auth()->user()->can('manufacturing.access_recipe')) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    try {
+        $recipe = MfgRecipe::with([
+            'variation', 
+            'variation.product', 
+            'variation.product_variation', 
+            'variation.media', 
+            'sub_unit', 
+            'variation.product.unit'
+        ])->findOrFail($id);
+
+        $ingredients = $this->mfgUtil->getIngredientDetails($recipe, $business_id);
+
+        return view('product.recipe-show', compact('recipe', 'ingredients'));
+    } catch (\Exception $e) {
+        \Log::error("Error in recipeShow: " . $e->getMessage());
+        abort(500, 'Internal Server Error');
+    }
+}
     /**
      * Get ingredients row while adding recipe.
      *

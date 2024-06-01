@@ -30,13 +30,35 @@
 									    	</a>
 									    </li>
 									@endcan
-								    @can('project.delete_project')
-									    <li>
-									    	<a data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'destroy'], [$project->id])}}" class="cursor-pointer delete_a_project">
-									    		<i class="fas fa-trash"></i>
-									    		@lang('messages.delete')
-									    	</a>
-									    </li>
+								    @can('project.archive_project')
+									@if(empty($project->deleted_at))
+										<li>
+											<a data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'destroy'], [$project->id])}}" class="cursor-pointer delete_a_project">
+												<i class="fas fa-file-archive"></i>
+												Archive
+											</a>
+										</li>
+									@endif
+									@endcan
+									@can('project.delete_project')
+									@if(isset($project->deleted_at))
+										<li>
+											<a data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'restore'], [$project->id])}}" class="cursor-pointer restore_a_project">
+												<i class="fas fa-trash-restore"></i>
+												Restore
+											</a>
+										</li>
+									@endif
+									@endcan
+									@can('project.delete_project')
+									@if(isset($project->deleted_at))
+										<li>
+											<a data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'permanentDelete'], [$project->id])}}" class="cursor-pointer permanentDelete_a_project">
+												<i class="fas fa-trash"></i>
+												@lang('messages.delete')
+											</a>
+										</li>
+									@endif
 									@endcan
 									<!-- more menus -->
 									<li class="divider"></li>
@@ -112,7 +134,17 @@
 								<br>
 								<i class="fas fa-check-circle"></i>
 								@lang('sale.status'):
-								@lang('project::lang.'.$project->status)
+								<span style="padding: 2px 8px; border-radius: 5px;" class="@if($project->status == 'not_started')
+									bg-red
+								@elseif($project->status == 'on_hold')
+									bg-yellow
+								@elseif($project->status == 'cancelled')
+									bg-red
+								@elseif($project->status == 'in_progress')
+									bg-aqua
+								@elseif($project->status == 'completed')
+									bg-green
+								@endif">@lang('project::lang.'.$project->status)</span>
 								<br>
 								@if(isset($project->start_date))
 								<i class="fas fa-calendar-check"></i>

@@ -41,23 +41,32 @@ $(document).on('click', 'button.add_new_project', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('#project_model').html(result).modal('show');
+            $('#project_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
             $('#project_model').find('.select2').select2();
         },
     });
 });
 
+
 // project - edit form model
 $(document).on('click', '.edit_a_project', function () {
     var url = $(this).data('href');
+    
     $.ajax({
         method: 'GET',
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('#project_model').html(result).modal('show');
+            $('#project_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
+    
 });
 
 //initialize ck editor, date picker and form validation when model is opened
@@ -160,6 +169,9 @@ $(document).on('submit', 'form#project_form', function (e) {
                     } else if (project_view == 'list_view') {
                         location.reload();
                     }
+                    else{
+                        location.reload();
+                    }
                 } else {
                     toastr.error(result.msg);
                 }
@@ -173,6 +185,7 @@ $(document).on('submit', 'form#project_form', function (e) {
 $(document).on('click', '.delete_a_project', function (e) {
     e.preventDefault();
     var url = $(this).data('href');
+    var redirect = $(this).data('redirect');
     swal({
         title: LANG.sure,
         icon: 'warning',
@@ -193,6 +206,88 @@ $(document).on('click', '.delete_a_project', function (e) {
                         if (project_view == 'kanban') {
                             initializeProjectKanbanBoard();
                         } else if (project_view == 'list_view') {
+                            location.reload();
+                        } else if (project_view == 'archive') {
+                            location.reload();
+                        }
+                        else {
+                            window.location.href = redirect;
+                        }
+                    } else {
+                        toastr.error(result.msg);
+                    }
+                },
+            });
+        }
+    });
+});
+
+//project restore
+$(document).on('click', '.restore_a_project', function (e) {
+    e.preventDefault();
+    var url = $(this).data('href');
+    swal({
+        title: LANG.sure,
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                method: 'GET',
+                dataType: 'json',
+                url: url,
+                success: function (result) {
+                    if (result.success) {
+                        toastr.success(result.msg);
+
+                        var project_view = urlSearchParam('project_view');
+
+                        if (project_view == 'kanban') {
+                            initializeProjectKanbanBoard();
+                        } else if (project_view == 'list_view') {
+                            location.reload();
+                        }
+                        else if (project_view == 'archive') {
+                            location.reload();
+                        }
+                    } else {
+                        toastr.error(result.msg);
+                    }
+                },
+            });
+        }
+    });
+});
+
+
+//project restore
+$(document).on('click', '.permanentDelete_a_project', function (e) {
+    e.preventDefault();
+    var url = $(this).data('href');
+    swal({
+        title: LANG.sure,
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                method: 'GET',
+                dataType: 'json',
+                url: url,
+                success: function (result) {
+                    if (result.success) {
+                        toastr.success(result.msg);
+
+                        var project_view = urlSearchParam('project_view');
+
+                        if (project_view == 'kanban') {
+                            initializeProjectKanbanBoard();
+                        } else if (project_view == 'list_view') {
+                            location.reload();
+                        }
+                        else if (project_view == 'archive') {
                             location.reload();
                         }
                     } else {
@@ -216,7 +311,10 @@ $(document).on('click', '.task_btn', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -229,7 +327,10 @@ $(document).on('click', '.edit_a_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -286,7 +387,10 @@ $(document).on('click', '.edit_a_task_from_view_task', function () {
         url: url,
         async: false,
         success: function (result) {
-            $('.project_task_model').html(result).modal('show');
+            $('.project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -468,7 +572,10 @@ $(document).on('click', '.change_status_of_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.view_modal').html(result).modal('show');
+            $('.view_modal').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -557,7 +664,10 @@ $(document).on('click', '.view_a_project_task', function () {
         dataType: 'html',
         url: url,
         success: function (result) {
-            $('.view_project_task_model').html(result).modal('show');
+            $('.view_project_task_model').html(result).modal({
+                backdrop: 'static', // Prevent closing on click outside
+                keyboard: false // Disable closing on escape key press
+            }).modal('show');
         },
     });
 });
@@ -734,6 +844,7 @@ $(document).on('submit', 'form#add_comment_form', function (e) {
                 $('form#add_comment_form')[0].reset();
                 $('.direct-chat-messages').prepend(result.comment_html);
                 toastr.success(result.msg);
+                initializeTaskKanbanBoard();
                 if (typeof project_task_datatable !== 'undefined') {
                     project_task_datatable.ajax.reload();
                 }
@@ -743,7 +854,6 @@ $(document).on('submit', 'form#add_comment_form', function (e) {
                 if (typeof project_task_datatable !== 'undefined') {
                     my_task_datatable.ajax.reload();
                 }
-                initializeTaskKanbanBoard();
             } else {
                 toastr.error(result.msg);
             }
@@ -903,15 +1013,34 @@ function initializeMyTaskDataTable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                {
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
                 { data: 'updated_at', name: 'updated_at' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function (data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (typeof my_task_datatable != 'undefined' && task_view == 'list_view') {
@@ -954,10 +1083,43 @@ $(document).on(
             $('.project_html').html('');
             getProjectList();
         }
+        else if (project_view == 'list_view') {
+            $('.project_html').html('');
+            getProjectArchive();
+        }
     }
 );
 
 function getProjectList(url = '') {
+    var project_view = urlSearchParam('project_view');
+    var data = {
+        status: $('#project_status_filter').val(),
+        end_date: $('#project_end_date_filter').val(),
+        category_id: $('#project_categories_filter').val(),
+        project_view: project_view,
+    };
+
+    if (url.length == 0) {
+        url = '/project/project';
+    }
+
+    $.ajax({
+        method: 'GET',
+        dataType: 'json',
+        url: url,
+        data: data,
+        success: function (result) {
+            if (result.success) {
+                $('.load_more_project').hide();
+                $('.project_html').append(result.projects_html);
+            } else {
+                toastr.error(result.msg);
+            }
+        },
+    });
+}
+
+function getProjectArchive(url = '') {
     var project_view = urlSearchParam('project_view');
     var data = {
         status: $('#project_status_filter').val(),
@@ -1208,15 +1370,34 @@ function initializeProjectTaskDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                {
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
                 { data: 'updated_at', name: 'updated_at' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function (data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (task_view == 'list_view') {
@@ -1256,15 +1437,34 @@ function initializeArchiveDatatable() {
                 { data: 'subject', name: 'subject' },
                 { data: 'members' },
                 { data: 'priority', name: 'priority' },
+                {
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
+                    }
+                },
                 { data: 'start_date', name: 'start_date' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'status', name: 'status' },
                 { data: 'createdBy' },
                 { data: 'updated_at', name: 'updated_at' },
-                { data: 'custom_field_1', name: 'custom_field_1' },
-                { data: 'custom_field_2', name: 'custom_field_2' },
-                { data: 'custom_field_3', name: 'custom_field_3' },
-                { data: 'custom_field_4', name: 'custom_field_4' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function (data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
             ],
         });
     } else if (task_view == 'archive') {
@@ -1692,6 +1892,16 @@ $(document).on('click', '.delete-task-comment', function (e) {
                     if (result.success) {
                         toastr.success(result.msg);
                         element.closest('.direct-chat-msg').remove();
+                        initializeTaskKanbanBoard();
+                        if (typeof project_task_datatable !== 'undefined') {
+                            project_task_datatable.ajax.reload();
+                        }
+                        if (typeof archive_datatable !== 'undefined') {
+                            archive_datatable.ajax.reload();
+                        }
+                        if (typeof my_task_datatable != 'undefined') {
+                            my_task_datatable.ajax.reload();
+                        }
                     } else {
                         toastr.error(result.msg);
                     }
@@ -1771,4 +1981,206 @@ $(document).on('submit', '#settings_form', function (event) {
     } else {
         ladda.stop();
     }
+});
+$(document).ready(function () {
+
+    $('.c-close').on('click', function() {
+        $('#c-popup').hide();
+    });
+
+    $(document).on('click', function(event) {
+        if ($(event.target).is('#c-popup')) {
+            $('#c-popup').hide();
+        }
+    });
+
+    // Function to initialize Spectrum color picker
+    function initializeSpectrum(element) {
+        element.spectrum({
+            showPalette: true,
+            palette: [
+                ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+                ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+                ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+                ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+                ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+                ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+                ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+                ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
+            ],
+            showInput: true,
+            allowEmpty: true,
+            showInitial: true,
+            preferredFormat: "hex"
+        });
+    }
+
+    // Attach click event handler to status cards
+    $(document).on('click', '.project_stats', function () {
+        // Get the status from the data attribute of the clicked card
+        var status = $(this).data('status');
+
+        // Set the selected status in the status filter dropdown and trigger change event
+        $('#project_status_filter').val(status).trigger('change');
+    });
+
+    // Prevent form submission when the plus icon button is clicked
+    $('#entries').on('click', '.add-entry', function (e) {
+        e.preventDefault();
+        addEntry();
+    });
+
+
+    // Add new entry function
+    function addEntry() {
+        var newEntry = `<div class="entry">
+        <div class="row">
+            <div class="col-md-4">
+                <input class="form-control" type="text" name="level_name[]" placeholder="Label Name">
+            </div>
+            <div hidden class="col-md-2">
+                <input class="form-control color-picker" type="text" name="color[]" value="#000000">
+            </div>
+            <div style="padding-right: 0px; width: 12%;" class="col-md-2">
+                <input class="form-control bg-picker" type="text" name="bg[]" value="#FFFFFF">
+            </div>
+            <div style="padding-left: 0px;" class="col-md-2">
+                <span style="font-size: 20px" class="remove-entry bg-white text-red"><i class="fas fa-minus-circle"></i></span>
+            </div>
+        </div>
+    </div>`;
+        $('#entries').append(newEntry);
+
+        // Initialize Spectrum on the new color picker
+        initializeSpectrum($('.color-picker').last());
+
+        // Initialize Spectrum on the new color picker
+        initializeSpectrum($('.bg-picker').last());
+    }
+
+    // Remove entry
+    $('#entries').on('click', '.remove-entry', function () {
+        $(this).closest('.entry').remove();
+    });
+
+    // Get values as array
+    function getEntriesArray() {
+        var entriesArray = [];
+        $('#entries .entry').each(function () {
+            var levelName = $(this).find('input[name="level_name[]"]').val();
+            var color = $(this).find('input[name="color[]"]').val();
+            var bg = $(this).find('input[name="bg[]"]').val();
+            entriesArray.push({ levelName: levelName, color: color, bg: bg });
+        });
+        return entriesArray;
+    }
+
+    // Example usage: print array to console
+    $('#save-button').on('click', function () {
+        var entriesArray = getEntriesArray();
+        console.log(entriesArray);
+    });
+
+    // Handle form submission when the update button is clicked
+    $('#update-button').on('click', function () {
+        // Submit the form
+        $('#settings_form').submit();
+    });
+});
+// Subject limit set
+$(document).on('keyup', 'input[name="subject"]', function () {
+    var maxLength = 180; // Maximum length allowed
+    var length = $(this).val().length; // Current length of the input value
+
+    // Show or hide the message based on the input length
+    if (length > maxLength) {
+        $('#subject-limit-message').show();
+    } else {
+        $('#subject-limit-message').hide();
+    }
+});
+
+$(document).ready(function () {
+    // Function to determine if a color is light or dark
+    function isLightColor(hexColor) {
+        var c = hexColor.substring(1); // strip #
+        var rgb = parseInt(c, 16); // convert rrggbb to decimal
+        var r = (rgb >> 16) & 0xff; // extract red
+        var g = (rgb >> 8) & 0xff; // extract green
+        var b = (rgb >> 0) & 0xff; // extract blue
+
+        var luma = 0.2126 * r + 0.7152 * g + 0.0722 * b; // per ITU-R BT.709
+        return luma > 128; // returns true if light color
+    }
+
+    // Initialize Spectrum for color input fields
+    $(".color-picker").spectrum({
+        showPalette: true,
+        palette: [
+            ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+            ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+            ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+            ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+            ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+            ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+            ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+            ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
+        ],
+        showInput: true,
+        allowEmpty: true,
+        showInitial: true,
+        preferredFormat: "hex"
+    });
+
+    // Initialize Spectrum for background color input fields
+    $(".bg-picker").spectrum({
+        showPalette: true,
+        palette: [
+            ['#000000', '#4C4C4C', '#999999', '#B3B3B3', '#CCCCCC', '#E6E6E6', '#F2F2F2', '#FFFFFF'],
+            ['#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#9900FF', '#FF00FF'],
+            ['#FF3333', '#FFCC33', '#FFFF33', '#33FF33', '#33FFFF', '#3333FF', '#CC33FF', '#FF33FF'],
+            ['#FF6666', '#FFCC66', '#FFFF66', '#66FF66', '#66FFFF', '#6666FF', '#CC66FF', '#FF66FF'],
+            ['#FF9999', '#FFCC99', '#FFFF99', '#99FF99', '#99FFFF', '#9999FF', '#CC99FF', '#FF99FF'],
+            ['#CC0000', '#CC6600', '#CCCC00', '#66CC00', '#00CC99', '#0066CC', '#6600CC', '#CC00CC'],
+            ['#990000', '#994C00', '#999900', '#4C9900', '#009966', '#004C99', '#4C0099', '#990099'],
+            ['#660000', '#663300', '#666600', '#336600', '#006633', '#003366', '#330066', '#660066']
+        ],
+        showInput: true,
+        allowEmpty: true,
+        showInitial: true,
+        preferredFormat: "hex",
+        change: function (color) {
+            var bgColor = color.toHexString();
+            var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
+            $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+        }
+    });
+
+    // Manually trigger change on load to set initial text color based on initial background color
+    $('.bg-picker').each(function () {
+        var bgColor = $(this).spectrum('get').toHexString();
+        var textColor = isLightColor(bgColor) ? '#000000' : '#FFFFFF';
+        $(this).closest('.row').find('.color-picker').spectrum('set', textColor);
+    });
+
+    // Add event listener to the dynamically added thumbnails
+    $(document).on('click', '.c-thumbnail', function() {
+        var src = $(this).attr('src');
+        var alt = $(this).attr('alt');
+        $('#c-popup-img').attr('src', src);
+        $('#c-caption').text(alt);
+        $('#c-popup').show();
+    });
+
+    // Add event listener to close button
+    $('.c-close').on('click', function() {
+        $('#c-popup').hide();
+    });
+
+    // Close the popup when clicking outside of the image
+    $(document).on('click', function(event) {
+        if ($(event.target).is('#c-popup')) {
+            $('#c-popup').hide();
+        }
+    });
 });

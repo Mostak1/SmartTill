@@ -40,7 +40,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         {!! Form::label('psr_customer_group_id', __( 'lang_v1.customer_group_name' ) . ':') !!}
-                        {!! Form::select('psr_customer_group_id', $customer_group, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'psr_customer_group_id']); !!}
+                        {!! Form::select('psr_customer_group_id', $customer_groups, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'psr_customer_group_id']); !!}
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -99,6 +99,9 @@
                     </li>
                     <li>
                         <a href="#psr_grouped_tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-bars" aria-hidden="true"></i> @lang('lang_v1.grouped')</a>
+                    </li>
+                    <li>
+                        <a href="#psr_grouped_single_tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-bars" aria-hidden="true"></i> Grouped (Single)</a>
                     </li>
                     <li>
                         <a href="#psr_by_cat_tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-bars" aria-hidden="true"></i> @lang('lang_v1.by_category')</a>
@@ -194,6 +197,33 @@
                             </table>
                         </div>
                     </div>
+
+                    <div class="tab-pane" id="psr_grouped_single_tab">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" id="product_sell_grouped_single_report_table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>@lang('sale.product')</th>
+                                        <th>@lang('product.sku')</th>
+                                        <th>Category</th>
+                                        <th>Brand</th>
+                                        <th>@lang('report.current_stock')</th>
+                                        <th>@lang('report.total_unit_sold')</th>
+                                        <th>@lang('sale.total')</th>
+                                    </tr>
+                                </thead>
+                                <tfoot>
+                                    <tr class="bg-gray font-17 footer-total text-center">
+                                        <td colspan="5"><strong>@lang('sale.total'):</strong></td>
+                                        <td id="footer_total_grouped_sold"></td>
+                                        <td><span class="display_currency" id="footer_grouped_subtotal" data-currency_symbol="true"></span></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    
                     @include('report.partials.product_sell_report_by_category')
 
                     @include('report.partials.product_sell_report_by_brand')

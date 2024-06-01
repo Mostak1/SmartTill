@@ -1,5 +1,30 @@
 <div class="row">
   <div class="col-md-10 col-md-offset-1 col-xs-12">
+
+
+    <div class="table-responsive">
+      <table class="table table-bordered">
+          <thead>
+              <tr>
+                  <th>Old Price</th>
+                  <th>New Price</th>
+                  <th>Updated By</th>
+                  <th>Updated At</th>
+              </tr>
+          </thead>
+          <tbody>
+            @foreach($PriceHistory as $history)
+            <tr>
+                <td>{{ $history->old_price }}</td>
+                <td>{{ $history->new_price }}</td>
+                <td>{{ $history->updated_by }}</td>
+                <td>{{ $history->updated_at }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+      </table>
+    </div>
+
     <div class="table-responsive">
       <table class="table table-condensed bg-gray">
         <tr>

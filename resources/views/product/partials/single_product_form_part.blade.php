@@ -22,10 +22,10 @@
         </tr>
         <tr>
           <td>
-            <div class="col-sm-6">
-              {!! Form::label('single_dpp', trans('product.exc_of_tax') . ':*') !!}
+            <div class="col-sm-6" id="single_dpp_wrapper">
+              {!! Form::label('single_dpp', trans('product.exc_of_tax') . ':*', ['id' => 'single_dpp_label']) !!}
 
-              {!! Form::text('single_dpp', $default, ['class' => 'form-control input-sm dpp input_number', 'placeholder' => __('product.exc_of_tax'), 'required']); !!}
+              {!! Form::text('single_dpp', $default, ['class' => 'form-control input-sm dpp input_number', 'placeholder' => __('product.exc_of_tax'), 'required', 'id' => 'single_dpp']); !!}
             </div>
 
             <div class="col-sm-6">

@@ -9,6 +9,9 @@
 <!-- app css -->
 <link rel="stylesheet" href="{{ asset('css/app.css?v='.$asset_v) }}">
 
+<!-- Spectrum CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.css">
+
 @if(isset($pos_layout) && $pos_layout)
 	<style type="text/css">
 		.content{

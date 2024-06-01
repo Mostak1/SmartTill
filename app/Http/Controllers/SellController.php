@@ -416,7 +416,15 @@ class SellController extends Controller
                                     ><i class="fas fa-money-bill-alt"></i> '.__('lang_v1.add_edit_payment').
                                     '</a></li>';
                                 }
+                                // $sell_icon = Transaction::where('id', $row->id)->get();
 
+                                // $activities = Activity::forSubject($sell_icon)
+                                // ->with(['causer', 'subject'])
+                                // ->latest()
+                                // ->get();
+
+                                // $is_edit = $activities;
+           
                                 if (auth()->user()->can('sell.payments') ||
                                     auth()->user()->can('edit_sell_payment') ||
                                     auth()->user()->can('delete_sell_payment')) {
@@ -435,14 +443,11 @@ class SellController extends Controller
                                     <li><a href="'.action([\App\Http\Controllers\SellPosController::class, 'showInvoiceUrl'], [$row->id]).'" class="view_invoice_url"><i class="fas fa-eye"></i> '.__('lang_v1.view_invoice_url').'</a></li>';
                                 }
                             }
-
                             $html .= '<li><a href="#" data-href="'.action([\App\Http\Controllers\NotificationController::class, 'getTemplate'], ['transaction_id' => $row->id, 'template_for' => 'new_sale']).'" class="btn-modal" data-container=".view_modal"><i class="fa fa-envelope" aria-hidden="true"></i>'.__('lang_v1.new_sale_notification').'</a></li>';
                         } else {
                             $html .= '<li><a href="#" data-href="'.action([\App\Http\Controllers\SellController::class, 'viewMedia'], ['model_id' => $row->id, 'model_type' => \App\Transaction::class, 'model_media_type' => 'shipping_document']).'" class="btn-modal" data-container=".view_modal"><i class="fas fa-paperclip" aria-hidden="true"></i>'.__('lang_v1.shipping_documents').'</a></li>';
                         }
-
                         $html .= '</ul></div>';
-
                         return $html;
                     }
                 )
@@ -615,8 +620,8 @@ class SellController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
+     * Show the form for creating a new resource. 
+     * 
      * @return \Illuminate\Http\Response
      */
     public function create()

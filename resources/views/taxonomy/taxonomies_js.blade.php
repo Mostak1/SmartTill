@@ -104,6 +104,23 @@
         });
     });
 
+
+    $(document).on('click', 'button.rate_category_button', function () {
+    var url = $(this).data('href');
+    $.ajax({
+        method: 'GET',
+        dataType: 'html',
+        url: url,
+        success: function (response) {
+            $('.rate_modal').html(response).modal({
+                backdrop: 'static',
+                keyboard: false
+            }).modal('show');
+        },
+    });
+});
+
+
     $(document).on('click', 'button.delete_category_button', function() {
         swal({
             title: LANG.sure,

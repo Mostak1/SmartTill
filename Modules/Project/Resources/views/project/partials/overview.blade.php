@@ -141,6 +141,14 @@
                 <h4 class="box-title">
                     <i class="fas fa-check-circle"></i>
                     {{ ucFirst($project->name) }}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a title="Edit" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'edit'], [$project->id])}}" class="cursor-pointer edit_a_project">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                    <a title="Archive" data-redirect="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=list_view'}}" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'destroy'], [$project->id])}}" class="cursor-pointer delete_a_project">
+                        <i class="fas fa-file-archive"></i>
+                    </a>
+                    
                 </h4>
             </div>
             <div class="box-body">
@@ -154,8 +162,10 @@
                     @lang('contact.mobile'): {{ $project->customer->mobile }}
                 @endif <br>
 
-                <i class="fa fa-map-marker"></i>
-                @lang('business.address'):
+                <i class="fas fa-user-tie"></i>
+                <strong>Lead: </strong>{{ \App\User::find($project->lead_id)->first_name }} {{ \App\User::find($project->lead_id)->last_name }} <br>
+                <i class="fas fa-flag"></i>
+                <strong>Creator: </strong>{{ \App\User::find($project->created_by)->first_name }} {{ \App\User::find($project->created_by)->last_name }}
                 @if (isset($project->customer->landmark))
                     {{ $project->customer->landmark }}
                 @endif
@@ -265,3 +275,7 @@
     </div>
 
 </div>
+
+<!-- /.box -->
+<div class="modal fade" tabindex="-1" role="dialog" id="project_model"></div>
+

@@ -12,51 +12,49 @@
 <!-- Main content -->
 <section class="content">
     @if($project_view == 'list_view')
-		<div class="row">
-			@foreach($project_stats as $project)
-			<div class="col-md-3 col-sm-6 col-xs-12 col-custom project_stats">
-				<div class="info-box info-box-new-style">
-					<span class="info-box-icon
-						@if($project->status == 'not_started')
-							bg-red
-						@elseif($project->status == 'on_hold')
-							bg-yellow
-						@elseif($project->status == 'cancelled')
-							bg-red
-						@elseif($project->status == 'in_progress')
-							bg-aqua
-						@elseif($project->status == 'completed')
-							bg-green
-						@endif
-					">
-						<i class="fas
-						@if($project->status == 'not_started')
-							fa-exclamation
-						@elseif($project->status == 'on_hold')
-							fa-exclamation-triangle
-						@elseif($project->status == 'cancelled')
-							fa-times-circle
-						@elseif($project->status == 'in_progress')
-							fa-sync
-						@elseif($project->status == 'completed')
-							fa-check
-						@endif
-						"></i>
+	<div class="row">
+		@foreach($project_stats as $project)
+		<div class="col-md-3 col-sm-6 col-xs-12 col-custom project_stats" data-status="{{ $project->status }}">
+			<div class="info-box info-box-new-style">
+				<span class="info-box-icon
+					@if($project->status == 'not_started')
+						bg-red
+					@elseif($project->status == 'on_hold')
+						bg-yellow
+					@elseif($project->status == 'cancelled')
+						bg-red
+					@elseif($project->status == 'in_progress')
+						bg-aqua
+					@elseif($project->status == 'completed')
+						bg-green
+					@endif
+				">
+					<i class="fas
+					@if($project->status == 'not_started')
+						fa-exclamation
+					@elseif($project->status == 'on_hold')
+						fa-exclamation-triangle
+					@elseif($project->status == 'cancelled')
+						fa-times-circle
+					@elseif($project->status == 'in_progress')
+						fa-sync
+					@elseif($project->status == 'completed')
+						fa-check
+					@endif
+					"></i>
+				</span>
+				<div class="info-box-content">
+					<span class="info-box-text">
+						{{$statuses[$project->status]}}
 					</span>
-					<div class="info-box-content">
-						<span class="info-box-text">
-							{{$statuses[$project->status]}}
-						</span>
-						<span class="info-box-number">
-							{{$project->count}}
-						</span>
-					</div>
-					<!-- /.info-box-content -->
+					<span class="info-box-number">
+						{{$project->count}}
+					</span>
 				</div>
-				<!-- /.info-box -->
 			</div>
-			@endforeach
 		</div>
+		@endforeach
+	</div>	
 	@endif
 	<div class="box box-solid">
 		<div class="box-header with-border">
@@ -71,6 +69,12 @@
 				        <input type="radio" name="project_view" value="kanban" class="project_view" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=kanban'}}">
 				        @lang('project::lang.kanban_board')
 				    </label>
+					@can('project.delete_project')
+						<label class="btn btn-info btn-sm archive">
+							<input type="radio" name="project_view" value="archive" class="project_view" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']).'?project_view=archive'}}">
+							<i class="fas fa-file-archive"></i>
+						</label>
+					@endcan
 				</div>
 				@can('project.create_project')
 					<button type="button" class="btn btn-primary btn-sm add_new_project" data-href="{{action([\Modules\Project\Http\Controllers\ProjectController::class, 'create'])}}">
@@ -90,20 +94,29 @@
 					    </div>
 					</div>
 				@endif
-				<div class="col-md-3">
-				    <div class="form-group">
-				        {!! Form::label('project_end_date_filter', __('project::lang.end_date') . ':') !!}
-				        {!! Form::select('project_end_date_filter', $due_dates, null, ['class' => 'form-control select2', 'placeholder' => __('messages.all'), 'style' => 'width: 100%;']); !!}
-				    </div>
-				</div>
-				<div class="col-md-3">
-					<div class="form-group">
-						{!! Form::label('project_categories_filter', __('project::lang.category') . ':') !!}
-						{!! Form::select('project_categories_filter', $categories, null, ['class' => 'form-controll select2', 'placeholder' => __('messages.all'), 'style' => 'width:100%;']); !!}
+				@if ($project_view != 'archive')
+					<div class="col-md-3">
+						<div class="form-group">
+							{!! Form::label('project_end_date_filter', __('project::lang.end_date') . ':') !!}
+							{!! Form::select('project_end_date_filter', $due_dates, null, ['class' => 'form-control select2', 'placeholder' => __('messages.all'), 'style' => 'width: 100%;']); !!}
+						</div>
 					</div>
-				</div>
+				@endif
+				@if ($project_view != 'archive')
+					<div class="col-md-3">
+						<div class="form-group">
+							{!! Form::label('project_categories_filter', __('project::lang.category') . ':') !!}
+							{!! Form::select('project_categories_filter', $categories, null, ['class' => 'form-controll select2', 'placeholder' => __('messages.all'), 'style' => 'width:100%;']); !!}
+						</div>
+					</div>
+				@endif
 			</div>
 			@if($project_view == 'list_view')
+				<div class="project_html">
+				</div>
+			@endif
+			{{-- project archive --}}
+			@if($project_view == 'archive')
 				<div class="project_html">
 				</div>
 			@endif
@@ -123,7 +136,8 @@
 		</div>			
 	</div>
 	<!-- /.box -->
-	<div class="modal fade" tabindex="-1" role="dialog" id="project_model" data-backdrop="static"  data-backdrop='static'></div>
+	<div class="modal fade" tabindex="-1" role="dialog" id="project_model"></div>
+
 </section>
 <link rel="stylesheet" href="{{ asset('modules/project/sass/project.css?v=' . $asset_v) }}">
 @endsection
@@ -134,18 +148,27 @@
 	$(document).ready(function() {
 		var project_view = urlSearchParam('project_view');
 
-		//if project view is empty, set default to list_view
-		if (_.isEmpty(project_view)) {
-			project_view = 'list_view';
-		}
+	// If project view is empty, set default to list_view
+	if (_.isEmpty(project_view)) {
+		project_view = 'list_view';
+	}
 
-		if (project_view == 'kanban') {
-			$('.kanban').addClass('active');
-			$('.list').removeClass('active');
-			initializeProjectKanbanBoard();
-		} else if(project_view == 'list_view') {
-			getProjectList();
-		}
+	if (project_view == 'kanban') {
+		$('.kanban').addClass('active');
+		$('.list').removeClass('active');
+		$('.archive').removeClass('active');
+		initializeProjectKanbanBoard();
+	} else if (project_view == 'list_view') {
+		$('.list').addClass('active');
+		$('.kanban').removeClass('active');
+		$('.archive').removeClass('active');
+		getProjectList();
+	} else if (project_view == 'archive') {
+		$('.archive').addClass('active');
+		$('.kanban').removeClass('active');
+		$('.list').removeClass('active');
+		getProjectArchive();
+	}
 	});
 </script>
 @endsection

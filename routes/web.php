@@ -154,6 +154,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::resource('contacts', ContactController::class);
 
     Route::get('taxonomies-ajax-index-page', [TaxonomyController::class, 'getTaxonomyIndexPage']);
+    Route::get('rate-history', [TaxonomyController::class, 'getRate']);
     Route::resource('taxonomies', TaxonomyController::class);
 
     Route::resource('variation-templates', VariationTemplateController::class);
@@ -298,6 +299,8 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/get-profit/{by?}', [ReportController::class, 'getProfit']);
     Route::get('/reports/items-report', [ReportController::class, 'itemsReport']);
     Route::get('/reports/get-stock-value', [ReportController::class, 'getStockValue']);
+    Route::get('/reports/procurement-report', [ReportController::class, 'showProcurementReportForm'])->name('procurement.report.form');
+    Route::get('/reports/procurement-report/data', [ReportController::class, 'getProcurementReportData'])->name('procurement.report.data');
 
     Route::get('business-location/activate-deactivate/{location_id}', [BusinessLocationController::class, 'activateDeactivateLocation']);
     //Business Location Settings...

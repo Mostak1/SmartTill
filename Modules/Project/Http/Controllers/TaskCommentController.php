@@ -46,6 +46,9 @@ class TaskCommentController extends Controller
         try {
             $project_task_id = $request->get('project_task_id');
             $input = $request->only('comment');
+
+            // Replace newlines with <br> tags
+            $input['comment'] = nl2br(e($input['comment']));
             $input['commented_by'] = request()->session()->get('user.id');
             $project_task = ProjectTask::findOrFail($project_task_id);
             $project_comment = $project_task->comments()->create($input);

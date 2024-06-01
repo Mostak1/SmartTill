@@ -86,4 +86,9 @@ class Variation extends Model
 
         return $name;
     }
+
+    public function priceHistories()
+    {
+        return $this->hasMany(VariationPriceHistory::class);
+    }
 }

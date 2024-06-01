@@ -108,7 +108,7 @@ class ProjectController extends Controller
 
                 if ($project_view == 'list_view') {
                     $projects = $projects->latest()
-                        ->simplePaginate(10);
+                        ->simplePaginate(9);
 
                     //check if user is lead/admin for the project
                     foreach ($projects as $key => $project) {
@@ -124,7 +124,28 @@ class ProjectController extends Controller
                     $projects_html = view('project::project.partials.index')
                         ->with(compact('projects'))
                         ->render();
-                } elseif ($project_view == 'kanban') {
+                }
+                elseif ($project_view == 'archive') {
+                    $projects = $projects->onlyTrashed()->latest()
+                        ->simplePaginate(9);
+
+                    //check if user is lead/admin for the project
+                    foreach ($projects as $key => $project) {
+                        $is_lead = $this->projectUtil->isProjectLead($user_id, $project->id);
+
+                        $projects[$key]['is_lead_or_admin'] = false;
+                        if ($is_lead || $is_admin) {
+                            $projects[$key]['is_lead_or_admin'] = true;
+                        }
+                    }
+
+                    //dynamically render projects
+                    $projects_html = view('project::project.partials.index')
+                        ->with(compact('projects'))
+                        ->render();
+                }
+                
+                elseif ($project_view == 'kanban') {
                     $projects = $projects->get()->groupBy('status');
                     //sort projects based on status
                     $sorted_projects = [];
@@ -323,13 +344,13 @@ class ProjectController extends Controller
             // default settings for project
             $input['settings'] = [
                 'enable_timelog' => 1,
-                'enable_invoice' => 1,
+                'enable_invoice' => 0,
                 'enable_notes_documents' => 1,
                 'enable_archive' => 'archive',
                 'members_crud_task' => 0,
                 'members_crud_note' => 0,
                 'members_crud_timelog' => 0,
-                'task_view' => 'list_view',
+                'task_view' => 'kanban',
                 'task_id_prefix' => '#',
                 'not_started' => [
                     'id' => 1,
@@ -344,7 +365,7 @@ class ProjectController extends Controller
                     'name' => 'On Hold',
                 ],
                 'cancelled' => [
-                    'id' => 1,
+                    'id' => 0,
                     'name' => 'Cancelled',
                 ],
                 'completed' => [
@@ -617,7 +638,7 @@ class ProjectController extends Controller
     {
         $business_id = request()->session()->get('user.business_id');
 
-        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
+        if (!(auth()->user() || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.archive_project')))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -639,6 +660,54 @@ class ProjectController extends Controller
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
+
+        return $output;
+    }
+
+    public function permanentDelete($id)
+    {
+        $business_id = request()->session()->get('user.business_id');
+
+        if (!(auth()->user()->can('superadmin') || ($this->moduleUtil->hasThePermissionInSubscription($business_id, 'project_module') && auth()->user()->can('project.delete_project')))) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (request()->ajax()) {
+            try {
+                // Retrieve the project
+                $project = Project::withTrashed()->where('business_id', $business_id)->where('id', $id)->firstOrFail();
+
+                // Permanently delete the project
+                $project->forceDelete();
+
+                $output = [
+                    'success' => true,
+                    'msg' => __('lang_v1.success'),
+                ];
+            } catch (\Exception $e) {
+                \Log::error('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+
+                $output = [
+                    'success' => false,
+                    'msg' => __('messages.something_went_wrong'),
+                ];
+            }
+
+            return $output;
+        }
+    }
+
+
+    public function restore($id)
+    {
+        $project = Project::withTrashed()->findOrFail($id);
+
+        // Restore the soft deleted project item
+        $project->restore();
+        $output = [
+            'success' => true,
+            'msg' => __('lang_v1.success'),
+        ];
 
         return $output;
     }
@@ -669,6 +738,25 @@ class ProjectController extends Controller
             $input['on_hold'] = ['id' => !empty($request->on_hold_id) ? 1 : 0, 'name' => $request->on_hold];
             $input['cancelled'] = ['id' => !empty($request->cancelled_id) ? 1 : 0, 'name' => $request->cancelled];
             $input['completed'] = ['id' => !empty($request->completed_id) ? 1 : 0, 'name' => $request->completed];
+            
+            // Store level name, color, and background color as arrays
+            $levelNames = $request->get('level_name');
+            $colors = $request->get('color');
+            $bgs = $request->get('bg');
+
+            $levelData = [];
+            foreach ($levelNames as $index => $name) {
+                if (!empty($name)) {
+                    $levelData[] = [
+                        'name' => $name,
+                        'color' => $colors[$index],
+                        'bg' => $bgs[$index]
+                    ];
+                }
+            }
+
+            $input['levels']=$levelData;
+            
             $project_id = $request->get('project_id');
             $business_id = request()->session()->get('user.business_id');
             $project = Project::where('business_id', $business_id)

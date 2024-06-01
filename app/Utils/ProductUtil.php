@@ -4,6 +4,7 @@ namespace App\Utils;
 
 use App\Business;
 use App\BusinessLocation;
+use App\Category;
 use App\Discount;
 use App\Media;
 use App\Product;
@@ -18,6 +19,7 @@ use App\Unit;
 use App\Variation;
 use App\VariationGroupPrice;
 use App\VariationLocationDetails;
+use App\VariationPriceHistory;
 use App\VariationTemplate;
 use App\VariationValueTemplate;
 use Illuminate\Support\Facades\DB;
@@ -49,18 +51,65 @@ class ProductUtil extends Util
         ];
         $product_variation = $product->product_variations()->create($product_variation_data);
 
-        //create variations
-        $variation_data = [
-            'name' => 'DUMMY',
-            'product_id' => $product->id,
-            'sub_sku' => $sku,
-            'default_purchase_price' => $this->num_uf($purchase_price),
-            'dpp_inc_tax' => $this->num_uf($dpp_inc_tax),
-            'profit_percent' => $this->num_uf($profit_percent),
-            'default_sell_price' => $this->num_uf($selling_price),
-            'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax),
-            'combo_variations' => $combo_variations,
-        ];
+        $foreign_cat = Category::where('id', 66)->first();
+
+        if($product->category_id == 66)
+        {
+            //create variations
+            $variation_data = [
+                'name' => 'DUMMY',
+                'product_id' => $product->id,
+                'sub_sku' => $sku,
+                'default_purchase_price' => $this->num_uf($purchase_price) * $foreign_cat->description,
+                'dpp_inc_tax' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
+                'profit_percent' => $this->num_uf($profit_percent),
+                'default_sell_price' => ceil(($this->num_uf($selling_price) * $foreign_cat->description)/10)*10,
+                'sell_price_inc_tax' => ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
+                'combo_variations' => $combo_variations,
+                'foreign_p_price' => $this->num_uf($purchase_price),
+                'foreign_p_price_inc_tex' => $this->num_uf($dpp_inc_tax),
+                'foreign_s_price' => $this->num_uf($selling_price),
+                'foreign_s_price_inc_tex' => $this->num_uf($selling_price_inc_tax),
+                'currency_code' => $foreign_cat->short_code,
+                'currency_rate' => $foreign_cat->description,
+                'is_foreign' => 1,
+            ];
+
+            // Create a new price history entry
+            VariationPriceHistory::create([
+                'variation_id' => $product->id,
+                'old_price' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
+                'new_price' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
+                'updated_by' => auth()->id(),
+                'type' => 'product',
+                'h_type' => 'Opening'
+            ]);
+        }
+        else{
+            //create variations
+            $variation_data = [
+                'name' => 'DUMMY',
+                'product_id' => $product->id,
+                'sub_sku' => $sku,
+                'default_purchase_price' => $this->num_uf($purchase_price),
+                'dpp_inc_tax' => $this->num_uf($dpp_inc_tax),
+                'profit_percent' => $this->num_uf($profit_percent),
+                'default_sell_price' => $this->num_uf($selling_price),
+                'sell_price_inc_tax' => $this->num_uf($selling_price_inc_tax),
+                'combo_variations' => $combo_variations,
+            ];
+
+            // Create a new price history entry
+            VariationPriceHistory::create([
+                'variation_id' => $product->id,
+                'old_price' => $this->num_uf($dpp_inc_tax),
+                'new_price' => $this->num_uf($selling_price_inc_tax),
+                'updated_by' => auth()->id(),
+                'type' => 'product',
+                'h_type' => 'Opening'
+            ]);
+        }
+
         $variation = $product_variation->variations()->create($variation_data);
 
         Media::uploadMedia($product->business_id, $variation, request(), 'variation_images');
@@ -170,6 +219,15 @@ class ProductUtil extends Util
                     ];
                     $c++;
                     $images[] = 'variation_images_'.$key.'_'.$k;
+                            // Create a new price history entry
+                            VariationPriceHistory::create([
+                                'variation_id' => $product->id,
+                                'old_price' => $this->num_uf($v['default_purchase_price']),
+                                'new_price' => $this->num_uf($v['default_sell_price']),
+                                'updated_by' => auth()->id(),
+                                'type' => 'product',
+                                'h_type' => 'Opening'
+                            ]);
                 }
                 $variations = $product_variation->variations()->createMany($variation_data);
 
@@ -215,6 +273,17 @@ class ProductUtil extends Util
                         'default_sell_price' => $this->num_uf($v['default_sell_price']),
                         'sell_price_inc_tax' => $this->num_uf($v['sell_price_inc_tax']),
                     ];
+
+                        // Create a new price history entry
+                        VariationPriceHistory::create([
+                            'variation_id' => $product->id,
+                            'old_price' => $this->num_uf($v['default_purchase_price']),
+                            'new_price' => $this->num_uf($v['default_sell_price']),
+                            'updated_by' => auth()->id(),
+                            'type' => 'product',
+                            'h_type' => 'Edited',
+                        ]);
+
                     if (! empty($v['sub_sku'])) {
                         $data['sub_sku'] = $v['sub_sku'];
                     }
@@ -270,6 +339,16 @@ class ProductUtil extends Util
                     ];
                     $c++;
                     $media[] = 'variation_images_'.$key.'_'.$k;
+
+                    // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $product->id,
+                        'old_price' => $this->num_uf($v['default_purchase_price']),
+                        'new_price' => $this->num_uf($v['default_sell_price']),
+                        'updated_by' => auth()->id(),
+                        'type' => 'product',
+                        'h_type' => 'Edited'
+                    ]);
                 }
                 $new_variations = $product_variation->variations()->createMany($variation_data);
 
@@ -321,6 +400,7 @@ class ProductUtil extends Util
             if ($is_variation_delatable) {
                 Variation::where('id', $removed_variation_id)
                     ->delete();
+                VariationPriceHistory::where('variation_id', $removed_variation_id)->delete();
             } else {
                 throw new \Exception(__('lang_v1.purchase_already_exist'));
             }
@@ -1568,7 +1648,7 @@ class ProductUtil extends Util
      */
     public function filterProduct($business_id, $search_term, $location_id = null, $not_for_selling = null, $price_group_id = null, $product_types = [], $search_fields = [], $check_qty = false, $search_type = 'like')
     {
-        $query = Product::join('variations', 'products.id', '=', 'variations.product_id')
+        $query = Product::with('brand')->join('variations', 'products.id', '=', 'variations.product_id')
                 ->active()
                 ->whereNull('variations.deleted_at')
                 ->leftjoin('units as U', 'products.unit_id', '=', 'U.id')
@@ -1686,6 +1766,7 @@ class ProductUtil extends Util
                 'products.id as product_id',
                 'products.name',
                 'products.type',
+                'products.brand_id',
                 'products.enable_stock',
                 'variations.id as variation_id',
                 'variations.name as variation',
@@ -1941,6 +2022,7 @@ class ProductUtil extends Util
 
         $output = [
             'variation' => $product_name,
+            'product_id' => 'p.id',
             'unit' => $purchase_details->unit,
             'second_unit' => $purchase_details->second_unit,
             'total_purchase' => $purchase_details->total_purchase,
@@ -2027,6 +2109,7 @@ class ProductUtil extends Util
                     'type' => 'sell',
                     'type_label' => __('sale.sale'),
                     'ref_no' => $stock_line->invoice_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'sell_secondary_unit_quantity' => ! empty($stock_line->sell_secondary_unit_quantity) ? $this->roundQuantity($stock_line->sell_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
@@ -2043,6 +2126,7 @@ class ProductUtil extends Util
                     'type' => 'purchase',
                     'type_label' => __('lang_v1.purchase'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'purchase_secondary_unit_quantity' => ! empty($stock_line->purchase_secondary_unit_quantity) ? $this->roundQuantity($stock_line->purchase_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
@@ -2055,6 +2139,7 @@ class ProductUtil extends Util
                     'type' => 'stock_adjustment',
                     'type_label' => __('stock_adjustment.stock_adjustment'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'opening_stock') {
@@ -2067,6 +2152,7 @@ class ProductUtil extends Util
                     'type' => 'opening_stock',
                     'type_label' => __('report.opening_stock'),
                     'ref_no' => $stock_line->ref_no ?? '',
+                    'sele_id' => $stock_line->transaction_id,
                     'additional_notes' => $stock_line->additional_notes,
                     'purchase_secondary_unit_quantity' => ! empty($stock_line->purchase_secondary_unit_quantity) ? $this->roundQuantity($stock_line->purchase_secondary_unit_quantity) : 0,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
@@ -2083,6 +2169,7 @@ class ProductUtil extends Util
                     'type' => 'sell_transfer',
                     'type_label' => __('lang_v1.stock_transfers').' ('.__('lang_v1.out').')',
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'purchase_transfer') {
@@ -2098,6 +2185,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_transfer',
                     'type_label' => __('lang_v1.stock_transfers').' ('.__('lang_v1.in').')',
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'production_sell') {
@@ -2111,7 +2199,8 @@ class ProductUtil extends Util
                     'stock' => $this->roundQuantity($stock),
                     'type' => 'sell',
                     'type_label' => __('manufacturing::lang.ingredient'),
-                    'ref_no' => '',
+                    'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'production_purchase') {
@@ -2123,6 +2212,7 @@ class ProductUtil extends Util
                     'type' => 'production_purchase',
                     'type_label' => __('manufacturing::lang.manufactured'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'purchase_return') {
@@ -2134,6 +2224,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_return',
                     'type_label' => __('lang_v1.purchase_return'),
                     'ref_no' => $stock_line->ref_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'sell_return') {
@@ -2145,6 +2236,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_transfer',
                     'type_label' => __('lang_v1.sell_return'),
                     'ref_no' => $stock_line->invoice_no,
+                    'sele_id' => $stock_line->transaction_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             }

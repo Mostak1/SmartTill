@@ -251,9 +251,16 @@
                         data: 'end_date',
                         name: 'end_date'
                     },
-                    {
-                        data: 'estimated_hours',
-                        name: 'estimated_hours'
+                    { 
+                        data: 'estimated_hours', 
+                        name: 'estimated_hours',
+                        render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
+                    }
                     },
                     {
                         data: 'assigned_by'

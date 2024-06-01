@@ -1689,7 +1689,7 @@ class ReportController extends Controller
      */
     public function getproductSellReport(Request $request)
     {
-        if (! auth()->user()->can('purchase_n_sell_report.view')) {
+        if (!auth()->user()->can('purchase_n_sell_report.view')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1751,12 +1751,12 @@ class ReportController extends Controller
                 )
                 ->groupBy('transaction_sell_lines.id');
 
-            if (! empty($variation_id)) {
+            if (!empty($variation_id)) {
                 $query->where('transaction_sell_lines.variation_id', $variation_id);
             }
             $start_date = $request->get('start_date');
             $end_date = $request->get('end_date');
-            if (! empty($start_date) && ! empty($end_date)) {
+            if (!empty($start_date) && !empty($end_date)) {
                 $query->where('t.transaction_date', '>=', $start_date)
                     ->where('t.transaction_date', '<=', $end_date);
             }
@@ -1767,28 +1767,28 @@ class ReportController extends Controller
             }
 
             $location_id = $request->get('location_id', null);
-            if (! empty($location_id)) {
+            if (!empty($location_id)) {
                 $query->where('t.location_id', $location_id);
             }
 
             $customer_id = $request->get('customer_id', null);
-            if (! empty($customer_id)) {
+            if (!empty($customer_id)) {
                 $query->where('t.contact_id', $customer_id);
             }
 
             $customer_group_id = $request->get('customer_group_id', null);
-            if (! empty($customer_group_id)) {
+            if (!empty($customer_group_id)) {
                 $query->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
-                ->where('CG.id', $customer_group_id);
+                    ->where('CG.id', $customer_group_id);
             }
 
             $category_id = $request->get('category_id', null);
-            if (! empty($category_id)) {
+            if (!empty($category_id)) {
                 $query->where('p.category_id', $category_id);
             }
 
             $brand_id = $request->get('brand_id', null);
-            if (! empty($brand_id)) {
+            if (!empty($brand_id)) {
                 $query->where('p.brand_id', $brand_id);
             }
 
@@ -1801,10 +1801,10 @@ class ReportController extends Controller
 
                     return $product_name;
                 })
-                 ->editColumn('invoice_no', function ($row) {
-                     return '<a data-href="'.action([\App\Http\Controllers\SellController::class, 'show'], [$row->transaction_id])
+                ->editColumn('invoice_no', function ($row) {
+                    return '<a data-href="'.action([\App\Http\Controllers\SellController::class, 'show'], [$row->transaction_id])
                             .'" href="#" data-container=".view_modal" class="btn-modal">'.$row->invoice_no.'</a>';
-                 })
+                })
                 ->editColumn('transaction_date', '{{@format_datetime($transaction_date)}}')
                 ->editColumn('unit_sale_price', function ($row) {
                     return '<span class="unit_sale_price" data-orig-value="'.$row->unit_sale_price.'">'.
@@ -1818,13 +1818,13 @@ class ReportController extends Controller
                     data-unit="'.$row->unit.'" >'.
                     $this->transactionUtil->num_f($row->sell_qty, false, null, true).'</span> '.$row->unit;
                 })
-                 ->editColumn('subtotal', function ($row) {
-                     //ignore child sell line of combo product
-                     $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
+                ->editColumn('subtotal', function ($row) {
+                    //ignore child sell line of combo product
+                    $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
 
-                     return '<span class="'.$class.'"  data-orig-value="'.$row->subtotal.'">'.
+                    return '<span class="'.$class.'"  data-orig-value="'.$row->subtotal.'">'.
                     $this->transactionUtil->num_f($row->subtotal, true).'</span>';
-                 })
+                })
                 ->editColumn('unit_price', function ($row) {
                     return '<span class="unit_price" data-orig-value="'.$row->unit_price.'">'.
                     $this->transactionUtil->num_f($row->unit_price, true).'</span>';
@@ -1838,9 +1838,11 @@ class ReportController extends Controller
                     ')
                 ->editColumn('tax', function ($row) {
                     return $this->transactionUtil->num_f($row->item_tax, true)
-                     .'<br>'.'<span data-orig-value="'.$row->item_tax.'" 
-                     class="tax" data-unit="'.$row->tax.'"><small>('.$row->tax.')</small></span>';
+                    .'<br>'.'<span data-orig-value="'.$row->item_tax.'" 
+                    class="tax" data-unit="'.$row->tax.'"><small>('.$row->tax.')</small></span>';
                 })
+
+
                 ->addColumn('payment_methods', function ($row) use ($payment_types) {
                     $methods = array_unique($row->transaction->payment_lines->pluck('method')->toArray());
                     $count = count($methods);
@@ -1851,7 +1853,7 @@ class ReportController extends Controller
                         $payment_method = __('lang_v1.checkout_multi_pay');
                     }
 
-                    $html = ! empty($payment_method) ? '<span class="payment-method" data-orig-value="'.$payment_method.'" data-status-name="'.$payment_method.'">'.$payment_method.'</span>' : '';
+                    $html = !empty($payment_method) ? '<span class="payment-method" data-orig-value="'.$payment_method.'" data-status-name="'.$payment_method.'">'.$payment_method.'</span>' : '';
 
                     return $html;
                 })
@@ -1860,15 +1862,26 @@ class ReportController extends Controller
                 ->make(true);
         }
 
-        $business_locations = BusinessLocation::forDropdown($business_id);
-        $customers = Contact::customersDropdown($business_id);
+        $business_locations = BusinessLocation::forDropdown($business_id, true);
+
         $categories = Category::forDropdown($business_id, 'product');
+
         $brands = Brands::forDropdown($business_id);
-        $customer_group = CustomerGroup::forDropdown($business_id, false, true);
+
+        $customers = Contact::customersDropdown($business_id, false);
+
+        $customer_groups = CustomerGroup::forDropdown($business_id);
 
         return view('report.product_sell_report')
-            ->with(compact('business_locations', 'customers', 'categories', 'brands',
-                'customer_group', 'product_custom_field1', 'product_custom_field2'));
+            ->with(compact(
+                'business_locations',
+                'categories',
+                'brands',
+                'customers',
+                'customer_groups',
+                'product_custom_field1',
+                'product_custom_field2'
+            ));
     }
 
     /**
@@ -2531,12 +2544,16 @@ class ReportController extends Controller
                 ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
                 ->join('products as p', 'pv.product_id', '=', 'p.id')
                 ->leftjoin('units as u', 'p.unit_id', '=', 'u.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
+                ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
                 ->where('t.business_id', $business_id)
                 ->where('t.type', 'sell')
                 ->where('t.status', 'final')
                 ->select(
                     'p.name as product_name',
                     'p.enable_stock',
+                    'cat.name as category_name',
+                    'b.name as brand_name',
                     'p.type as product_type',
                     'pv.name as product_variation',
                     'v.name as variation_name',
@@ -3905,5 +3922,118 @@ class ReportController extends Controller
         $suppliers = Contact::suppliersDropdown($business_id);
 
         return view('report.gst_purchase_report')->with(compact('suppliers', 'taxes'));
+    }
+
+    public function showProcurementReportForm()
+    {
+        $categories = DB::table('categories')->where('category_type', 'product')->pluck('name', 'id');
+        $brands = DB::table('brands')->pluck('name', 'id');
+        
+        return view('report.procurement', compact('categories', 'brands'));
+    }
+
+    public function getProcurementReportData(Request $request)
+    {
+        try {
+            $category = $request->input('category');
+            $brand = $request->input('brand');
+            $days = (int) $request->input('days', 1);
+
+            $salesData = $this->getSalesData($category, $brand, $days);
+            $stockData = $this->getStockData($category, $brand);
+
+            $predictions = $this->applyLinearRegression($salesData, $stockData, $days);
+
+            return datatables()->of($predictions)
+                ->make(true);
+        } catch (\Exception $e) {
+            Log::error('Error fetching procurement report data: ' . $e->getMessage());
+            return response()->json(['error' => 'Error fetching procurement report data'], 500);
+        }
+    }
+
+    private function getSalesData($category, $brand)
+    {
+        $query = TransactionSellLine::join('transactions as t', 'transaction_sell_lines.transaction_id', '=', 't.id')
+            ->join('variations as v', 'transaction_sell_lines.variation_id', '=', 'v.id')
+            ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
+            ->join('products as p', 'pv.product_id', '=', 'p.id')
+            ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
+            ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
+            ->where('t.type', 'sell')
+            ->where('t.status', 'final')
+            ->select(
+                'p.id as product_id',
+                'p.name as product_name',
+                'cat.name as category_name',
+                'b.name as brand_name',
+                DB::raw('DATE(t.transaction_date) as date'),
+                DB::raw('SUM(transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) as quantity_sold')
+            );
+
+        if ($category) {
+            $query->where('p.category_id', $category);
+        }
+
+        if ($brand) {
+            $query->where('p.brand_id', $brand);
+        }
+
+        return $query->groupBy('p.id', DB::raw('DATE(t.transaction_date)'))->get();
+    }
+
+    private function getStockData($category, $brand)
+    {
+        $query = Variation::join('products as p', 'p.id', '=', 'variations.product_id')
+            ->leftjoin('categories as c', 'p.category_id', '=', 'c.id')
+            ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
+            ->select('p.id as product_id', 'p.name as product_name', 'c.name as category_name', 'b.name as brand_name', DB::raw('SUM(vld.qty_available) as stock'))
+            ->groupBy('p.id');
+        if ($category) {
+            $query->where('p.category_id', $category);
+        }
+
+        if ($brand) {
+            $query->where('p.brand_id', $brand);
+        }
+
+        return $query->get();
+    }
+
+    private function applyLinearRegression($salesData, $stockData, $days)
+    {
+        $predictions = [];
+
+        foreach ($salesData as $sales) {
+            $x = range(1, count($salesData));
+            $y = array_column($salesData->where('product_id', $sales->product_id)->toArray(), 'quantity_sold');
+
+            $n = count($x);
+            $x_sum = array_sum($x);
+            $y_sum = array_sum($y);
+            $xy_sum = array_sum(array_map(function ($xi, $yi) {
+                return $xi * $yi;
+            }, $x, $y));
+            $xx_sum = array_sum(array_map(function ($xi) {
+                return $xi * $xi;
+            }, $x));
+
+            $slope = ($n * $xy_sum - $x_sum * $y_sum) / ($n * $xx_sum - $x_sum * $x_sum);
+            $intercept = ($y_sum - $slope * $x_sum) / $n;
+
+            for ($i = 1; $i <= $days; $i++) {
+                $predictedValue = $slope * ($n + $i) + $intercept;
+                $predictedValueRounded = ceil($predictedValue / 6) * 6;
+
+                $predictions[] = [
+                    'product_name' => $sales->product_name,
+                    'category_name' => $sales->category_name,
+                    'brand_name' => $sales->brand_name,
+                    'predicted_demand' => $predictedValueRounded
+                ];
+            }
+        }
+
+        return $predictions;
     }
 }

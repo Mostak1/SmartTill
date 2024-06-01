@@ -74,7 +74,7 @@
 						<span class="input-group-addon">
 							<i class="fas fa-clock"></i>
 						</span>
-						{!! Form::text('estimated_hours', null, ['class' => 'form-control']); !!}
+						{!! Form::number('estimated_hours', null, ['class' => 'form-control']); !!}
 					</div>
 				</div>
 			</div>

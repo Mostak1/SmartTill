@@ -2,6 +2,7 @@
 
 return [
     'archive' => 'Archive',
+    'level' => 'Level',
     'project' => 'Project',
     'projects' => 'Projects',
     'all_projects' => 'All Projects',

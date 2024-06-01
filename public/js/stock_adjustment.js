@@ -54,7 +54,10 @@ $(document).ready(function() {
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
                 }
-                string += ' (' + item.sub_sku + ') </div>';
+                string += ' (' + item.sub_sku + ') ';
+                if(item.brand_id){
+                    string +='</br>Brand: ' + item.brand.name + '</div>';
+                }
                 return $('<li>')
                     .append(string)
                     .appendTo(ul);
