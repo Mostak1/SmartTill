@@ -126,6 +126,7 @@ return [
     'select_location' => 'Select location',
     'add_description' => 'Add Description',
     'cash' => 'Cash',
+    'bkash' => 'Bkash',
     'card' => 'Card',
     'cheque' => 'Cheque',
     'bank_transfer' => 'Bank Transfer',

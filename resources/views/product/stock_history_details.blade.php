@@ -142,7 +142,11 @@
 						<a href="#" data-href="{{action([\App\Http\Controllers\PurchaseController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal">{{$history['ref_no']}}</a>
 						@elseif ($history['type_label'] == 'Manufactured')
 
-						<a href="#" data-href="{{action([\Modules\Manufacturing\Http\Controllers\RecipeController::class, 'recipeShow'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal" data-target="#recipe_modal">{{$history['ref_no']}}</a>
+						<a href="#" data-href="{{action([\Modules\Manufacturing\Http\Controllers\ProductionController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal" data-target="#recipe_modal">{{$history['ref_no']}}</a>
+						@elseif ($history['type_label'] == 'Stock Adjustment')
+
+						<a href="#" data-href="{{action([\App\Http\Controllers\StockAdjustmentController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal" data-target="#recipe_modal">{{$history['ref_no']}}</a>
+						
 						@else
 						{{$history['ref_no']}}
 						@endif

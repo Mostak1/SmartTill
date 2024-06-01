@@ -318,10 +318,8 @@ class SellingPriceGroupController extends Controller
                         $imported_pgs[$key] = $value;
                     }
                 }
-
                 $error_msg = '';
                 DB::beginTransaction();
-
                 foreach ($imported_data as $key => $value) {
                     $variation = Variation::where('sub_sku', $value[1])
                                         ->first();
@@ -331,7 +329,6 @@ class SellingPriceGroupController extends Controller
 
                         throw new \Exception($error_msg);
                     }
-
                     //Check if product base price is changed
                     if($variation->sell_price_inc_tax != $value[2]){
                         //update price for base selling price, adjust default_sell_price, profit %

@@ -362,7 +362,7 @@
                                         @endif
                         </td>
                         <td class="text-center">
-                            {{ number_format($line['quantity'], 0) }}
+                            {{ $line['quantity']}}
                             @if ($receipt_details->show_base_unit_details && $line['quantity'] && $line['base_unit_multiplier'] !== 1)
                                 <br><small>
                                     {{ $line['quantity'] }} x {{ $line['base_unit_multiplier'] }} =
@@ -385,7 +385,7 @@
                                 @endif
                             </td>
                         @endif
-                        <td class="text-center">{{ number_format($line['line_total'],0) }}</td>
+                        <td class="text-center">{{$line['line_total'] }}</td>
                     </tr>
                     @if (!empty($line['modifiers']))
                         @foreach ($line['modifiers'] as $modifier)
