@@ -101,3 +101,10 @@ if (! function_exists('str_ordinal')) {
         return number_format($number).$suffix;
     }
 }
+
+if (!function_exists('format_datetime')) {
+    function format_datetime($date)
+    {
+        return \Carbon\Carbon::parse($date)->format('d-M Y, h:i A');
+    }
+}

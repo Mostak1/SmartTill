@@ -1,14 +1,20 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\BusinessLocation;
+use App\Product;
 use App\SellingPriceGroup;
 use App\Utils\Util;
+use App\Utils\ProductUtil;
+use App\Utils\ModuleUtil;
+use App\Utils\TransactionUtil;
 use App\Variation;
 use App\VariationGroupPrice;
 use DB;
 use Excel;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Permission;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -18,6 +24,9 @@ class SellingPriceGroupController extends Controller
      * All Utils instance.
      */
     protected $commonUtil;
+    protected $productUtil;
+    protected $transactionUtil;
+    protected $moduleUtil;
 
     /**
      * Constructor
@@ -25,11 +34,13 @@ class SellingPriceGroupController extends Controller
      * @param  ProductUtils  $product
      * @return void
      */
-    public function __construct(Util $commonUtil)
+    public function __construct(ProductUtil $productUtil, TransactionUtil $transactionUtil, ModuleUtil $moduleUtil, Util $commonUtil)
     {
+        $this->productUtil = $productUtil;
+        $this->transactionUtil = $transactionUtil;
+        $this->moduleUtil = $moduleUtil;
         $this->commonUtil = $commonUtil;
     }
-
     /**
      * Display a listing of the resource.
      *
@@ -50,7 +61,9 @@ class SellingPriceGroupController extends Controller
             return Datatables::of($price_groups)
                 ->addColumn(
                     'action',
-                    '<button data-href="{{action(\'App\Http\Controllers\SellingPriceGroupController@edit\', [$id])}}" class="btn btn-xs btn-primary btn-modal" data-container=".view_modal"><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</button>
+                    '<a href="{{action(\'App\Http\Controllers\SellingPriceGroupController@show\', [$id])}}" class="btn btn-xs btn-info" > @lang("messages.view") Products</a>
+                    &nbsp;
+                    <button data-href="{{action(\'App\Http\Controllers\SellingPriceGroupController@edit\', [$id])}}" class="btn btn-xs btn-primary btn-modal" data-container=".view_modal"><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</button>
                         &nbsp;
                         <button data-href="{{action(\'App\Http\Controllers\SellingPriceGroupController@destroy\', [$id])}}" class="btn btn-xs btn-danger delete_spg_button"><i class="glyphicon glyphicon-trash"></i> @lang("messages.delete")</button>
                         &nbsp;
@@ -124,7 +137,56 @@ class SellingPriceGroupController extends Controller
      */
     public function show(SellingPriceGroup $sellingPriceGroup)
     {
-        //
+        if (!auth()->user()->can('product.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $id = $sellingPriceGroup->id;
+        $business_id = request()->session()->get('user.business_id');
+        $business_locations = BusinessLocation::forDropdown($business_id);
+        $price_groups = SellingPriceGroup::where('business_id', $business_id)
+            ->active()
+            ->get();
+        if (request()->ajax()) {
+            $variationProducts = VariationGroupPrice::with(['variation.product'])
+                ->where('price_group_id', $id)
+                ->select('variation_id', 'price_group_id', 'price_inc_tax', 'price_type');
+
+            return Datatables::of($variationProducts)
+                ->addColumn('product', function ($row) {
+                    return $row->variation->product->name . ' (' . $row->variation->name . ')';
+                })
+                ->addColumn('sku', function ($row) {
+                    return $row->variation->sub_sku;
+                })
+                ->addColumn('selling_price', function ($row) {
+                    return number_format($row->variation->sell_price_inc_tax, 0);
+                })
+                ->addColumn('price_group', function ($row) {
+                    if ($row->price_type == 'percentage') {
+                        $price = number_format($row->price_inc_tax, 0) . '%';
+                        $html = $price . '%';
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
+                        $html = $price . 'Fixed';
+                    }
+                    return $price;
+                })
+                ->addColumn('price_group_price', function ($row) {
+
+                    if ($row->price_type == 'percentage') {
+                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+                        $html = $price . '%';
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $html = $price . 'Fixed';
+                    }
+                    return $price;
+                })
+                ->rawColumns(['product', 'sku', 'selling_price', 'price_group', 'price_group_price'])
+                ->make(true);
+        }
+        return view('selling_price_group.show')
+            ->with(compact('sellingPriceGroup', 'business_locations', 'price_groups'));
     }
 
     /**
@@ -413,5 +475,76 @@ class SellingPriceGroupController extends Controller
 
             return $output;
         }
+    }
+
+    public function getProductRow(Request $request)
+    {
+        if ($request->ajax()) {
+            try {
+                $row_index = $request->input('row_index');
+                $variation_id = $request->input('variation_id');
+                $location_id = $request->input('location_id');
+                $price_group_id = $request->input('price_group_id');
+                Log::info('getProductRow called', [
+                    'row_index' => $row_index,
+                    'variation_id' => $variation_id,
+                    'location_id' => $location_id
+                ]);
+
+                $business_id = $request->session()->get('user.business_id');
+                Log::info('Business ID retrieved', ['business_id' => $business_id]);
+                $product1 = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id);
+                if (!$product1) {
+                    throw new \Exception('No product details retrieved from variation');
+                }
+                Log::info('Product details retrieved from variation', ['product1' => $product1]);
+                // Ensure product1 contains a valid id
+                if (!isset($product1->product_id)) {
+                    throw new \Exception('Product ID not found in variation details');
+                }
+                $variation = Variation::where('id', $variation_id)
+                    ->whereHas('product', function ($query) use ($business_id) {
+                        $query->where('business_id', $business_id);
+                    })
+                    ->with(['product', 'group_prices', 'product_variation'])
+                    ->firstOrFail();
+                Log::info('Variation retrieved with relations', ['variation' => $variation]);
+                $product = $variation->product;
+                Log::info('Product retrieved with relations', ['product' => $product]);
+                $price_groups = SellingPriceGroup::where('business_id', $business_id)->where('id', $price_group_id)
+                    ->active()
+                    ->get();
+                Log::info('Price groups retrieved', ['price_groups' => $price_groups]);
+                $variation_prices = [];
+                foreach ($product->variations as $variation) {
+                    foreach ($variation->group_prices as $group_price) {
+                        $variation_prices[$variation->id][$group_price->price_group_id] = [
+                            'price' => $group_price->price_inc_tax,
+                            'price_type' => $group_price->price_type
+                        ];
+                    }
+                }
+                Log::info('Variation prices calculated', ['variation_prices' => $variation_prices]);
+                return view('selling_price_group.product_group_row')
+                    ->with(compact('row_index', 'product', 'price_groups', 'variation_prices'));
+            } catch (ModelNotFoundException $e) {
+                Log::error('Model not found in getProductRow', [
+                    'row_index' => $row_index,
+                    'variation_id' => $variation_id,
+                    'location_id' => $location_id,
+                    'exception' => $e->getMessage()
+                ]);
+                return response()->json(['error' => 'Product not found.'], 404);
+            } catch (\Exception $e) {
+                Log::error('Error in getProductRow', [
+                    'row_index' => $row_index,
+                    'variation_id' => $variation_id,
+                    'location_id' => $location_id,
+                    'exception' => $e->getMessage()
+                ]);
+                return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+            }
+        }
+        return response()->json(['error' => 'Invalid request.'], 400);
     }
 }

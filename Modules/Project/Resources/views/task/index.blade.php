@@ -56,7 +56,7 @@
                 <th>@lang('sale.status')</th>
                 <th>@lang('project::lang.assigned_by')</th>
                 <th> @lang('messages.updated_at')</th>
-                <th>Level</th>
+                <th>Label</th>
             </tr>
         </thead>
     </table>
@@ -91,7 +91,7 @@
                 <th>@lang('sale.status')</th>
                 <th>@lang('project::lang.assigned_by')</th>
                 <th> @lang('messages.updated_at')</th>
-                <th>Level</th>
+                <th>Label</th>
             </tr>
         </thead>
     </table>

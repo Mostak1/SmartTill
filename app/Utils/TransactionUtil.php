@@ -1354,7 +1354,7 @@ class TransactionUtil extends Util
             $output['subtotal_exc_tax'] = $this->num_f($subtotal_exc_tax, true, $business_details);
             $output['total_line_discount'] = ! empty($total_line_discount) ? $this->num_f($total_line_discount, true, $business_details) : 0;
         } elseif ($transaction_type == 'sell_return') {
-            $parent_sell = Transaction::find($transaction->return_parent_id);
+            $parent_sell = Transaction::with('payment_lines')->find($transaction->return_parent_id);
             $lines = $parent_sell->sell_lines;
 
             foreach ($lines as $key => $value) {
@@ -1494,62 +1494,34 @@ class TransactionUtil extends Util
             }
 
             //Get payment details
+            $output['payment'] =  $transaction->payment_lines->toArray();
             $output['payments'] = [];
             if ($il->show_payments == 1) {
                 $payments = $transaction->payment_lines->toArray();
                 $payment_types = $this->payment_types($transaction->location_id, true);
-                if (! empty($payments)) {
+            
+                if (!empty($payments)) {
                     foreach ($payments as $value) {
-                        $method = ! empty($payment_types[$value['method']]) ? $payment_types[$value['method']] : '';
+                        $method = !empty($payment_types[$value['method']]) ? $payment_types[$value['method']] : '';
+                        $payment_entry = [
+                            'method' => $method,
+                            'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
+                            'date' => $this->format_date($value['paid_on'], false, $business_details),
+                        ];
+            
                         if ($value['method'] == 'cash') {
-                            $output['payments'][] =
-                                ['method' => $method.($value['is_return'] == 1 ? ' ('.$il->change_return_label.')(-)' : ''),
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
-                            if ($value['is_return'] == 1) {
-                            }
+                            $payment_entry['method'] .= $value['is_return'] == 1 ? ' ('.$il->change_return_label.')(-)' : '';
                         } elseif ($value['method'] == 'card') {
-                            $output['payments'][] =
-                                ['method' => $method.(! empty($value['card_transaction_number']) ? (', Transaction Number:'.$value['card_transaction_number']) : ''),
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
+                            $payment_entry['method'] .= !empty($value['card_transaction_number']) ? ', Transaction Number:'.$value['card_transaction_number'] : '';
                         } elseif ($value['method'] == 'cheque') {
-                            $output['payments'][] =
-                                ['method' => $method.(! empty($value['cheque_number']) ? (', Cheque Number:'.$value['cheque_number']) : ''),
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
+                            $payment_entry['method'] .= !empty($value['cheque_number']) ? ', Cheque Number:'.$value['cheque_number'] : '';
                         } elseif ($value['method'] == 'bank_transfer') {
-                            $output['payments'][] =
-                                ['method' => $method.(! empty($value['bank_account_number']) ? (', Account Number:'.$value['bank_account_number']) : ''),
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
-                        } elseif ($value['method'] == 'advance') {
-                            $output['payments'][] =
-                                ['method' => $method,
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
-                        } elseif ($value['method'] == 'other') {
-                            $output['payments'][] =
-                                ['method' => $method,
-                                    'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                    'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                ];
+                            $payment_entry['method'] .= !empty($value['bank_account_number']) ? ', Account Number:'.$value['bank_account_number'] : '';
+                        } elseif ($value['method'] == 'custom_pay_1' || $value['method'] == 'custom_pay_2' || $value['method'] == 'custom_pay_3' || $value['method'] == 'custom_pay_4' || $value['method'] == 'custom_pay_5' || $value['method'] == 'custom_pay_6' || $value['method'] == 'custom_pay_7') {
+                            $payment_entry['method'] .= !empty($value['transaction_no']) ? ', '.trans('lang_v1.transaction_no').':'.$value['transaction_no'] : '';
                         }
-
-                        for ($i = 1; $i < 8; $i++) {
-                            if ($value['method'] == "custom_pay_{$i}") {
-                                $output['payments'][] =
-                                    ['method' => $method.(! empty($value['transaction_no']) ? (', '.trans('lang_v1.transaction_no').':'.$value['transaction_no']) : ''),
-                                        'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                                        'date' => $this->format_date($value['paid_on'], false, $business_details),
-                                    ];
-                            }
-                        }
+            
+                        $output['payments'][] = $payment_entry;
                     }
                 }
             }

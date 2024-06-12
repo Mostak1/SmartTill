@@ -657,23 +657,59 @@ $(document).ready(function() {
     $(document).on('change', '.profit_percent', function() {
         var row = $(this).closest('tr');
         var profit_percent = __read_number($(this), true);
-
         var purchase_unit_cost = __read_number(row.find('input.purchase_unit_cost_after_tax'), true);
-        var default_sell_price =
-            parseFloat(purchase_unit_cost) +
-            __calculate_amount('percentage', profit_percent, purchase_unit_cost);
+        var default_sell_price = parseFloat(purchase_unit_cost) + __calculate_amount('percentage', profit_percent, purchase_unit_cost);
         var exchange_rate = $('input#exchange_rate').val();
-        __write_number(
-            row.find('input.default_sell_price'),
-            default_sell_price * exchange_rate,
-            true
-        );
+        
+        // Write the new default sell price
+        __write_number(row.find('input.default_sell_price'), default_sell_price * exchange_rate, true);
+    
+        // Update BDT value if product belongs to category 66
+        if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+            var cat_desck = __read_number(row.find('input.cat_desck'), true);
+            var foreign_s_price_inc_tex = __read_number(row.find('input.default_sell_price'), true);
+            var bdt_value = foreign_s_price_inc_tex * cat_desck;
+            
+            // Update the BDT display
+            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+        }
     });
-
+    
     $(document).on('change', '.default_sell_price', function() {
         var row = $(this).closest('tr');
         update_inline_profit_percentage(row);
+    
+        // Update BDT value if product belongs to category 66
+        if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+            var cat_desck = __read_number(row.find('input.cat_desck'), true);
+            var foreign_s_price_inc_tex = __read_number(row.find('input.default_sell_price'), true);
+            var bdt_value = foreign_s_price_inc_tex * cat_desck;
+            
+            // Update the BDT display
+            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+        }
     });
+    
+    $(document).on('change', '.purchase_unit_cost_after_tax', function() {
+        var row = $(this).closest('tr');
+        var purchase_unit_cost = __read_number($(this), true);
+        var profit_percent = __read_number(row.find('input.profit_percent'), true);
+        var default_sell_price = parseFloat(purchase_unit_cost) + __calculate_amount('percentage', profit_percent, purchase_unit_cost);
+        var exchange_rate = $('input#exchange_rate').val();
+        
+        // Write the new default sell price
+        __write_number(row.find('input.default_sell_price'), default_sell_price * exchange_rate, true);
+    
+        // Update BDT value if product belongs to category 66
+        if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+            var cat_desck = __read_number(row.find('input.cat_desck'), true);
+            var foreign_s_price_inc_tex = __read_number(row.find('input.default_sell_price'), true);
+            var bdt_value = foreign_s_price_inc_tex * cat_desck;
+            
+            // Update the BDT display
+            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+        }
+    });        
 
     $(document).on('click', 'a.delete-purchase', function(e) {
         e.preventDefault();

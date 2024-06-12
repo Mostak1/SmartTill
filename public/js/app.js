@@ -1638,8 +1638,8 @@ $(document).ready(function() {
         var start = $('#modal_today').val();
         var end = start;
         var location_id = '';
-
         updateProfitLoss(start, end, location_id, $('#todays_profit'));
+        updateProfitLossCustom(start, end, location_id, $('#todays_profit'));
     });
 
     //Used for Purchase & Sell invoice.
@@ -2534,11 +2534,9 @@ $(document).on('submit', 'form#edit_shipping_form', function(e){
         },
     });
 });
-
 $(document).on('show.bs.modal', '.register_details_modal, .close_register_modal', function () {
     __currency_convert_recursively($(this));
 });
-
 function updateProfitLoss(start = null, end = null, location_id = null, selector = null) {
     if(start == null){
         var start = $('#profit_loss_date_filter')
@@ -2568,7 +2566,6 @@ function updateProfitLoss(start = null, end = null, location_id = null, selector
             updateStockBySellingPrice(data);
         },
     });
-
     $('.nav-tabs li.active').find('a[data-toggle="tab"]').trigger('shown.bs.tab');
 }
 

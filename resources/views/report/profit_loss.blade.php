@@ -1,11 +1,9 @@
 @extends('layouts.app')
 @section('title', __( 'report.profit_loss' ))
-
 @section('content')
-
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <h1>@lang( 'report.profit_loss' )
+    <h1>@lang( 'report.profit_loss' ) (Go TO<a href="{{action('App\Http\Controllers\ReportController@getProfitLossCustom')}}" class="" > Custom Report</a>)
     </h1>
 </section>
 

@@ -168,6 +168,9 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/products/view-product-group-price/{id}', [ProductController::class, 'viewGroupPrice']);
     Route::get('/products/add-selling-prices/{id}', [ProductController::class, 'addSellingPrices']);
     Route::post('/products/save-selling-prices', [ProductController::class, 'saveSellingPrices']);
+    Route::get('/products/add-selling-prices-category', [ProductController::class, 'addSellingPricesCategory']);
+    Route::post('/products/save-selling-prices-category', [ProductController::class, 'saveSellingPricesCategory'] );
+    Route::post('/products/save-selling-prices-many', [ProductController::class, 'saveSellingPricesMany']);
     Route::post('/products/mass-delete', [ProductController::class, 'massDestroy']);
     Route::get('/products/view/{id}', [ProductController::class, 'view']);
     Route::get('/products/list', [ProductController::class, 'getProducts']);
@@ -267,6 +270,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/service-staff-line-orders', [ReportController::class, 'serviceStaffLineOrders']);
     Route::get('/reports/table-report', [ReportController::class, 'getTableReport']);
     Route::get('/reports/profit-loss', [ReportController::class, 'getProfitLoss']);
+    Route::get('/reports/profit-loss-custom', [ReportController::class, 'getProfitLossCustom']);
     Route::get('/reports/get-opening-stock', [ReportController::class, 'getOpeningStock']);
     Route::get('/reports/purchase-sell', [ReportController::class, 'getPurchaseSell']);
     Route::get('/reports/customer-supplier', [ReportController::class, 'getCustomerSuppliers']);
@@ -371,6 +375,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('sell-return/get-product-row', [SellReturnController::class, 'getProductRow']);
     Route::get('/sell-return/print/{id}', [SellReturnController::class, 'printInvoice']);
     Route::get('/sell-return/add/{id}', [SellReturnController::class, 'add']);
+    Route::post('/sell-return/store-with-payment', [SellReturnController::class, 'storeWithPayment']);
 
     //Backup
     Route::get('backup/download/{file_name}', [BackUpController::class, 'download']);
@@ -381,6 +386,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('update-product-price', [SellingPriceGroupController::class, 'updateProductPrice'])->name('update-product-price');
     Route::get('export-product-price', [SellingPriceGroupController::class, 'export']);
     Route::post('import-product-price', [SellingPriceGroupController::class, 'import']);
+    Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
 
     Route::resource('selling-price-group', SellingPriceGroupController::class);
 

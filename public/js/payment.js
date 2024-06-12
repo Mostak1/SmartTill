@@ -1,12 +1,12 @@
-$(document).ready(function() {
-    $(document).on('click', '.add_payment_modal', function(e) {
+$(document).ready(function () {
+    $(document).on('click', '.add_payment_modal', function (e) {
         e.preventDefault();
         var container = $('.payment_modal');
 
         $.ajax({
             url: $(this).attr('href'),
             dataType: 'json',
-            success: function(result) {
+            success: function (result) {
                 if (result.status == 'due') {
                     container.html(result.view).modal('show');
                     __currency_convert_recursively(container);
@@ -19,7 +19,7 @@ $(document).ready(function() {
 
                     $('.payment_modal')
                         .find('input[type="checkbox"].input-icheck')
-                        .each(function() {
+                        .each(function () {
                             $(this).iCheck({
                                 checkboxClass: 'icheckbox_square-blue',
                                 radioClass: 'iradio_square-blue',
@@ -31,14 +31,14 @@ $(document).ready(function() {
             },
         });
     });
-    $(document).on('click', '.edit_payment', function(e) {
+    $(document).on('click', '.edit_payment', function (e) {
         e.preventDefault();
         var container = $('.edit_payment_modal');
 
         $.ajax({
             url: $(this).data('href'),
             dataType: 'html',
-            success: function(result) {
+            success: function (result) {
                 container.html(result).modal('show');
                 __currency_convert_recursively(container);
                 $('#paid_on').datetimepicker({
@@ -50,35 +50,33 @@ $(document).ready(function() {
         });
     });
 
-    $(document).on('click', '.view_payment_modal', function(e) {
+    $(document).on('click', '.view_payment_modal', function (e) {
         e.preventDefault();
         var container = $('.payment_modal');
 
         $.ajax({
             url: $(this).attr('href'),
             dataType: 'html',
-            success: function(result) {
-                $(container)
-                    .html(result)
-                    .modal('show');
+            success: function (result) {
+                $(container).html(result).modal('show');
                 __currency_convert_recursively(container);
             },
         });
     });
-    $(document).on('click', '.delete_payment', function(e) {
+    $(document).on('click', '.delete_payment', function (e) {
         swal({
             title: LANG.sure,
             text: LANG.confirm_delete_payment,
             icon: 'warning',
             buttons: true,
             dangerMode: true,
-        }).then(willDelete => {
+        }).then((willDelete) => {
             if (willDelete) {
                 $.ajax({
                     url: $(this).data('href'),
                     method: 'delete',
                     dataType: 'json',
-                    success: function(result) {
+                    success: function (result) {
                         if (result.success === true) {
                             $('div.payment_modal').modal('hide');
                             $('div.edit_payment_modal').modal('hide');
@@ -99,7 +97,7 @@ $(document).ready(function() {
                             if (typeof project_invoice_datatable != 'undefined') {
                                 project_invoice_datatable.ajax.reload();
                             }
-                            
+
                             if ($('#contact_payments_table').length) {
                                 get_contact_payments();
                             }
@@ -113,24 +111,22 @@ $(document).ready(function() {
     });
 
     //view single payment
-    $(document).on('click', '.view_payment', function() {
+    $(document).on('click', '.view_payment', function () {
         var url = $(this).data('href');
         var container = $('.view_modal');
         $.ajax({
             method: 'GET',
             url: url,
             dataType: 'html',
-            success: function(result) {
-                $(container)
-                    .html(result)
-                    .modal('show');
+            success: function (result) {
+                $(container).html(result).modal('show');
                 __currency_convert_recursively(container);
             },
         });
     });
 });
 
-$(document).on('change', '#transaction_payment_add_form .payment_types_dropdown', function(e) {
+$(document).on('change', '#transaction_payment_add_form .payment_types_dropdown', function (e) {
     set_default_payment_account();
 });
 
@@ -138,19 +134,23 @@ function set_default_payment_account() {
     var default_accounts = {};
 
     if (!_.isUndefined($('#transaction_payment_add_form #default_payment_accounts').val())) {
-        default_accounts = JSON.parse($('#transaction_payment_add_form #default_payment_accounts').val());
+        default_accounts = JSON.parse(
+            $('#transaction_payment_add_form #default_payment_accounts').val()
+        );
     }
 
     var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
     if (payment_type && payment_type != 'advance') {
-        var default_account = !_.isEmpty(default_accounts) && default_accounts[payment_type]['account'] ? 
-            default_accounts[payment_type]['account'] : '';
+        var default_account =
+            !_.isEmpty(default_accounts) && default_accounts[payment_type]['account']
+                ? default_accounts[payment_type]['account']
+                : '';
         $('#transaction_payment_add_form #account_id').val(default_account);
         $('#transaction_payment_add_form #account_id').change();
     }
 }
 
-$(document).on('change', '.payment_types_dropdown', function(e) {
+$(document).on('change', '.payment_types_dropdown', function (e) {
     var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
     account_dropdown = $('#transaction_payment_add_form #account_id');
     if (payment_type == 'advance') {
@@ -160,33 +160,116 @@ $(document).on('change', '.payment_types_dropdown', function(e) {
         }
     } else {
         if (account_dropdown) {
-            account_dropdown.prop('disabled', false); 
+            account_dropdown.prop('disabled', false);
             account_dropdown.closest('.form-group').removeClass('hide');
-        }    
+        }
     }
 });
 
-$(document).on('submit', 'form#transaction_payment_add_form', function(e){
+// $(document).on('submit', 'form#transaction_payment_add_form', function(e){
+//     var is_valid = true;
+//     var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
+//     var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
+//     if (denomination_for_payment_types.includes(payment_type) && $('#transaction_payment_add_form .is_strict').length && $('#transaction_payment_add_form .is_strict').val() === '1' ) {
+//         var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
+//         var total_denomination = $('#transaction_payment_add_form').find('input.denomination_total_amount').val();
+//         if (payment_amount != total_denomination ) {
+//             is_valid = false;
+//         }
+//     }
+
+//     $('#transaction_payment_add_form').find('button[type="submit"]')
+//             .attr('disabled', false);
+
+//     if (!is_valid) {
+//         $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
+//         e.preventDefault();
+//         return false;
+//     } else {
+//         $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
+//     }
+
+// })
+$(document).on('submit', 'form#transaction_payment_add_form', function (e) {
+    e.preventDefault(); // Prevent the default form submission
+
     var is_valid = true;
     var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
-    var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
-    if (denomination_for_payment_types.includes(payment_type) && $('#transaction_payment_add_form .is_strict').length && $('#transaction_payment_add_form .is_strict').val() === '1' ) {
-        var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
-        var total_denomination = $('#transaction_payment_add_form').find('input.denomination_total_amount').val();
-        if (payment_amount != total_denomination ) {
-            is_valid = false;
+    // var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
+
+    // if (
+    //     denomination_for_payment_types.includes(payment_type) &&
+    //     $('#transaction_payment_add_form .is_strict').length &&
+    //     $('#transaction_payment_add_form .is_strict').val() === '1'
+    // ) {
+    //     var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
+    //     var total_denomination = $('#transaction_payment_add_form')
+    //         .find('input.denomination_total_amount')
+    //         .val();
+    //     if (payment_amount != total_denomination) {
+    //         is_valid = false;
+    //     }
+    // }
+
+    // if (!is_valid) {
+    //     $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
+    //     return false; // Stop form submission if not valid
+    // } else {
+    //     $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
+    // }
+
+    var form = $(this);
+    var form_data = form.serialize(); // Serialize the form data
+
+    $.ajax({
+        method: 'POST',
+        url: form.attr('action'), // Use the form's action URL
+        data: form_data,
+        dataType: 'json',
+        success: function (result) {
+            if (result.success == 1) {
+                pos_print(result.receipt);
+            } else {
+                toastr.error(result.msg);
+            }
+        },
+        error: function (xhr, status, error) {
+            toastr.error('An error occurred while processing your request.');
+        },
+    });
+});
+function pos_print(receipt) {
+    // If printer type then connect with websocket
+    if (receipt.print_type == 'printer') {
+        var content = receipt;
+        content.type = 'print-receipt';
+
+        // Check if ready or not, then print.
+        if (socket.readyState != 1) {
+            initializeSocket();
+            setTimeout(function () {
+                socket.send(JSON.stringify(content));
+            }, 700);
+        } else {
+            socket.send(JSON.stringify(content));
         }
-    }
+    } else if (receipt.html_content != '') {
+        var title = document.title;
+        if (typeof receipt.print_title != 'undefined') {
+            document.title = receipt.print_title;
+        }
 
-    $('#transaction_payment_add_form').find('button[type="submit"]')
-            .attr('disabled', false);
-
-    if (!is_valid) {
-        $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
-        e.preventDefault();
-        return false;
-    } else {
-        $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
+        // If printer type browser then print content
+        $('#receipt_section').html(receipt.html_content);
+        __currency_convert_recursively($('#receipt_section'));
+        var url = base_path + '/sell-return';
+        setTimeout(function () {
+            window.print();
+            document.title = title;
+            // Redirect after printing
+            setTimeout(function () {
+                window.location.href = url;
+            }, 500);
+        }, 1000);
     }
-    
-})
+}

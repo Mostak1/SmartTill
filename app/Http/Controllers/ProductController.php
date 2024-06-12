@@ -1833,12 +1833,10 @@ class ProductController extends Controller
         if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
-
         $business_id = request()->session()->get('user.business_id');
         $product = Product::where('business_id', $business_id)
             ->with(['variations', 'variations.group_prices', 'variations.product_variation'])
             ->findOrFail($id);
-
         $price_groups = SellingPriceGroup::where('business_id', $business_id)
             ->active()
             ->get();
@@ -1848,7 +1846,6 @@ class ProductController extends Controller
                 $variation_prices[$variation->id][$group_price->price_group_id] = ['price' => $group_price->price_inc_tax, 'price_type' => $group_price->price_type];
             }
         }
-
         return view('product.add-selling-prices')->with(compact('product', 'price_groups', 'variation_prices'));
     }
     public function addSellingPricesCategory()
@@ -1858,22 +1855,13 @@ class ProductController extends Controller
         }
         $business_id = request()->session()->get('user.business_id');
         $categories = Category::forDropdown($business_id, 'product');
-        $business_id = request()->session()->get('user.business_id');
         $product = Product::where('business_id', $business_id)
             ->with(['variations', 'variations.group_prices', 'variations.product_variation'])
-            ->findOrFail($id);
-
+            ->get();
         $price_groups = SellingPriceGroup::where('business_id', $business_id)
             ->active()
             ->get();
-        $variation_prices = [];
-        foreach ($product->variations as $variation) {
-            foreach ($variation->group_prices as $group_price) {
-                $variation_prices[$variation->id][$group_price->price_group_id] = ['price' => $group_price->price_inc_tax, 'price_type' => $group_price->price_type];
-            }
-        }
-
-        return view('product.add-selling-prices-category')->with(compact('categories', 'price_groups', 'variation_prices'));
+        return view('product.add-selling-prices-category')->with(compact('categories', 'price_groups'));
     }
 
     /**
@@ -1955,76 +1943,97 @@ class ProductController extends Controller
         if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
-
         try {
             $business_id = $request->session()->get('user.business_id');
             $category_id = $request->input('category_id');
-
-            // Fetch all products under the given category
             $products = Product::where('business_id', $business_id)
                 ->where('category_id', $category_id)
                 ->with(['variations'])
                 ->get();
-
             DB::beginTransaction();
-
             foreach ($products as $product) {
                 foreach ($product->variations as $variation) {
                     $variation_group_prices = [];
                     foreach ($request->input('group_prices') as $key => $value) {
-                        if (isset($value[$variation->id])) {
-                            $variation_group_price = VariationGroupPrice::where('variation_id', $variation->id)
-                                ->where('price_group_id', $key)
-                                ->first();
-                            if (empty($variation_group_price)) {
-                                $variation_group_price = new VariationGroupPrice([
+                        if (isset($value['price'])) {
+                            $variation_group_price = VariationGroupPrice::updateOrCreate(
+                                [
                                     'variation_id' => $variation->id,
                                     'price_group_id' => $key,
-                                ]);
-                            }
-
-                            $variation_group_price->price_inc_tax = $this->productUtil->num_uf($value[$variation->id]['price']);
-                            $variation_group_price->price_type = $value[$variation->id]['price_type'];
-                            $variation_group_prices[] = $variation_group_price;
+                                ],
+                                [
+                                    'price_inc_tax' => $this->productUtil->num_uf($value['price']),
+                                    'price_type' => $value['price_type'],
+                                ]
+                            );
                         }
                     }
-
-                    if (!empty($variation_group_prices)) {
-                        $variation->group_prices()->saveMany($variation_group_prices);
-                    }
                 }
-
                 // Update product updated_at timestamp
                 $product->touch();
             }
-
             DB::commit();
-
-            $output = [
-                'success' => 1,
-                'msg' => __('lang_v1.updated_success'),
-            ];
+            $output = ['success' => 1, 'msg' => __('lang_v1.updated_success')];
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+            \Log::emergency('File: ' . $e->getFile() . ' Line: ' . $e->getLine() . ' Message: ' . $e->getMessage());
 
-            $output = [
-                'success' => 0,
-                'msg' => __('messages.something_went_wrong'),
-            ];
+            $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
         }
 
         if ($request->input('submit_type') == 'submit_n_add_opening_stock') {
             return redirect()->action(
                 [\App\Http\Controllers\OpeningStockController::class, 'add'],
-                ['category_id' => $category_id]
+                ['product_id' => $product->id]
             );
         } elseif ($request->input('submit_type') == 'save_n_add_another') {
-            return redirect()->action([\App\Http\Controllers\ProductController::class, 'create'])
-                ->with('status', $output);
+            return redirect()->action(
+                [\App\Http\Controllers\ProductController::class, 'create']
+            )->with('status', $output);
         }
 
-        return redirect('products')->with('status', $output);
+        return redirect('products/add-selling-prices-category')->with('status', $output);
+    }
+    
+    public function saveSellingPricesMany(Request $request)
+    {
+        if (!auth()->user()->can('product.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+        // dd($request->input('group_prices'));
+        // foreach ($request->group_prices as $key => $value){
+        //     dd( $value['price_type']);
+        // };
+        try {
+            $business_id = $request->session()->get('user.business_id');
+            $category_id = $request->input('category_id');
+            $products = Product::where('business_id', $business_id)
+                ->where('category_id', $category_id)
+                ->with(['variations'])
+                ->get();
+            DB::beginTransaction();
+                    foreach ($request->input('group_prices') as $key => $value) {
+                        if (isset($value['price'])) {
+                            $variation_group_price = VariationGroupPrice::updateOrCreate(
+                                [
+                                    'variation_id' => $key,
+                                    'price_group_id' => $request->selling_price_group_id,
+                                ],
+                                [
+                                    'price_inc_tax' => $this->productUtil->num_uf($value['price']),
+                                    'price_type' => $value['price_type'],
+                                ]
+                            );
+                        }
+            }
+            DB::commit();
+            $output = ['success' => 1, 'msg' => __('lang_v1.updated_success')];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::emergency('File: ' . $e->getFile() . ' Line: ' . $e->getLine() . ' Message: ' . $e->getMessage());
+            $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
+        }
+        return redirect('/selling-price-group')->with('status', $output);
     }
 
     public function viewGroupPrice($id)

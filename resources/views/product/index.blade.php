@@ -103,6 +103,12 @@
                     <li class="active">
                         <a href="#product_list_tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-cubes" aria-hidden="true"></i> @lang('lang_v1.all_products')</a>
                     </li>
+                    <li>
+                        <a href="#product_sell_tab" data-toggle="tab" aria-expanded="true"><i class="fas fa-calendar-check"></i> Today Sell Details</a>
+                    </li>
+                    <li>
+                        <a href="#product_return_tab" data-toggle="tab" aria-expanded="true"><i class="fas fa-undo-alt"></i> Today Return Products</a>
+                    </li>
                     @can('stock_report.view')
                     <li>
                         <a href="#product_stock_report" data-toggle="tab" aria-expanded="true"><i class="fa fa-hourglass-half" aria-hidden="true"></i> @lang('report.stock_report')</a>
@@ -125,6 +131,12 @@
                     @can('stock_report.view')
                     <div class="tab-pane" id="product_stock_report">
                         @include('report.partials.stock_report_table')
+                    </div>
+                    <div class="tab-pane" id="product_sell_tab">
+                        @include('product.partials.product_sell_report')
+                    </div>
+                    <div class="tab-pane" id="product_return_tab">
+                        @include('product.partials.sell_return')
                     </div>
                     @endcan
                 </div>
@@ -235,7 +247,174 @@
                         __currency_convert_recursively($('#product_table'));
                     },
             });
-            // Array to track the ids of the details displayed rows
+
+    $(document).ready(function() {
+    var product_sell_table = $('#product_sell_table').DataTable({
+        processing: true,
+        serverSide: true,
+        aaSorting: [[4, 'desc']],  // Sort by date
+        ajax: {
+            url: '/reports/product-sell-grouped-report',
+            data: function(d) {
+                var today = new Date();
+                var day = String(today.getDate()).padStart(2, '0');
+                var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+                var year = today.getFullYear();
+                var todayDate = year + '-' + month + '-' + day;
+
+                d.variation_id = $('#variation_id').val();
+                d.customer_id = $('select#customer_id').val();
+                d.customer_group_id = $('#psr_customer_group_id').val();
+                d.type = $('#product_list_filter_type').val();
+                d.category_id = $('#product_list_filter_category_id').val();
+                d.brand_id = $('#product_list_filter_brand_id').val();
+                d.unit_id = $('#product_list_filter_unit_id').val();
+                d.tax_id = $('#product_list_filter_tax_id').val();
+                d.active_state = $('#active_state').val();
+                d.not_for_selling = $('#not_for_selling').is(':checked');
+                d.location_id = $('#location_id').val();
+                d.transaction_date = todayDate; // Add transaction_date filter
+            },
+        },
+        columns: [
+            { data: 'product_name', name: 'p.name' },
+            { data: 'sub_sku', name: 'v.sub_sku' },
+            { data: 'category_name', name: 'cat.name' },
+            { data: 'brand_name', name: 'b.name' },
+            { data: 'transaction_date', name: 't.transaction_date'},
+            { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
+            { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
+            { data: 'subtotal', name: 'subtotal', searchable: false },
+        ],
+        fnDrawCallback: function(oSettings) {
+            let api = this.api();
+            
+            // Calculate the total quantity sold
+            let totalQtySold = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
+                // Filter out non-numeric characters and then parse the numeric value
+                let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
+                return parseFloat(a) + numericValueB;
+            }, 0);
+            
+
+            // Calculate the total sold subtotal
+            let totalSubtotal = api.column(7, { page: 'current' }).data().reduce(function (a, b) {
+                // Filter out non-numeric characters and then parse the numeric value
+                let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
+                return parseFloat(a) + numericValueB;
+            }, 0);
+
+            // Update the footer with the totals
+            // $('#footer_total_today_sold').html(totalQtySold);
+            $('#footer_today_subtotal').text(totalSubtotal.toFixed(2));
+
+            __currency_convert_recursively($('#product_sell_table'));
+        },
+    });
+
+
+
+});
+
+
+$(document).ready(function(){
+
+    sell_return_table = $('#sell_return_table').DataTable({
+            processing: true,
+            serverSide: true,
+            aaSorting: [[0, 'desc']],
+            "ajax": {
+                "url": "/sell-return",
+                "data": function ( d ) {
+
+                    d.customer_id = $('#sell_list_filter_customer_id').val();
+
+                    if($('#created_by').length) {
+                        d.created_by = $('#created_by').val();
+                    }
+                    var today = new Date();
+                    var day = String(today.getDate()).padStart(2, '0');
+                    var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+                    var year = today.getFullYear();
+                    var todayDate = year + '-' + month + '-' + day;
+                    d.type = $('#product_list_filter_type').val();
+                    d.category_id = $('#product_list_filter_category_id').val();
+                    d.brand_id = $('#product_list_filter_brand_id').val();
+                    d.unit_id = $('#product_list_filter_unit_id').val();
+                    d.tax_id = $('#product_list_filter_tax_id').val();
+                    d.active_state = $('#active_state').val();
+                    d.not_for_selling = $('#not_for_selling').is(':checked');
+                    d.location_id = $('#location_id').val();
+                    d.transaction_date = todayDate;
+                }
+            },
+            columnDefs: [ {
+                "targets": [7, 8],
+                "orderable": false,
+                "searchable": false
+            } ],
+            columns: [
+                { data: 'transaction_date', name: 'transaction_date'  },
+                { data: 'invoice_no', name: 'invoice_no'},
+                { data: 'parent_sale', name: 'T1.invoice_no'},
+                { data: 'name', name: 'contacts.name'},
+                { data: 'business_location', name: 'bl.name'},
+                { data: 'payment_status', name: 'payment_status'},
+                { data: 'final_total', name: 'final_total'},
+                { data: 'payment_due', name: 'payment_due'},
+                { data: 'action', name: 'action'}
+            ],
+            "fnDrawCallback": function (oSettings) {
+                var total_sell = sum_table_col($('#sell_return_table'), 'final_total');
+                $('#footer_sell_return_total').text(total_sell);
+                
+                $('#footer_payment_status_count_sr').html(__sum_status_html($('#sell_return_table'), 'payment-status-label'));
+
+                var total_due = sum_table_col($('#sell_return_table'), 'payment_due');
+                $('#footer_total_due_sr').text(total_due);
+
+                __currency_convert_recursively($('#sell_return_table'));
+            },
+            createdRow: function( row, data, dataIndex ) {
+                $( row ).find('td:eq(2)').attr('class', 'clickable_td');
+            }
+        });
+        $(document).on('change', '#sell_list_filter_location_id, #sell_list_filter_customer_id, #created_by',  function() {
+            sell_return_table.ajax.reload();
+        });
+    })
+
+    $(document).on('click', 'a.delete_sell_return', function(e) {
+        e.preventDefault();
+        swal({
+            title: LANG.sure,
+            icon: 'warning',
+            buttons: true,
+            dangerMode: true,
+        }).then(willDelete => {
+            if (willDelete) {
+                var href = $(this).attr('href');
+                var data = $(this).serialize();
+
+                $.ajax({
+                    method: 'DELETE',
+                    url: href,
+                    dataType: 'json',
+                    data: data,
+                    success: function(result) {
+                        if (result.success == true) {
+                            toastr.success(result.msg);
+                            sell_return_table.ajax.reload();
+                        } else {
+                            toastr.error(result.msg);
+                        }
+                    },
+                });
+            }
+        });
+    });
+
+// Array to track the ids of the details displayed rows
             var detailRows = [];
 
             $('#product_table tbody').on( 'click', 'tr i.rack-details', function () {
@@ -267,6 +446,8 @@
 
             $('#opening_stock_modal').on('hidden.bs.modal', function(e) {
                 product_table.ajax.reload();
+                product_sell_table.ajax.reload();
+                sell_return_table.ajax.reload();
             });
 
             $('table#product_table tbody').on('click', 'a.delete-product', function(e){
@@ -287,6 +468,8 @@
                                 if(result.success == true){
                                     toastr.success(result.msg);
                                     product_table.ajax.reload();
+                                    product_sell_table.ajax.reload();
+                                    sell_return_table.ajax.reload();
                                 } else {
                                     toastr.error(result.msg);
                                 }
@@ -343,6 +526,8 @@
                                         if (result.success == true) {
                                             toastr.success(result.msg);
                                             product_table.ajax.reload();
+                                            product_sell_table.ajax.reload();
+                                            sell_return_table.ajax.reload();
                                             form
                                             .find('#selected_products')
                                             .val('');
@@ -383,6 +568,8 @@
                         if(result.success == true){
                             toastr.success(result.msg);
                             product_table.ajax.reload();
+                            product_sell_table.ajax.reload();
+                            sell_return_table.ajax.reload();
                         } else {
                             toastr.error(result.msg);
                         }
@@ -399,6 +586,12 @@
                     if ($("#product_stock_report").hasClass('active')) {
                         stock_report_table.ajax.reload();
                     }
+                    if ($("#product_sell_tab").hasClass('active')) {
+                        product_sell_table.ajax.reload();
+                    }
+                    if ($("#product_return_tab").hasClass('active')) {
+                        sell_return_table.ajax.reload();
+                    }
             });
 
             $(document).on('ifChanged', '#not_for_selling, #woocommerce_enabled', function(){
@@ -408,6 +601,12 @@
 
                 if ($("#product_stock_report").hasClass('active')) {
                     stock_report_table.ajax.reload();
+                }
+                if ($("#product_sell_tab").hasClass('active')) {
+                        product_sell_table.ajax.reload();
+                }
+                if ($("#product_return_tab").hasClass('active')) {
+                        sell_return_table.ajax.reload();
                 }
             });
 
@@ -445,6 +644,8 @@
                                 $('#woocommerce_sync_modal').modal('hide');
                                 toastr.success(result.msg);
                                 product_table.ajax.reload();
+                                product_sell_table.ajax.reload();
+                                sell_return_table.ajax.reload();
                             } else {
                                 toastr.error(result.msg);
                             }
@@ -580,6 +781,8 @@
                 }
             } else {
                 product_table.ajax.reload();
+                product_sell_table.ajax.reload();
+                sell_return_table.ajax.reload();
             }
         });
 
@@ -628,6 +831,7 @@
                     $('div#edit_product_location_modal').modal('hide');
                     toastr.success(result.msg);
                     product_table.ajax.reload();
+                    product_sell_table.ajax.reload();
                     $('form#edit_product_location_form')
                     .find('button[type="submit"]')
                     .attr('disabled', false);

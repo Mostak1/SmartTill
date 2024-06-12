@@ -45,8 +45,8 @@
                         <th>@lang('sale.customer_name')</th>
                         <th>@lang('lang_v1.contact_no')</th>
                         <th>@lang('sale.location')</th>
-                        <th>@lang('sale.payment_status')</th>
                         <th>@lang('lang_v1.payment_method')</th>
+                        <th>@lang('sale.payment_status')</th>
                         <th>@lang('sale.total_amount')</th>
                         <th>@lang('sale.total_paid')</th>
                         <th>@lang('lang_v1.sell_due')</th>
@@ -70,19 +70,17 @@
                 <tbody></tbody>
                 <tfoot>
                     <tr class="bg-gray font-17 footer-total text-center">
-                        <td colspan="6"><strong>@lang('sale.total'):</strong></td>
+                        <td colspan="5"><strong>@lang('sale.total'):</strong></td>
+                        <td colspan="2" class="payment_method_count"></td>
                         <td class="footer_payment_status_count"></td>
-                        <td class="payment_method_count"></td>
                         <td class="footer_sale_total"></td>
                         <td class="footer_total_paid"></td>
                         <td class="footer_total_remaining"></td>
                         <td class="footer_total_sell_return_due"></td>
-                        <td colspan="2"></td>
-                        <td class="service_type_count"></td>
-                        <td colspan="7"></td>
+                        <td colspan="12"></td>
                     </tr>
                 </tfoot>
-            </table>
+            </table>            
         @endif
     @endcomponent
 </section>
@@ -164,8 +162,8 @@ $(document).ready( function(){
             { data: 'conatct_name', name: 'conatct_name'},
             { data: 'mobile', name: 'contacts.mobile'},
             { data: 'business_location', name: 'bl.name'},
-            { data: 'payment_status', name: 'payment_status'},
             { data: 'payment_methods', orderable: false, "searchable": false},
+            { data: 'payment_status', name: 'payment_status'},
             { data: 'final_total', name: 'final_total'},
             { data: 'total_paid', name: 'total_paid', "searchable": false},
             { data: 'total_remaining', name: 'total_remaining'},
@@ -193,21 +191,46 @@ $(document).ready( function(){
             var footer_total_paid = 0;
             var footer_total_remaining = 0;
             var footer_total_sell_return_due = 0;
+
+            // Initialize an object to store payment method counts and subtotals
+            var paymentMethodTotals = {};
+
+            // Loop through each data row
             for (var r in data){
+                // Accumulate totals for sale total, total paid, total remaining, and sell return due
                 footer_sale_total += $(data[r].final_total).data('orig-value') ? parseFloat($(data[r].final_total).data('orig-value')) : 0;
                 footer_total_paid += $(data[r].total_paid).data('orig-value') ? parseFloat($(data[r].total_paid).data('orig-value')) : 0;
                 footer_total_remaining += $(data[r].total_remaining).data('orig-value') ? parseFloat($(data[r].total_remaining).data('orig-value')) : 0;
                 footer_total_sell_return_due += $(data[r].return_due).find('.sell_return_due').data('orig-value') ? parseFloat($(data[r].return_due).find('.sell_return_due').data('orig-value')) : 0;
+
+                // Count payment methods and calculate subtotal based on payment methods
+                var paymentMethods = $(data[r].payment_methods).text().split(',');
+                for (var i = 0; i < paymentMethods.length; i++) {
+                    var paymentMethod = paymentMethods[i].trim();
+                    if (!paymentMethodTotals.hasOwnProperty(paymentMethod)) {
+                        paymentMethodTotals[paymentMethod] = { count: 0, subtotal: 0 };
+                    }
+                    paymentMethodTotals[paymentMethod].count++;
+                    paymentMethodTotals[paymentMethod].subtotal += parseFloat($(data[r].final_total).data('orig-value'));
+                }
             }
 
+            // Render payment method counts and subtotals
+            var paymentMethodHtml = '';
+            for (var method in paymentMethodTotals) {
+                paymentMethodHtml += method + '(' + paymentMethodTotals[method].count + ')-' + __currency_trans_from_en(paymentMethodTotals[method].subtotal) + '<br>';
+            }
+
+            // Update footer elements with totals and payment method information
             $('.footer_total_sell_return_due').html(__currency_trans_from_en(footer_total_sell_return_due));
             $('.footer_total_remaining').html(__currency_trans_from_en(footer_total_remaining));
             $('.footer_total_paid').html(__currency_trans_from_en(footer_total_paid));
             $('.footer_sale_total').html(__currency_trans_from_en(footer_sale_total));
             $('.footer_payment_status_count').html(__count_status(data, 'payment_status'));
             $('.service_type_count').html(__count_status(data, 'types_of_service_name'));
-            $('.payment_method_count').html(__count_status(data, 'payment_methods'));
+            $('.payment_method_count').html(paymentMethodHtml);
         },
+
         createdRow: function( row, data, dataIndex ) {
             $( row ).find('td:eq(6)').attr('class', 'clickable_td');
         }
