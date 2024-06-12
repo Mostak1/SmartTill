@@ -509,12 +509,16 @@ class SellController extends Controller
                     return $return_due_html;
                 })
                 ->editColumn('invoice_no', function ($row) use ($is_crm) {
+                    $Edited = Transaction::where('id', $row->id)->first();
                     $invoice_no = $row->invoice_no;
                     if (! empty($row->woocommerce_order_id)) {
                         $invoice_no .= ' <i class="fab fa-wordpress text-primary no-print" title="'.__('lang_v1.synced_from_woocommerce').'"></i>';
                     }
                     if (! empty($row->return_exists)) {
                         $invoice_no .= ' &nbsp;<small class="label bg-red label-round no-print" title="'.__('lang_v1.some_qty_returned_from_sell').'"><i class="fas fa-undo"></i></small>';
+                    }
+                    if ($Edited->created_at != $Edited->updated_at) {
+                        $invoice_no .= ' &nbsp;<small class="label bg-blue label-round no-print" title="'.__('Edited').'"><i class="fas fa-edit"></i></small>';
                     }
                     if (! empty($row->is_recurring)) {
                         $invoice_no .= ' &nbsp;<small class="label bg-red label-round no-print" title="'.__('lang_v1.subscribed_invoice').'"><i class="fas fa-recycle"></i></small>';

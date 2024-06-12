@@ -282,11 +282,12 @@ class TaxonomyController extends Controller
                         if ($foreign_variation->sell_price_inc_tax != $newPrice) {
                             // Create a new price history entry
                             VariationPriceHistory::create([
-                                'variation_id' => $foreign_variation->id,
-                                'old_price' => $foreign_variation->foreign_p_price_inc_tex * $category->description,
-                                'new_price' => $foreign_variation->foreign_s_price_inc_tex * $category->description,
+                                'variation_id' => $foreign_variation->product_id,
+                                'old_price' => $foreign_variation->dpp_inc_tax,
+                                'new_price' => $newPrice,
                                 'updated_by' => auth()->id(),
                                 'type' => 'product',
+                                'h_type' => 'Edited'
                             ]);
                         }
                         $foreign_variation->sell_price_inc_tax = $foreign_variation->foreign_s_price_inc_tex * $category->description;

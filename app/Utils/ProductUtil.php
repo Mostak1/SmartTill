@@ -542,6 +542,7 @@ class ProductUtil extends Util
                 ->leftjoin('variation_location_details AS vld', 'variations.id', '=', 'vld.variation_id')
                 ->leftjoin('units', 'p.unit_id', '=', 'units.id')
                 ->leftjoin('units as u', 'p.secondary_unit_id', '=', 'u.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
                 ->leftjoin('brands', function ($join) {
                     $join->on('p.brand_id', '=', 'brands.id')
                         ->whereNull('brands.deleted_at');
@@ -612,6 +613,7 @@ class ProductUtil extends Util
             'units.allow_decimal as unit_allow_decimal',
             'u.short_name as second_unit',
             'brands.name as brand',
+            'cat.name as category_name', 
             DB::raw('(SELECT purchase_price_inc_tax FROM purchase_lines WHERE 
                         variation_id=variations.id ORDER BY id DESC LIMIT 1) as last_purchased_price')
         )
@@ -964,6 +966,10 @@ class ProductUtil extends Util
         $variation_details = Variation::where('id', $variation_data['variation_id'])
                                         ->with(['product', 'product.product_tax'])
                                         ->first();
+        
+        $product = Product::where('id', $variation_data['product_id'])->first();
+        $foreign_cat = Category::where('id', 66)->first();
+
         $tax_rate = 0;
         if (! empty($variation_details->product->product_tax->amount)) {
             $tax_rate = $variation_details->product->product_tax->amount;
@@ -973,25 +979,96 @@ class ProductUtil extends Util
             $variation_data['sell_price_inc_tax'] = $variation_details->sell_price_inc_tax;
         }
 
-        if (($variation_details->default_purchase_price != $variation_data['pp_without_discount']) ||
-            ($variation_details->sell_price_inc_tax != $variation_data['sell_price_inc_tax'])
-            ) {
-            //Set default purchase price exc. tax
-            $variation_details->default_purchase_price = $variation_data['pp_without_discount'];
+        if ($product->category_id == 66) {
+            if (($variation_details->default_purchase_price != $variation_data['pp_without_discount']) ||
+                ($variation_details->sell_price_inc_tax != $variation_data['sell_price_inc_tax'])
+                ) {              
 
-            //Set default purchase price inc. tax
-            $variation_details->dpp_inc_tax = $this->calc_percentage($variation_details->default_purchase_price, $tax_rate, $variation_details->default_purchase_price);
+                //foreign price set
+                //Set default purchase price exc. tax
+                $variation_details->foreign_p_price = $variation_data['pp_without_discount'];
 
-            //Set default sell price inc. tax
-            $variation_details->sell_price_inc_tax = $variation_data['sell_price_inc_tax'];
+                //Set default purchase price inc. tax
+                $variation_details->foreign_p_price_inc_tex = $this->calc_percentage($variation_details->foreign_p_price, $tax_rate, $variation_details->foreign_p_price);
 
-            //set sell price inc. tax
-            $variation_details->default_sell_price = $this->calc_percentage_base($variation_details->sell_price_inc_tax, $tax_rate);
+                //Set default sell price inc. tax
+                $variation_details->foreign_s_price_inc_tex = $variation_data['sell_price_inc_tax'];
 
-            //set profit margin
-            $variation_details->profit_percent = $this->get_percent($variation_details->default_purchase_price, $variation_details->default_sell_price);
+                //set sell price inc. tax
+                $variation_details->foreign_s_price = $this->calc_percentage_base($variation_details->foreign_s_price_inc_tex, $tax_rate);
+                // end foreign price
+                
+                //Set default purchase price exc. tax
+                $variation_details->default_purchase_price = $variation_details->foreign_p_price * $foreign_cat->description;
 
-            $variation_details->save();
+                //Set default purchase price inc. tax
+                $variation_details->dpp_inc_tax = $variation_details->foreign_p_price_inc_tex * $foreign_cat->description;
+
+                //Set default sell price inc. tax
+                $variation_details->sell_price_inc_tax = ceil(($variation_details->foreign_s_price_inc_tex * $foreign_cat->description) /10 ) * 10;
+
+                //set sell price inc. tax
+                $variation_details->default_sell_price = ceil(($variation_details->foreign_s_price * $foreign_cat->description) / 10) * 10;
+
+                //set profit margin
+                $variation_details->profit_percent = $this->get_percent($variation_details->default_purchase_price, $variation_details->default_sell_price);
+
+                $variation_details->save();
+
+                $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
+                    ->latest('created_at')
+                    ->first();
+                if ($latest_price_history->old_price != $variation_details->dpp_inc_tax) {
+                   // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation_data['product_id'],
+                        'old_price' => $variation_details->dpp_inc_tax,
+                        'new_price' => $variation_details->sell_price_inc_tax,
+                        'updated_by' => auth()->id(),
+                        'type' => 'product',
+                        'h_type' => 'Purchase',
+                        'ref_no' => $variation_data['ref_no']
+                    ]);
+                }
+            }
+        } 
+        else {
+            if (($variation_details->default_purchase_price != $variation_data['pp_without_discount']) ||
+                ($variation_details->sell_price_inc_tax != $variation_data['sell_price_inc_tax'])
+                ) {
+                //Set default purchase price exc. tax
+                $variation_details->default_purchase_price = $variation_data['pp_without_discount'];
+
+                //Set default purchase price inc. tax
+                $variation_details->dpp_inc_tax = $this->calc_percentage($variation_details->default_purchase_price, $tax_rate, $variation_details->default_purchase_price);
+
+                //Set default sell price inc. tax
+                $variation_details->sell_price_inc_tax = $variation_data['sell_price_inc_tax'];
+
+                //set sell price inc. tax
+                $variation_details->default_sell_price = $this->calc_percentage_base($variation_details->sell_price_inc_tax, $tax_rate);
+
+                //set profit margin
+                $variation_details->profit_percent = $this->get_percent($variation_details->default_purchase_price, $variation_details->default_sell_price);
+
+                $variation_details->save();
+
+                $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
+                    ->latest('created_at')
+                    ->first();
+                if ($latest_price_history->old_price != $variation_details->dpp_inc_tax) {
+                   // Create a new price history entry
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation_data['product_id'],
+                        'old_price' => $variation_details->dpp_inc_tax,
+                        'new_price' => $variation_details->sell_price_inc_tax,
+                        'updated_by' => auth()->id(),
+                        'type' => 'product',
+                        'h_type' => 'Purchase',
+                        'ref_no' => $variation_data['ref_no']
+                    ]);
+                }
+            }
         }
     }
 
@@ -1315,6 +1392,8 @@ class ProductUtil extends Util
                 $variation_data['pp_without_discount'] = ($this->num_uf($data['pp_without_discount'], $currency_details) * $exchange_rate) / $multiplier;
                 $variation_data['variation_id'] = $purchase_line->variation_id;
                 $variation_data['purchase_price'] = $purchase_line->purchase_price;
+                $variation_data['product_id'] = $data['product_id'];
+                $variation_data['ref_no'] = $transaction->ref_no;
 
                 $this->updateProductFromPurchase($variation_data);
             }

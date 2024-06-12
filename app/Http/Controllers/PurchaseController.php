@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\AccountTransaction;
 use App\Business;
 use App\BusinessLocation;
+use App\Category;
 use App\Contact;
 use App\CustomerGroup;
 use App\Product;
@@ -1070,6 +1071,8 @@ class PurchaseController extends Controller
                             ->get();
 
                 $last_purchase_line = $this->getLastPurchaseLine($variation_id, $location_id, $supplier_id);
+                $category = Category::where('id', 66)->first();
+                $cat_desck = $category->description;
 
                 return view('purchase.partials.purchase_entry_row')
                     ->with(compact(
@@ -1082,7 +1085,8 @@ class PurchaseController extends Controller
                         'hide_tax',
                         'sub_units',
                         'is_purchase_order',
-                        'last_purchase_line'
+                        'last_purchase_line',
+                        'cat_desck'
                     ));
             }
         }

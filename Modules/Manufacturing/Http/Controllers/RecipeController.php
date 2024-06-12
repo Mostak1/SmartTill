@@ -6,6 +6,7 @@ use App\Utils\BusinessUtil;
 use App\Utils\ModuleUtil;
 use App\Utils\TransactionUtil;
 use App\Variation;
+use App\VariationPriceHistory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -176,7 +177,7 @@ class RecipeController extends Controller
         try {
             $input = $request->only([
                 'variation_id', 'ingredients', 'total', 'instructions',
-                'ingredients_cost', 'waste_percent', 'total_quantity', 'extra_cost', 'production_cost_type',
+                'ingredients_cost', 'waste_percent', 'total_quantity','final_quantity', 'extra_cost', 'production_cost_type',
             ]);
             if (!empty($input['ingredients'])) {
                 $variation = Variation::findOrFail($input['variation_id']);
@@ -189,14 +190,23 @@ class RecipeController extends Controller
                         'product_id' => $variation->product_id,
                         'final_price' => $this->moduleUtil->num_uf($input['total']),
                         'ingredients_cost' => $input['ingredients_cost'],
-                        'waste_percent' => $this->moduleUtil->num_uf($input['waste_percent']),
-                        'total_quantity' => $this->moduleUtil->num_uf($input['total_quantity']),
+                        'waste_percent' => $input['waste_percent'],
+                        'total_quantity' => $input['total_quantity'],
                         'extra_cost' => $this->moduleUtil->num_uf($input['extra_cost']),
                         'production_cost_type' => $input['production_cost_type'],
                         'instructions' => $input['instructions'],
                         'sub_unit_id' => !empty($request->input('sub_unit_id')) ? $request->input('sub_unit_id') : null,
                     ]
                 );
+
+                // Create a new price history entry
+                VariationPriceHistory::create([
+                    'variation_id' => $recipe->id,
+                    'new_price' => $this->moduleUtil->num_uf($input['total']),
+                    'updated_by' => auth()->id(),
+                    'type' => 'manufacturing',
+                    'h_type' => 'Edited'
+                ]);
 
                 $ingredients = [];
                 $edited_ingredients = [];
@@ -215,8 +225,8 @@ class RecipeController extends Controller
                         $ingredient = new MfgRecipeIngredient(['variation_id' => $value['ingredient_id']]);
                     }
 
-                    $ingredient->quantity = $this->moduleUtil->num_uf($value['quantity']);
-                    $ingredient->waste_percent = $this->moduleUtil->num_uf($value['waste_percent']);
+                    $ingredient->quantity = $value['quantity'];
+                    $ingredient->waste_percent = $value['waste_percent'];
                     $ingredient->sort_order = $this->moduleUtil->num_uf($value['sort_order']);
 
                     $ingredient->sub_unit_id = !empty($value['sub_unit_id']) && $value['sub_unit_id'] != $variation->product->unit_id ? $value['sub_unit_id'] : null;
@@ -300,7 +310,13 @@ class RecipeController extends Controller
 
         $ingredients = $this->mfgUtil->getIngredientDetails($recipe, $business_id);
 
-        return view('manufacturing::recipe.show', compact('recipe', 'ingredients'));
+        // $variation = Variation::where('product_id', $product->id)->get();
+        $PriceHistory = VariationPriceHistory::where('variation_id', $id)
+            ->where('type', 'manufacturing')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('manufacturing::recipe.show', compact('recipe', 'ingredients', 'PriceHistory'));
     }
 
     public function recipeShow($id)
@@ -576,10 +592,26 @@ class RecipeController extends Controller
                     $variation->dpp_inc_tax = $unit_price;
 
                     //Keep sell price constant and change profit margin
-                    $profit_margin = $this->transactionUtil->get_percent($unit_price, $variation->sell_price_inc_tax);
-                    $sell_price_excluding_tax = $this->transactionUtil->calc_percentage($unit_price_exc_tax, $profit_margin, $unit_price_exc_tax);
+                    // $profit_margin = $this->transactionUtil->get_percent($unit_price, $variation->sell_price_inc_tax);
+                    // $sell_price_excluding_tax = $this->transactionUtil->calc_percentage($unit_price_exc_tax, $profit_margin, $unit_price_exc_tax);
+
+                    $profit_margin = $variation->profit_percent;
+                    $sell_price_excluding_tax = $unit_price * (1 + $profit_margin / 100);
+
+                    $newPrice = $unit_price;
+                    $userId = auth()->id();
+
+                    VariationPriceHistory::create([
+                        'variation_id' => $variation->product_id,
+                        'old_price' => $newPrice,
+                        'new_price' => $sell_price_excluding_tax,
+                        'updated_by' => $userId,
+                        'type' => 'product',
+                        'h_type' => 'Manufacturing'
+                    ]);
 
                     $variation->default_sell_price = $sell_price_excluding_tax;
+                    $variation->sell_price_inc_tax = $sell_price_excluding_tax;
                     $variation->profit_percent = $profit_margin;
                     $variation->save();
                 }

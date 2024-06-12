@@ -29,4 +29,8 @@ class VariationGroupPrice extends Model
 
         return $price;
     }
+    public function variation()
+    {
+        return $this->belongsTo(\App\Variation::class, 'variation_id');
+    }
 }
