@@ -542,6 +542,7 @@ class ProductUtil extends Util
                 ->leftjoin('variation_location_details AS vld', 'variations.id', '=', 'vld.variation_id')
                 ->leftjoin('units', 'p.unit_id', '=', 'units.id')
                 ->leftjoin('units as u', 'p.secondary_unit_id', '=', 'u.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
                 ->leftjoin('brands', function ($join) {
                     $join->on('p.brand_id', '=', 'brands.id')
                         ->whereNull('brands.deleted_at');
@@ -612,6 +613,7 @@ class ProductUtil extends Util
             'units.allow_decimal as unit_allow_decimal',
             'u.short_name as second_unit',
             'brands.name as brand',
+            'cat.name as category_name', 
             DB::raw('(SELECT purchase_price_inc_tax FROM purchase_lines WHERE 
                         variation_id=variations.id ORDER BY id DESC LIMIT 1) as last_purchased_price')
         )

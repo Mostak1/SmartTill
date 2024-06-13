@@ -671,7 +671,8 @@ $(document).ready(function() {
             var bdt_value = foreign_s_price_inc_tex * cat_desck;
             
             // Update the BDT display
-            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+            var rounded_bdt_value = Math.ceil(bdt_value / 10) * 10;
+            row.find('.bdt-display').text('BDT: ' + rounded_bdt_value.toFixed(2));
         }
     });
     
@@ -686,7 +687,8 @@ $(document).ready(function() {
             var bdt_value = foreign_s_price_inc_tex * cat_desck;
             
             // Update the BDT display
-            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+            var rounded_bdt_value = Math.ceil(bdt_value / 10) * 10;
+            row.find('.bdt-display').text('BDT: ' + rounded_bdt_value.toFixed(2));
         }
     });
     
@@ -707,7 +709,8 @@ $(document).ready(function() {
             var bdt_value = foreign_s_price_inc_tex * cat_desck;
             
             // Update the BDT display
-            row.find('.bdt-display').text('BDT: ' + bdt_value.toFixed(2));
+            var rounded_bdt_value = Math.ceil(bdt_value / 10) * 10;
+            row.find('.bdt-display').text('BDT: ' + rounded_bdt_value.toFixed(2));
         }
     });        
 

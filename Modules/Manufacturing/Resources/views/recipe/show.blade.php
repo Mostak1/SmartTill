@@ -23,6 +23,7 @@
 								<th>@lang('manufacturing::lang.ingredient')</th>
 								<th>@lang('lang_v1.quantity')</th>
 								<th>@lang('manufacturing::lang.waste_percent')</th>
+								<th>Final Quantity</th>
 								<th>@lang('lang_v1.price')</th>
 							</tr>
 						</thead>
@@ -41,8 +42,13 @@
 										<td>
 											{{$ingredient['full_name']}}
 										</td>
-										<td><span class="display_currency" data-currency_symbol="false" data-is_quantity="true">{{$ingredient['quantity']}}</span> {{$ingredient['unit']}}</td>
-										<td><span class="display_currency" data-currency_symbol="false">{{$ingredient['waste_percent']}}</span>%</td>
+										<td><span>{{ number_format($ingredient['quantity'], 3) }}</span> {{$ingredient['unit']}}</td>
+										<td><span>{{ number_format($ingredient['waste_percent'], 4) }}</span>%</td>
+										<td>
+											<span>
+												{{ number_format($ingredient['quantity'] * (100 - $ingredient['waste_percent']) / 100, 3) }}
+											</span> {{$ingredient['unit']}}
+										</td>
 										<td><span class="display_currency" data-currency_symbol="true">{{$ingredient_price}}</span></td>
 									</tr>
 								@else
@@ -63,8 +69,8 @@
 										<td>
 											{{$ingredient['full_name']}}
 										</td>
-										<td><span class="display_currency" data-currency_symbol="false" data-is_quantity="true">{{$ingredient['quantity']}}</span> {{$ingredient['unit']}}</td>
-										<td><span class="display_currency" data-currency_symbol="false">{{$ingredient['waste_percent']}}</span>%</td>
+										<td><span>{{ number_format($ingredient['quantity'], 3)}}</span> {{$ingredient['unit']}}</td>
+										<td><span>{{ number_format($ingredient['waste_percent'], 4)}}</span>%</td>
 										<td><span class="display_currency" data-currency_symbol="true">{{$ingredient['quantity']*$ingredient['dpp_inc_tax']*$ingredient['multiplier']}}</span></td>
 									</tr>
 								@endforeach
@@ -84,7 +90,7 @@
       				<strong>@lang('manufacturing::lang.wastage'):</strong>
       				{{$recipe->waste_percent ?? 0}} % <br>
       				<strong>@lang('manufacturing::lang.total_output_quantity'):</strong>
-      				@if(!empty($recipe->total_quantity)){{@format_quantity($recipe->total_quantity)}}@else 0 @endif @if(!empty($recipe->sub_unit)) {{$recipe->sub_unit->short_name}} @else {{$recipe->variation->product->unit->short_name}} @endif
+      				@if(!empty($recipe->total_quantity)){{number_format($recipe->total_quantity, 3)}}@else 0 @endif @if(!empty($recipe->sub_unit)) {{$recipe->sub_unit->short_name}} @else {{$recipe->variation->product->unit->short_name}} @endif
       			</div>
       			<div class="col-md-6">
       				<strong>@lang('manufacturing::lang.extra_cost'):</strong>
@@ -99,6 +105,35 @@
       				{!! $recipe->instructions !!}
       			</div>
       		</div>
+			  <div class="row">
+				<div class="col-md-12">
+					<h4 style="padding: 7px 0;" class="text-center bg-green"><b>Recipe Price History</b></h4>
+					<table class="table table-bordered table-striped">
+						<thead>
+							<tr>
+								<th>Type</th>
+								<th>Price</th>
+								<th>Updated By</th>
+								<th>Updated At</th>
+							</tr>
+						</thead>
+						<tbody>
+							@forelse($PriceHistory as $history)
+								<tr>
+									<td>{{$history->h_type}}</td>
+									<td>{{ number_format($history->new_price, 2) }}</td>
+									<td>{{ \App\User::find($history->updated_by)->first_name }} {{ \App\User::find($history->updated_by)->last_name }}</td>
+									<td>{{ Carbon::parse($history->updated_at)->format('d-m-Y, h:i A') }}</td>
+								</tr>
+							@empty
+								<tr>
+									<td colspan="4">No price history available for this Recipe.</td>
+								</tr>
+							@endforelse
+						</tbody>
+					</table>
+				</div>
+			</div>
       	</div>
       	<div class="modal-footer">
       		<button type="button" class="btn btn-primary no-print" aria-label="Print" 

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\BusinessLocation;
 use App\Product;
 use App\SellingPriceGroup;
@@ -48,7 +49,7 @@ class SellingPriceGroupController extends Controller
      */
     public function index()
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -56,7 +57,7 @@ class SellingPriceGroupController extends Controller
             $business_id = request()->session()->get('user.business_id');
 
             $price_groups = SellingPriceGroup::where('business_id', $business_id)
-                        ->select(['name', 'description', 'id', 'is_active']);
+                ->select(['name', 'description', 'id', 'is_active']);
 
             return Datatables::of($price_groups)
                 ->addColumn(
@@ -85,7 +86,7 @@ class SellingPriceGroupController extends Controller
      */
     public function create()
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -100,7 +101,7 @@ class SellingPriceGroupController extends Controller
      */
     public function store(Request $request)
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -112,16 +113,18 @@ class SellingPriceGroupController extends Controller
             $spg = SellingPriceGroup::create($input);
 
             //Create a new permission related to the created selling price group
-            Permission::create(['name' => 'selling_price_group.'.$spg->id]);
+            Permission::create(['name' => 'selling_price_group.' . $spg->id]);
 
-            $output = ['success' => true,
+            $output = [
+                'success' => true,
                 'data' => $spg,
                 'msg' => __('lang_v1.added_success'),
             ];
         } catch (\Exception $e) {
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-            $output = ['success' => false,
+            $output = [
+                'success' => false,
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
@@ -163,7 +166,7 @@ class SellingPriceGroupController extends Controller
                 })
                 ->addColumn('price_group', function ($row) {
                     if ($row->price_type == 'percentage') {
-                        $price = number_format($row->price_inc_tax, 0) . '%';
+                        $price = 100 - $row->price_inc_tax . ' %';
                         $html = $price . '%';
                     } elseif ($row->price_type == 'fixed') {
                         $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
@@ -182,7 +185,18 @@ class SellingPriceGroupController extends Controller
                     }
                     return $price;
                 })
-                ->rawColumns(['product', 'sku', 'selling_price', 'price_group', 'price_group_price'])
+                ->addColumn('profit_per', function ($row) {
+
+                    if ($row->price_type == 'percentage') {
+                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+                    }
+                    return number_format($profit, 2) . ' %';
+                })
+                ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price'])
                 ->make(true);
         }
         return view('selling_price_group.show')
@@ -197,7 +211,7 @@ class SellingPriceGroupController extends Controller
      */
     public function edit($id)
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -219,7 +233,7 @@ class SellingPriceGroupController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if (! auth()->user()->can('product.update')) {
+        if (!auth()->user()->can('product.update')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -233,13 +247,15 @@ class SellingPriceGroupController extends Controller
                 $spg->description = $input['description'];
                 $spg->save();
 
-                $output = ['success' => true,
+                $output = [
+                    'success' => true,
                     'msg' => __('lang_v1.updated_success'),
                 ];
             } catch (\Exception $e) {
-                \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+                \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-                $output = ['success' => false,
+                $output = [
+                    'success' => false,
                     'msg' => __('messages.something_went_wrong'),
                 ];
             }
@@ -256,7 +272,7 @@ class SellingPriceGroupController extends Controller
      */
     public function destroy($id)
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -267,13 +283,15 @@ class SellingPriceGroupController extends Controller
                 $spg = SellingPriceGroup::where('business_id', $business_id)->findOrFail($id);
                 $spg->delete();
 
-                $output = ['success' => true,
+                $output = [
+                    'success' => true,
                     'msg' => __('lang_v1.deleted_success'),
                 ];
             } catch (\Exception $e) {
-                \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+                \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-                $output = ['success' => false,
+                $output = [
+                    'success' => false,
                     'msg' => __('messages.something_went_wrong'),
                 ];
             }
@@ -287,8 +305,9 @@ class SellingPriceGroupController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function updateProductPrice(){
-        if (! auth()->user()->can('product.update')) {
+    public function updateProductPrice()
+    {
+        if (!auth()->user()->can('product.update')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -306,16 +325,16 @@ class SellingPriceGroupController extends Controller
         $price_groups = SellingPriceGroup::where('business_id', $business_id)->active()->get();
 
         $variations = Variation::join('products as p', 'variations.product_id', '=', 'p.id')
-                            ->join('product_variations as pv', 'variations.product_variation_id', '=', 'pv.id')
-                            ->where('p.business_id', $business_id)
-                            ->whereIn('p.type', ['single', 'variable'])
-                            ->select('sub_sku', 'p.name as product_name', 'variations.name as variation_name', 'p.type', 'variations.id', 'pv.name as product_variation_name', 'sell_price_inc_tax')
-                            ->with(['group_prices'])
-                            ->get();
+            ->join('product_variations as pv', 'variations.product_variation_id', '=', 'pv.id')
+            ->where('p.business_id', $business_id)
+            ->whereIn('p.type', ['single', 'variable'])
+            ->select('sub_sku', 'p.name as product_name', 'variations.name as variation_name', 'p.type', 'variations.id', 'pv.name as product_variation_name', 'sell_price_inc_tax')
+            ->with(['group_prices'])
+            ->get();
         $export_data = [];
         foreach ($variations as $variation) {
             $temp = [];
-            $temp['product'] = $variation->type == 'single' ? $variation->product_name : $variation->product_name.' - '.$variation->product_variation_name.' - '.$variation->variation_name;
+            $temp['product'] = $variation->type == 'single' ? $variation->product_name : $variation->product_name . ' - ' . $variation->product_variation_name . ' - ' . $variation->variation_name;
             $temp['sku'] = $variation->sub_sku;
             $temp['Selling Price Including Tax'] = $variation->sell_price_inc_tax;
 
@@ -352,7 +371,7 @@ class SellingPriceGroupController extends Controller
     {
         try {
             $notAllowed = $this->commonUtil->notAllowedInDemo();
-            if (! empty($notAllowed)) {
+            if (!empty($notAllowed)) {
                 return $notAllowed;
             }
 
@@ -376,7 +395,7 @@ class SellingPriceGroupController extends Controller
                 //Get price group names from headers
                 $imported_pgs = [];
                 foreach ($headers as $key => $value) {
-                    if (! empty($value) && $key > 2) {
+                    if (!empty($value) && $key > 2) {
                         $imported_pgs[$key] = $value;
                     }
                 }
@@ -384,7 +403,7 @@ class SellingPriceGroupController extends Controller
                 DB::beginTransaction();
                 foreach ($imported_data as $key => $value) {
                     $variation = Variation::where('sub_sku', $value[1])
-                                        ->first();
+                        ->first();
                     if (empty($variation)) {
                         $row = $key + 1;
                         $error_msg = __('lang_v1.product_not_found_exception', ['sku' => $value[1], 'row' => $row]);
@@ -392,14 +411,14 @@ class SellingPriceGroupController extends Controller
                         throw new \Exception($error_msg);
                     }
                     //Check if product base price is changed
-                    if($variation->sell_price_inc_tax != $value[2]){
+                    if ($variation->sell_price_inc_tax != $value[2]) {
                         //update price for base selling price, adjust default_sell_price, profit %
                         $variation->sell_price_inc_tax = $value[2];
                         $tax = $variation->product->product_tax()->get();
                         $tax_percent = !empty($tax) && !empty($tax->first()) ? $tax->first()->amount : 0;
                         $variation->default_sell_price = $this->commonUtil->calc_percentage_base($value[2], $tax_percent);
                         $variation->profit_percent = $this->commonUtil
-                                        ->get_percent($variation->default_purchase_price, $variation->default_sell_price);
+                            ->get_percent($variation->default_purchase_price, $variation->default_sell_price);
                         $variation->update();
                     }
 
@@ -411,19 +430,21 @@ class SellingPriceGroupController extends Controller
 
                         if ($price_group->isNotEmpty()) {
                             //Check if price is numeric
-                            if (! is_null($value[$k]) && ! is_numeric($value[$k])) {
+                            if (!is_null($value[$k]) && !is_numeric($value[$k])) {
                                 $row = $key + 1;
                                 $error_msg = __('lang_v1.price_group_non_numeric_exception', ['row' => $row]);
 
                                 throw new \Exception($error_msg);
                             }
 
-                            if (! is_null($value[$k])) {
+                            if (!is_null($value[$k])) {
                                 VariationGroupPrice::updateOrCreate(
-                                    ['variation_id' => $variation->id,
+                                    [
+                                        'variation_id' => $variation->id,
                                         'price_group_id' => $price_group->first()->id,
                                     ],
-                                    ['price_inc_tax' => $value[$k],
+                                    [
+                                        'price_inc_tax' => $value[$k],
                                     ]
                                 );
                             }
@@ -437,14 +458,16 @@ class SellingPriceGroupController extends Controller
                 }
                 DB::commit();
             }
-            $output = ['success' => 1,
+            $output = [
+                'success' => 1,
                 'msg' => __('lang_v1.product_prices_imported_successfully'),
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
 
-            $output = ['success' => 0,
+            $output = [
+                'success' => 0,
                 'msg' => $e->getMessage(),
             ];
 
@@ -459,7 +482,7 @@ class SellingPriceGroupController extends Controller
      */
     public function activateDeactivate($id)
     {
-        if (! auth()->user()->can('product.create')) {
+        if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -469,7 +492,8 @@ class SellingPriceGroupController extends Controller
             $spg->is_active = $spg->is_active == 1 ? 0 : 1;
             $spg->save();
 
-            $output = ['success' => true,
+            $output = [
+                'success' => true,
                 'msg' => __('lang_v1.updated_success'),
             ];
 

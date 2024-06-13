@@ -160,15 +160,17 @@
                         <tfoot>
                             <tr>
                                 <td colspan="4" class="text-right"><strong>@lang('manufacturing::lang.ingredients_cost')</strong></td>
-                                <td><span class="display_currency" data-currency_symbol="true">{{$total_ingredient_price}}</span></td>
+                                <td><span class="display_currency" data-currency_symbol="true">{{ number_format($total_ingredient_price, 2) }}</span></td>
                             </tr>
                             <tr>
                                 <td colspan="4" class="text-right"><strong>{{__('manufacturing::lang.production_cost')}}:</strong></td>
-                                <td><span class="display_currency" data-currency_symbol="true">{{$total_production_cost}}</span> </td>
+                                <td><span class="display_currency" data-currency_symbol="true">{{ number_format($total_production_cost, 2) }}</span> </td>
                             </tr>
-                            <tr><td colspan="4" class="text-right"><strong>{{__('manufacturing::lang.total_cost')}}:</strong></td>
-                                <td><span class="display_currency" data-currency_symbol="true">{{$production_purchase->final_total}}</span></td></tr>
-                        </tfoot>
+                            <tr>
+                                <td colspan="4" class="text-right"><strong>{{__('manufacturing::lang.total_cost')}}:</strong></td>
+                                <td><span class="display_currency" data-currency_symbol="true">{{ number_format($production_purchase->final_total, 2) }}</span></td>
+                            </tr>
+                        </tfoot>                        
                     </table>
                 </div>
             </div>

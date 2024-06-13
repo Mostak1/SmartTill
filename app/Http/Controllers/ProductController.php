@@ -163,29 +163,29 @@ class ProductController extends Controller
 
             $products->groupBy('products.id');
 
-            $type = request()->get('type', null);
-            if (!empty($type)) {
-                $products->where('products.type', $type);
+            $types = request()->get('type', null);
+            if (!empty($types)) {
+                $products->whereIn('products.type', $types);
             }
 
-            $category_id = request()->get('category_id', null);
-            if (!empty($category_id)) {
-                $products->where('products.category_id', $category_id);
+            $category_ids = request()->get('category_id', null);
+            if (!empty($category_ids)) {
+                $products->whereIn('products.category_id', $category_ids);
             }
 
-            $brand_id = request()->get('brand_id', null);
-            if (!empty($brand_id)) {
-                $products->where('products.brand_id', $brand_id);
+            $brand_ids = request()->get('brand_id', null);
+            if (!empty($brand_ids)) {
+                $products->whereIn('products.brand_id', $brand_ids);
             }
 
-            $unit_id = request()->get('unit_id', null);
-            if (!empty($unit_id)) {
-                $products->where('products.unit_id', $unit_id);
+            $unit_ids = request()->get('unit_id', null);
+            if (!empty($unit_ids)) {
+                $products->whereIn('products.unit_id', $unit_ids);
             }
 
-            $tax_id = request()->get('tax_id', null);
-            if (!empty($tax_id)) {
-                $products->where('products.tax', $tax_id);
+            $tax_ids = request()->get('tax_id', null);
+            if (!empty($tax_ids)) {
+                $products->whereIn('products.tax', $tax_ids);
             }
 
             $active_state = request()->get('active_state', null);
@@ -207,6 +207,15 @@ class ProductController extends Controller
 
             if (!empty(request()->get('repair_model_id'))) {
                 $products->where('products.repair_model_id', request()->get('repair_model_id'));
+            }
+
+            $stock_status = request()->get('stock_status', null);
+            if (!empty($stock_status)) {
+                if ($stock_status == 'in_stock') {
+                    $products->having(DB::raw('SUM(vld.qty_available)'), '>', 0);
+                } elseif ($stock_status == 'out_of_stock') {
+                    $products->having(DB::raw('SUM(vld.qty_available)'), '<=', 0);
+                }
             }
 
             return Datatables::of($products)
@@ -869,7 +878,7 @@ class ProductController extends Controller
                 $userId = auth()->id();
 
                 // Update the variation's price
-                if ($variation_history->sell_price_inc_tax != $newPrice) {
+                if ($variation_history->sell_price_inc_tax != $newPrice || $variation_history->dpp_inc_tax != $oldPrice) {
                     // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $id,
@@ -902,7 +911,7 @@ class ProductController extends Controller
                 $userId = auth()->id();
 
                 // Update the variation's price
-                if ($variation_history->sell_price_inc_tax != $newPrice) {
+                if ($variation_history->sell_price_inc_tax != $newPrice || $variation_history->dpp_inc_tax != $oldPrice) {
                     // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $id,
@@ -962,7 +971,7 @@ class ProductController extends Controller
                 $userId = auth()->id();
 
                 // Update the variation's price
-                if ($variation_history->sell_price_inc_tax != $newPrice) {
+                if ($variation_history->sell_price_inc_tax != $newPrice || $variation_history->dpp_inc_tax != $oldPrice) {
                     $variation_history->sell_price_inc_tax = $newPrice;
                     $variation_history->save();
 
@@ -1690,7 +1699,7 @@ class ProductController extends Controller
         // $variation = Variation::where('product_id', $product->id)->get();
         $PriceHistory = VariationPriceHistory::where('variation_id', $id)
             ->where('type', 'product')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->orderBy('created_at', 'desc')
             ->get();
 
         if (!auth()->user()->can('product.view')) {
@@ -2024,6 +2033,61 @@ class ProductController extends Controller
                                     'price_type' => $value['price_type'],
                                 ]
                             );
+                        }
+            }
+            DB::commit();
+            $output = ['success' => 1, 'msg' => __('lang_v1.updated_success')];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::emergency('File: ' . $e->getFile() . ' Line: ' . $e->getLine() . ' Message: ' . $e->getMessage());
+            $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
+        }
+        return redirect('/selling-price-group')->with('status', $output);
+    }
+    
+    public function saveSellingPricesMany(Request $request)
+    {
+        if (!auth()->user()->can('product.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+        // dd($request->input('group_prices'));
+        // foreach ($request->group_prices as $key => $value){
+        //     dd( $value['price_type']);
+        // };
+        try {
+            $business_id = $request->session()->get('user.business_id');
+            $category_id = $request->input('category_id');
+            $products = Product::where('business_id', $business_id)
+                ->where('category_id', $category_id)
+                ->with(['variations'])
+                ->get();
+            DB::beginTransaction();
+                    foreach ($request->input('group_prices') as $key => $value) {
+                        if (isset($value['price'])) {
+                            if ($value['price_type']=='percentage') {
+                                $variation_group_price = VariationGroupPrice::updateOrCreate(
+                                    [
+                                        'variation_id' => $key,
+                                        'price_group_id' => $request->selling_price_group_id,
+                                    ],
+                                    [
+                                        'price_inc_tax' => 100 -$value['price'],
+                                        'price_type' => $value['price_type'],
+                                    ]
+                                );
+                            } else {
+                                $variation_group_price = VariationGroupPrice::updateOrCreate(
+                                    [
+                                        'variation_id' => $key,
+                                        'price_group_id' => $request->selling_price_group_id,
+                                    ],
+                                    [
+                                        'price_inc_tax' => $this->productUtil->num_uf($value['price']),
+                                        'price_type' => $value['price_type'],
+                                    ]
+                                );
+                            }
+                            
                         }
             }
             DB::commit();

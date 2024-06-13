@@ -69,8 +69,8 @@
                 </thead>
                 <tbody></tbody>
                 <tfoot>
-                    <tr class="bg-gray font-17 footer-total text-center">
-                        <td colspan="5"><strong>@lang('sale.total'):</strong></td>
+                    <tr style="font-size: 12px" class="bg-gray footer-total text-left">
+                        <td class="text-center" colspan="5"><strong>@lang('sale.total'):</strong></td>
                         <td colspan="2" class="payment_method_count"></td>
                         <td class="footer_payment_status_count"></td>
                         <td class="footer_sale_total"></td>

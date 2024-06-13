@@ -224,7 +224,8 @@
             @endif
             @if ($product->category_id == 66)
             <input class="cat_desck" hidden type="number" value="{{ $cat_desck }}">
-            <small class="bdt-display">BDT: {{ number_format($variation->foreign_s_price_inc_tex * $cat_desck, 2) }}</small>
+            <small class="bdt-display">BDT: {{ number_format($variation->sell_price_inc_tax, 2) }}
+            </small>
             @endif 
         </td>
         @if(session('business.enable_lot_number'))

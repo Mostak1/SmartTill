@@ -2320,7 +2320,7 @@ class ReportController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $business_id = $request->session()->get('user.business_id');
+        $business_id = request()->session()->get('user.business_id');
 
         $payment_types = $this->transactionUtil->payment_types(null, true, $business_id);
         if ($request->ajax()) {
@@ -2523,8 +2523,8 @@ class ReportController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function getproductSellGroupedReport(Request $request)
-    {
-        if (!auth()->user()->can('purchase_n_sell_report.view')) {
+    {       
+        if (! auth()->user()->can('purchase_n_sell_report.view')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -2580,11 +2580,11 @@ class ReportController extends Controller
                 ->groupBy('v.id')
                 ->groupBy('formated_date');
 
-            if (!empty($today)) {
+            if (! empty($today)) {
                 $query->whereDate('t.transaction_date', $today);
             }
 
-            if (!empty($variation_id)) {
+            if (! empty($variation_id)) {
                 $query->where('transaction_sell_lines.variation_id', $variation_id);
             }
             $start_date = $request->get('start_date');
@@ -2648,10 +2648,10 @@ class ReportController extends Controller
                 ->editColumn('subtotal', function ($row) {
                     $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
 
-                    return '<span class="' . $class . '" data-orig-value="' . $row->subtotal . '">' .
-                        $this->transactionUtil->num_f($row->subtotal, true) . '</span>';
-                })
-                ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
+                     return '<span class="'.$class.'" data-orig-value="'.$row->subtotal.'">'.
+                     $this->transactionUtil->num_f($row->subtotal, true).'</span>';
+                 })
+                 ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
 
                 ->rawColumns(['current_stock', 'subtotal', 'total_qty_sold'])
                 ->make(true);

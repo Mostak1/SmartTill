@@ -376,6 +376,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/sell-return/print/{id}', [SellReturnController::class, 'printInvoice']);
     Route::get('/sell-return/add/{id}', [SellReturnController::class, 'add']);
     Route::post('/sell-return/store-with-payment', [SellReturnController::class, 'storeWithPayment']);
+    Route::post('/sell-return/store-with-payment', [SellReturnController::class, 'storeWithPayment']);
 
     //Backup
     Route::get('backup/download/{file_name}', [BackUpController::class, 'download']);
@@ -386,6 +387,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('update-product-price', [SellingPriceGroupController::class, 'updateProductPrice'])->name('update-product-price');
     Route::get('export-product-price', [SellingPriceGroupController::class, 'export']);
     Route::post('import-product-price', [SellingPriceGroupController::class, 'import']);
+    Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
     Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
 
     Route::resource('selling-price-group', SellingPriceGroupController::class);

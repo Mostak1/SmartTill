@@ -10,6 +10,7 @@ $(document).ready(function () {
         initialize_printer();
     }
     // Date picker
+    // Date picker
     $('#transaction_date').datetimepicker({
         format: moment_date_format + ' ' + moment_time_format,
         ignoreReadonly: true,
@@ -83,10 +84,12 @@ function initialize_printer() {
 
 function pos_print(receipt) {
     // If printer type then connect with websocket
+    // If printer type then connect with websocket
     if (receipt.print_type == 'printer') {
         var content = receipt;
         content.type = 'print-receipt';
 
+        // Check if ready or not, then print.
         // Check if ready or not, then print.
         if (socket.readyState != 1) {
             initializeSocket();
@@ -102,6 +105,7 @@ function pos_print(receipt) {
             document.title = receipt.print_title;
         }
 
+        // If printer type browser then print content
         // If printer type browser then print content
         $('#receipt_section').html(receipt.html_content);
         __currency_convert_recursively($('#receipt_section'));

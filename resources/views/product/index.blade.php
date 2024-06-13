@@ -16,38 +16,41 @@
 
 <!-- Main content -->
 <section class="content">
+@component('components.filters', ['title' => __('report.filters')])
 <div class="row">
     <div class="col-md-12">
-    @component('components.filters', ['title' => __('report.filters')])
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('type', __('product.product_type') . ':') !!}
-                {!! Form::select('type', ['single' => __('lang_v1.single'), 'variable' => __('lang_v1.variable'), 'combo' => __('lang_v1.combo')], null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_type', 'placeholder' => __('lang_v1.all')]); !!}
+                {!! Form::label('type[]', __('product.product_type') . ':') !!}
+                {!! Form::select('type[]', ['single' => __('lang_v1.single'), 'variable' => __('lang_v1.variable'), 'combo' => __('lang_v1.combo')], null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_type','multiple' => 'multiple']); !!}
             </div>
         </div>
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('category_id', __('product.category') . ':') !!}
-                {!! Form::select('category_id', $categories, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_category_id', 'placeholder' => __('lang_v1.all')]); !!}
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="form-group">
-                {!! Form::label('unit_id', __('product.unit') . ':') !!}
-                {!! Form::select('unit_id', $units, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_unit_id', 'placeholder' => __('lang_v1.all')]); !!}
+                {!! Form::label('category_id[]', __('product.category') . ':') !!}
+                {!! Form::select('category_id[]', $categories, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_category_id', 'multiple' => 'multiple']); !!}
             </div>
         </div>
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('tax_id', __('product.tax') . ':') !!}
-                {!! Form::select('tax_id', $taxes, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_tax_id', 'placeholder' => __('lang_v1.all')]); !!}
+                {!! Form::label('unit_id[]', __('product.unit') . ':') !!}
+                {!! Form::select('unit_id[]', $units, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_unit_id', 'multiple' => 'multiple']); !!}
             </div>
         </div>
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('brand_id', __('product.brand') . ':') !!}
-                {!! Form::select('brand_id', $brands, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_brand_id', 'placeholder' => __('lang_v1.all')]); !!}
+                {!! Form::label('tax_id[]', __('product.tax') . ':') !!}
+                {!! Form::select('tax_id[]', $taxes, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_tax_id', 'multiple' => 'multiple']); !!}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="col-md-3">
+            <div class="form-group">
+                {!! Form::label('brand_id[]', __('product.brand') . ':') !!}
+                {!! Form::select('brand_id[]', $brands, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_brand_id', 'multiple' => 'multiple']); !!}
             </div>
         </div>
         <div class="col-md-3" id="location_filter">
@@ -57,8 +60,8 @@
             </div>
         </div>
         <div class="col-md-3">
-            <br>
             <div class="form-group">
+                {!! Form::label('active_state',  __('Product Status') . ':') !!}
                 {!! Form::select('active_state', ['active' => __('business.is_active'), 'inactive' => __('lang_v1.inactive')], null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'active_state', 'placeholder' => __('lang_v1.all')]); !!}
             </div>
         </div>
@@ -80,20 +83,30 @@
             </label>
           </div>
         </div>
-        @if($is_woocommerce)
-            <div class="col-md-3">
-                <div class="form-group">
-                    <br>
-                    <label>
-                      {!! Form::checkbox('woocommerce_enabled', 1, false, 
-                      [ 'class' => 'input-icheck', 'id' => 'woocommerce_enabled']); !!} {{ __('lang_v1.woocommerce_enabled') }}
-                    </label>
-                </div>
-            </div>
-        @endif
-    @endcomponent
     </div>
 </div>
+<div class="row">
+    <div class="col-md-12">
+        @if($is_woocommerce)
+        <div class="col-md-3">
+            <div class="form-group">
+                <br>
+                <label>
+                  {!! Form::checkbox('woocommerce_enabled', 1, false, 
+                  [ 'class' => 'input-icheck', 'id' => 'woocommerce_enabled']); !!} {{ __('lang_v1.woocommerce_enabled') }}
+                </label>
+            </div>
+        </div>
+    @endif
+        <div class="col-md-3">
+            <div class="form-group">
+                {!! Form::label('stock_status', __('Stock Status') . ':') !!}
+                {!! Form::select('stock_status', ['in_stock' => __('In stock'), 'out_of_stock' => __('Out of stock')], null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'product_list_filter_stock_status', 'placeholder' => __('lang_v1.all')]); !!}
+            </div>
+        </div>
+    </div>
+</div>
+@endcomponent
 @can('product.view')
     <div class="row">
         <div class="col-md-12">
@@ -191,6 +204,7 @@
                         d.active_state = $('#active_state').val();
                         d.not_for_selling = $('#not_for_selling').is(':checked');
                         d.location_id = $('#location_id').val();
+                        d.stock_status = $('#product_list_filter_stock_status').val();
                         if ($('#repair_model_id').length == 1) {
                             d.repair_model_id = $('#repair_model_id').val();
                         }
@@ -274,6 +288,7 @@
                 d.not_for_selling = $('#not_for_selling').is(':checked');
                 d.location_id = $('#location_id').val();
                 d.transaction_date = todayDate; // Add transaction_date filter
+                d.stock_status = $('#product_list_filter_stock_status').val();
             },
         },
         columns: [
@@ -311,9 +326,6 @@
             __currency_convert_recursively($('#product_sell_table'));
         },
     });
-
-
-
 });
 
 
@@ -346,6 +358,7 @@ $(document).ready(function(){
                     d.not_for_selling = $('#not_for_selling').is(':checked');
                     d.location_id = $('#location_id').val();
                     d.transaction_date = todayDate;
+                    d.stock_status = $('#product_list_filter_stock_status').val();
                 }
             },
             columnDefs: [ {
@@ -577,12 +590,11 @@ $(document).ready(function(){
                 });
             });
 
-            $(document).on('change', '#product_list_filter_type, #product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_unit_id, #product_list_filter_tax_id, #location_id, #active_state, #repair_model_id', 
+            $(document).on('change', '#product_list_filter_type, #product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_unit_id, #product_list_filter_tax_id, #product_list_filter_stock_status, #location_id, #active_state, #repair_model_id', 
                 function() {
                     if ($("#product_list_tab").hasClass('active')) {
                         product_table.ajax.reload();
                     }
-
                     if ($("#product_stock_report").hasClass('active')) {
                         stock_report_table.ajax.reload();
                     }

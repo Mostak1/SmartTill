@@ -59,7 +59,7 @@
                                         <th>@lang('lang_v1.default_selling_price_inc_tax')</th>
                                         <th>{{ $sellingPriceGroup->name }}
                                             @show_tooltip(('lang_v1.price_group_price_type_tooltip'))</th>
-
+                                        <th>Final Price</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -91,6 +91,7 @@
                                 <th>Default Price</th>
                                 <th>Discount</th>
                                 <th>{{ $sellingPriceGroup->name }} Price</th>
+                                <th>Profit Percentage</th>
                             </tr>
                         </thead>
                     </table>
@@ -125,6 +126,10 @@
                     {
                         data: 'price_group_price',
                         name: 'price_group_price'
+                    },
+                    {
+                        data: 'profit_per',
+                        name: 'profit_per'
                     }
                 ]
             });
@@ -217,6 +222,42 @@
                     }
                 });
             });
+
+        
+            function updateFinalPrice() {
+                // Retrieve the base price from the data attribute
+                var basePrice = parseFloat($('#base-price').data('base-price'));
+                var finalPrice = basePrice;
+
+                $('.group-price-input').each(function() {
+                    var variationId = $(this).data('variation-id');
+                    var priceGroupId = $(this).data('price-group-id');
+                    var priceType = $('select[data-variation-id="' + variationId + '"][data-price-group-id="' + priceGroupId + '"]').val();
+                    var priceValue = parseFloat($(this).val());
+
+                    // Handle empty or invalid input values
+                    if (isNaN(priceValue) || priceValue === null) {
+                        priceValue = 0;
+                    }
+
+                    if (priceType === 'fixed') {
+                        finalPrice = basePrice - priceValue;
+                    } else if (priceType === 'percentage') {
+                        finalPrice = basePrice - (basePrice * priceValue / 100);
+                    }
+                });
+
+                $('.final-price').text(finalPrice.toFixed(2));
+            }
+
+            $(document).on('input', '.group-price-input', function() {
+                updateFinalPrice();
+            });
+
+            $(document).on('change', '.group-price-type', function() {
+                updateFinalPrice();
+            });
         });
+
     </script>
 @endsection

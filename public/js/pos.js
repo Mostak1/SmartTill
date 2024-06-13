@@ -1702,21 +1702,43 @@ function pos_each_row(row_obj) {
 function pos_total_row() {
     var total_quantity = 0;
     var price_total = get_subtotal();
+    var category_subtotals = {};
+    var uncategorizedSubtotal = 0;
+
     $('table#pos_table tbody tr').each(function() {
-        total_quantity = total_quantity + __read_number($(this).find('input.pos_quantity'));
+        var qty = __read_number($(this).find('input.pos_quantity'));
+        var subtotal = __read_number($(this).find('input.pos_line_total'));
+        var category = $(this).data('category');
+
+        total_quantity += qty;
+
+        // Categorize the product as "Uncategorized" if no category is assigned
+        if (!category) {
+            category = 'Uncategorized';
+            uncategorizedSubtotal += subtotal;
+        }
+
+        if (!category_subtotals[category]) {
+            category_subtotals[category] = { count: 0, subtotal: 0 };
+        }
+        category_subtotals[category].count += qty;
+        category_subtotals[category].subtotal += subtotal;
     });
 
-    //updating shipping charges
-    $('span#shipping_charges_amount').text(
-        __currency_trans_from_en(__read_number($('input#shipping_charges_modal')), false)
-    );
-
+    // Update the overall total and item count
     $('span.total_quantity').each(function() {
         $(this).html(__number_f(total_quantity));
     });
-
-    //$('span.unit_price_total').html(unit_price_total);
     $('span.price_total').html(__currency_trans_from_en(price_total, false));
+
+    // Update the category subtotals
+    var category_subtotals_html = '';
+    for (var category in category_subtotals) {
+        category_subtotals_html += '<b>' + category + '(' + category_subtotals[category].count + '):</b> ' + __currency_trans_from_en(category_subtotals[category].subtotal, false) + '<br>';
+    }
+
+    $('#category_subtotals').html(category_subtotals_html);
+
     calculate_billing_details(price_total);
 }
 
@@ -1724,19 +1746,20 @@ function get_subtotal() {
     var price_total = 0;
 
     $('table#pos_table tbody tr').each(function() {
-        price_total = price_total + __read_number($(this).find('input.pos_line_total'));
+        price_total += __read_number($(this).find('input.pos_line_total'));
     });
 
-    //Go through the modifier prices.
+    // Go through the modifier prices
     $('input.modifiers_price').each(function() {
         var modifier_price = __read_number($(this));
         var modifier_quantity = $(this).closest('.product_modifier').find('.modifiers_quantity').val();
         var modifier_subtotal = modifier_price * modifier_quantity;
-        price_total = price_total + modifier_subtotal;
+        price_total += modifier_subtotal;
     });
 
     return price_total;
 }
+
 
 function calculate_billing_details(price_total) {
     var discount = pos_discount(price_total);

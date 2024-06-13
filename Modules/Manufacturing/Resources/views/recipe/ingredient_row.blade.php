@@ -27,14 +27,8 @@
 		@endif
 	</td>
 	<td>
-		<div class="input-group">
-			{!! Form::text('ingredients[' . $row_index . '][waste_percent]', !empty($ingredient->waste_percent) ? @num_format($ingredient->waste_percent) : 0, ['class' => 'form-control input_number waste_percent input-sm', 'placeholder' => __('lang_v1.waste_percent')]); !!}
-			<span class="input-group-addon"><i class="fa fa-percent"></i></span>
-		</div>
-	</td>
-	<td>
 		<div class="@if(empty($ingredient->sub_units)) input-group @else input_inline @endif">
-			{!! Form::text('ingredients[' . $row_index . '][quantity]', !empty($ingredient->quantity) ? @format_quantity($ingredient->quantity) : 1, ['class' => 'form-control input_number quantity input-sm', 'placeholder' => __('lang_v1.quantity'), 'required']); !!}
+			{!! Form::text('ingredients[' . $row_index . '][quantity]', !empty($ingredient->quantity) ? number_format($ingredient->quantity, 3) : 1, ['class' => 'form-control input_number quantity input-sm', 'placeholder' => __('lang_v1.quantity'), 'required']); !!}
 			<span class="@if(empty($ingredient->sub_units)) input-group-addon @endif">
 				@if(!empty($ingredient->sub_units))
 					<select name="ingredients[{{$row_index}}][sub_unit_id]" class="form-control input-sm row_sub_unit_id">
@@ -55,6 +49,15 @@
 			</span>
 		</div>
 	</td>
+	<td>
+        <div class="input-group">
+            {!! Form::text('ingredients[' . $row_index . '][waste_percent]', !empty($ingredient->waste_percent) ? number_format($ingredient->waste_percent, 4) : 0, ['class' => 'form-control input_number waste_percent input-sm', 'placeholder' => __('Waste percent')]); !!}
+            <span class="input-group-addon"><i class="fa fa-percent"></i></span>
+        </div>
+    </td>
+    <td>
+        <span class="row_final_quantity">{{@format_quantity($ingredient->quantity)}}</span> <span class="row_unit_text">{!! $ingredient->unit !!}</span>
+    </td>
 	@php
 		$price = !empty($ingredient->quantity) ? $ingredient->quantity * $ingredient->dpp_inc_tax : $ingredient->dpp_inc_tax;
 		$price = $price * $ingredient->multiplier;

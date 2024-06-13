@@ -37,9 +37,10 @@
 						<thead>
 							<tr>
 								<th>@lang('manufacturing::lang.ingredient')</th>
+								<th>@lang('manufacturing::lang.input_quantity')</th>
 								<th>@lang('manufacturing::lang.waste_percent')</th>
-								<th>@lang('manufacturing::lang.final_quantity')</th>
-								<th>@lang('lang_v1.price')</th>
+								<th>@lang('manufacturing::lang.final_quantity') @show_tooltip(__('manufacturing::lang.final_quantity_tooltip'))</th>
+								<th>@lang('manufacturing::lang.total_price') @show_tooltip(__('manufacturing::lang.total_price_tooltip'))</th>
 								<th>&nbsp;</th>
 							</tr>
 						</thead>

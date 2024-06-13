@@ -1,7 +1,7 @@
 <tr class="product_row">
 	<td>
 		{{$product->product_name}}
-		<br/>
+		<br>
 		{{$product->sub_sku}}@if(!empty($product->brand)), {{$product->brand}} @endif
 		&nbsp;
 		<input type="hidden" class="enable_sr_no" value="{{$product->enable_sr_no}}">
