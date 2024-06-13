@@ -8,11 +8,11 @@
         </a>
         </h1>
     </section>
-
     <!-- Main content -->
     <section class="content">
         <div class="print_section">
-            <h2>{{ session()->get('business.name') }} - @lang('report.profit_loss')</h2>
+            {{-- <h2>{{ session()->get('business.name') }} - @lang('report.profit_loss')</h2> --}}
+            <h2 class="text-center">Custom Daily Report</h2>
         </div>
         <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
 

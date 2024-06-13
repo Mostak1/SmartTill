@@ -2523,8 +2523,8 @@ class ReportController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function getproductSellGroupedReport(Request $request)
-    {       
-        if (! auth()->user()->can('purchase_n_sell_report.view')) {
+    {
+        if (!auth()->user()->can('purchase_n_sell_report.view')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -2580,11 +2580,11 @@ class ReportController extends Controller
                 ->groupBy('v.id')
                 ->groupBy('formated_date');
 
-            if (! empty($today)) {
+            if (!empty($today)) {
                 $query->whereDate('t.transaction_date', $today);
             }
 
-            if (! empty($variation_id)) {
+            if (!empty($variation_id)) {
                 $query->where('transaction_sell_lines.variation_id', $variation_id);
             }
             $start_date = $request->get('start_date');
@@ -2648,10 +2648,10 @@ class ReportController extends Controller
                 ->editColumn('subtotal', function ($row) {
                     $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
 
-                     return '<span class="'.$class.'" data-orig-value="'.$row->subtotal.'">'.
-                     $this->transactionUtil->num_f($row->subtotal, true).'</span>';
-                 })
-                 ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
+                    return '<span class="' . $class . '" data-orig-value="' . $row->subtotal . '">' .
+                        $this->transactionUtil->num_f($row->subtotal, true) . '</span>';
+                })
+                ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
 
                 ->rawColumns(['current_stock', 'subtotal', 'total_qty_sold'])
                 ->make(true);
@@ -4079,7 +4079,47 @@ class ReportController extends Controller
             $user_id = request()->input('user_id') ?? null;
             $permitted_locations = auth()->user()->permitted_locations();
             $data = $this->transactionUtil->getProfitLossDetails($business_id, $location_id, $start_date, $end_date, $user_id, $permitted_locations);
-
+            // sale return query
+            $queryReturn = TransactionPayment::leftjoin('transactions as t', function ($join) use ($business_id) {
+                $join->on('transaction_payments.transaction_id', '=', 't.id')
+                    ->where('t.business_id', $business_id)
+                    ->where('t.type', 'sell_return');
+            })
+                ->leftjoin('contacts as c', 't.contact_id', '=', 'c.id')
+                ->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
+                ->where('transaction_payments.business_id', $business_id)
+                ->where('t.type', 'sell_return')
+                ->select(
+                    DB::raw("IF(transaction_payments.transaction_id IS NULL, 
+                                (SELECT c.name FROM transactions as ts
+                                JOIN contacts as c ON ts.contact_id=c.id 
+                                WHERE ts.id=(
+                                        SELECT tps.transaction_id FROM transaction_payments as tps
+                                        WHERE tps.parent_id=transaction_payments.id LIMIT 1
+                                    )
+                                ),
+                                (SELECT CONCAT(COALESCE(CONCAT(c.supplier_business_name, '<br>'), ''), c.name) FROM transactions as ts JOIN
+                                    contacts as c ON ts.contact_id=c.id
+                                    WHERE ts.id=t.id 
+                                )
+                            ) as customer"),
+                    'transaction_payments.amount',
+                    'transaction_payments.is_return',
+                    'method',
+                    'paid_on',
+                    'transaction_id',
+                    'transaction_payments.payment_ref_no',
+                    'transaction_payments.document',
+                    'transaction_payments.transaction_no',
+                    't.invoice_no',
+                    't.id as transaction_id',
+                    'cheque_number',
+                    'card_transaction_number',
+                    'bank_account_number',
+                    'transaction_payments.id as DT_RowId',
+                    'CG.name as customer_group'
+                )
+                ->groupBy('transaction_payments.id');
             // transactions_payments 
             $query1 = TransactionPayment::leftjoin('transactions as t', function ($join) use ($business_id) {
                 $join->on('transaction_payments.transaction_id', '=', 't.id')
@@ -4089,6 +4129,7 @@ class ReportController extends Controller
                 ->leftjoin('contacts as c', 't.contact_id', '=', 'c.id')
                 ->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
                 ->where('transaction_payments.business_id', $business_id)
+                ->whereIn('t.type', ['sell'])
                 ->select(
                     DB::raw("IF(transaction_payments.transaction_id IS NULL, 
                                 (SELECT c.name FROM transactions as ts
@@ -4136,7 +4177,9 @@ class ReportController extends Controller
                 ->where('sale.business_id', $business_id)
                 ->where('transaction_sell_lines.children_type', '!=', 'combo');
             //If type combo: find childrens, sale price parent - get PP of childrens
-            $query->select( 'TP.method as method', 'TP.amount as tp_amount',
+            $query->select(
+                'TP.method as method',
+                'TP.amount as tp_amount',
                 DB::raw('SUM(IF (TSPL.id IS NULL AND P.type="combo", ( 
             SELECT Sum((tspl2.quantity - tspl2.qty_returned) * (tsl.unit_price_inc_tax - pl2.purchase_price_inc_tax)) AS total
                 FROM transaction_sell_lines AS tsl
@@ -4159,15 +4202,18 @@ class ReportController extends Controller
             if (!empty(request()->location_id)) {
                 $query->where('sale.location_id', request()->location_id);
                 $query1->where('t.location_id', request()->location_id);
+                $queryReturn->where('t.location_id', request()->location_id);
             }
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
                 $start = request()->start_date;
                 $end = request()->end_date;
                 $query->whereDate('sale.transaction_date', '>=', $start)
                     ->whereDate('sale.transaction_date', '<=', $end);
-                    $query1->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
+                $query1->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
+                $queryReturn->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
             }
             $payments = $query1->get();
+            $payReturn = $queryReturn->get();
             $incomeByCategories = $query->join('variations as V', 'transaction_sell_lines.variation_id', '=', 'V.id')
                 ->leftJoin('categories as C', 'C.id', '=', 'P.category_id')
                 ->addSelect('C.name as category')
@@ -4194,7 +4240,7 @@ class ReportController extends Controller
 
             $total_purchase_return_inc_tax = $transaction_totals['total_purchase_return_inc_tax'];
             $total_sell_return_inc_tax = $transaction_totals['total_sell_return_inc_tax'];
-            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax','payments', 'totalbyTransaction', 'start_date', 'end_date', 'location_id'))->render();
+            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments','payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id'))->render();
         }
         $business_locations = BusinessLocation::forDropdown($business_id, true);
         return view('report.profit_loss_custom', compact('business_locations'));

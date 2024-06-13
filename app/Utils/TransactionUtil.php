@@ -1019,16 +1019,16 @@ class TransactionUtil extends Util
             $temp[] = $location_details->city;
         }
         if ($il->show_state == 1 && ! empty($location_details->state)) {
-            $temp[] = $location_details->state;
+            $temp[] ='';
         }
         if ($il->show_zip_code == 1 && ! empty($location_details->zip_code)) {
             $temp[] = $location_details->zip_code;
         }
         if ($il->show_country == 1 && ! empty($location_details->country)) {
-            $temp[] = $location_details->country;
+            // $temp[] = $location_details->country;
         }
         if (! empty($temp)) {
-            $output['address'] .= implode(', ', $temp);
+            $output['address'] .= implode(',', $temp);
         }
 
         $output['website'] = $location_details->website;
@@ -1508,8 +1508,8 @@ class TransactionUtil extends Util
                         $method = !empty($payment_types[$value['method']]) ? $payment_types[$value['method']] : '';
                         $payment_entry = [
                             'method' => $method,
-                            'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
-                            'date' => $this->format_date($value['paid_on'], false, $business_details),
+                            'amount' => $value['amount'],
+                            'date' =>$value['paid_on'],
                         ];
             
                         if ($value['method'] == 'cash') {
@@ -4416,19 +4416,16 @@ class TransactionUtil extends Util
                 $query->where('transactions.location_id', $location_id);
             }
         }
-
         //Filter by created_by
         if (! empty($created_by)) {
             $query->where('transactions.created_by', $created_by);
         }
-
         if (in_array('purchase_return', $transaction_types)) {
             $query->addSelect(
                 DB::raw("SUM(IF(transactions.type='purchase_return', final_total, 0)) as total_purchase_return_inc_tax"),
                 DB::raw("SUM(IF(transactions.type='purchase_return', total_before_tax, 0)) as total_purchase_return_exc_tax")
             );
         }
-
         if (in_array('sell_return', $transaction_types)) {
             $query->addSelect(
                 DB::raw("SUM(IF(transactions.type='sell_return', final_total, 0)) as total_sell_return_inc_tax"),

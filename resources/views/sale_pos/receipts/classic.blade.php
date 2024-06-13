@@ -27,7 +27,7 @@
     .watermark {
         position: absolute;
         bottom: 60%;
-        left: 5%;
+        left: 16%;
         font-size: 50px;
         color: rgba(80, 74, 74, 0.245) !important;
         /* Adjust the opacity as needed */
@@ -107,9 +107,23 @@
                 </p>
         @endif
         <!-- Title of receipt -->
+        @if ($receipt_details->show_barcode || $receipt_details->show_qr_code)
+            <div class=" col-xs-12 text-center">
+                @if ($receipt_details->show_barcode)
+                    {{-- Barcode --}}
+                    <img class="center-block"
+                        src="data:image/png;base64,{{ DNS1D::getBarcodePNG($receipt_details->invoice_no, 'C128', 2, 30, [39, 48, 54], true) }}">
+                @endif
+                @if ($receipt_details->show_qr_code && !empty($receipt_details->qr_code_text))
+                    <img class="center-block mt-5"
+                        src="data:image/png;base64,{{ DNS2D::getBarcodePNG($receipt_details->qr_code_text, 'QRCODE', 3, 3, [39, 48, 54]) }}">
+                @endif
+            </div>
+        @endif
+        <br>
         @if (!empty($receipt_details->invoice_heading))
             <h5 class="text-center">
-                {!! $receipt_details->invoice_heading !!}
+                {{-- {!! $receipt_details->invoice_heading !!} --}}
             </h5>
         @endif
     </div>
@@ -120,9 +134,11 @@
     @endif
     @if (!empty($receipt_details->status))
         <div class="watermark">
-             {{ $receipt_details->status }}
+            {{ $receipt_details->status }}
         </div>
     @endif
+    <br>
+    <br>
     <div class="col-12 text-center">
         <!-- Invoice  number, Date  -->
         <p style="width: 100% !important" class="word-wrap">
@@ -494,7 +510,7 @@
                             {!! $receipt_details->subtotal_label !!}
                         </th>
                         <td class="text-right">
-                           ৳ {{ number_format($receipt_details->subtotal) }}
+                            ৳ {{ number_format($receipt_details->subtotal) }}
                         </td>
                     </tr>
                     @if (!empty($receipt_details->total_exempt_uf))
@@ -596,10 +612,10 @@
                     <!-- Total -->
                     <tr>
                         <th>
-                             {!! $receipt_details->total_label !!}
+                            {!! $receipt_details->total_label !!}
                         </th>
                         <td class="text-right">
-                           ৳ {{ number_format($receipt_details->total) }}
+                            ৳ {{ number_format($receipt_details->total) }}
                             @if (!empty($receipt_details->total_in_words))
                                 <br>
                                 <small>({{ $receipt_details->total_in_words }})</small>
@@ -680,24 +696,12 @@
         </div>
     @endif
 </div>
-<div class="row" style="color: #000000 !important; font-size:10px;">
+<div class="row" style="color: #000000 !important;">
     @if (!empty($receipt_details->footer_text))
-        <div class="@if ($receipt_details->show_barcode || $receipt_details->show_qr_code) col-xs-8 @else col-xs-12 @endif">
+        <div class="col-xs-12">
             {!! $receipt_details->footer_text !!}
         </div>
     @endif
-    @if ($receipt_details->show_barcode || $receipt_details->show_qr_code)
-        <div class="@if (!empty($receipt_details->footer_text)) col-xs-4 @else col-xs-12 @endif text-center">
-            @if ($receipt_details->show_barcode)
-                {{-- Barcode --}}
-                <img class="center-block"
-                    src="data:image/png;base64,{{ DNS1D::getBarcodePNG($receipt_details->invoice_no, 'C128', 2, 30, [39, 48, 54], true) }}">
-            @endif
-            @if ($receipt_details->show_qr_code && !empty($receipt_details->qr_code_text))
-                <img class="center-block mt-5"
-                    src="data:image/png;base64,{{ DNS2D::getBarcodePNG($receipt_details->qr_code_text, 'QRCODE', 3, 3, [39, 48, 54]) }}">
-            @endif
-        </div>
-    @endif
+
 </div>
 </div>
