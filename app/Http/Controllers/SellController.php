@@ -40,6 +40,7 @@ class SellController extends Controller
     protected $transactionUtil;
 
     protected $productUtil;
+    protected $moduleUtil;
 
     /**
      * Constructor

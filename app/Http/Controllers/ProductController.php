@@ -2023,47 +2023,6 @@ class ProductController extends Controller
             DB::beginTransaction();
                     foreach ($request->input('group_prices') as $key => $value) {
                         if (isset($value['price'])) {
-                            $variation_group_price = VariationGroupPrice::updateOrCreate(
-                                [
-                                    'variation_id' => $key,
-                                    'price_group_id' => $request->selling_price_group_id,
-                                ],
-                                [
-                                    'price_inc_tax' => $this->productUtil->num_uf($value['price']),
-                                    'price_type' => $value['price_type'],
-                                ]
-                            );
-                        }
-            }
-            DB::commit();
-            $output = ['success' => 1, 'msg' => __('lang_v1.updated_success')];
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::emergency('File: ' . $e->getFile() . ' Line: ' . $e->getLine() . ' Message: ' . $e->getMessage());
-            $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
-        }
-        return redirect('/selling-price-group')->with('status', $output);
-    }
-    
-    public function saveSellingPricesMany(Request $request)
-    {
-        if (!auth()->user()->can('product.create')) {
-            abort(403, 'Unauthorized action.');
-        }
-        // dd($request->input('group_prices'));
-        // foreach ($request->group_prices as $key => $value){
-        //     dd( $value['price_type']);
-        // };
-        try {
-            $business_id = $request->session()->get('user.business_id');
-            $category_id = $request->input('category_id');
-            $products = Product::where('business_id', $business_id)
-                ->where('category_id', $category_id)
-                ->with(['variations'])
-                ->get();
-            DB::beginTransaction();
-                    foreach ($request->input('group_prices') as $key => $value) {
-                        if (isset($value['price'])) {
                             if ($value['price_type']=='percentage') {
                                 $variation_group_price = VariationGroupPrice::updateOrCreate(
                                     [

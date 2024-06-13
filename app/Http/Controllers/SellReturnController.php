@@ -5,12 +5,9 @@ namespace App\Http\Controllers;
 use App\BusinessLocation;
 use App\Contact;
 use App\Events\TransactionPaymentAdded;
-use App\Events\TransactionPaymentAdded;
 use App\Events\TransactionPaymentDeleted;
 use App\Exceptions\AdvanceBalanceNotAvailable;
-use App\Exceptions\AdvanceBalanceNotAvailable;
 use App\Transaction;
-use App\TransactionPayment;
 use App\TransactionPayment;
 use App\TransactionSellLine;
 use App\User;
@@ -59,7 +56,6 @@ class SellReturnController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
     public function index(Request $request)
     {
         if (!auth()->user()->can('access_sell_return') && !auth()->user()->can('access_own_sell_return')) {
@@ -305,8 +301,7 @@ class SellReturnController extends Controller
 
                 DB::commit();
 
-                $output = [
-                    'success' => 1,
+                
                 $output = [
                     'success' => 1,
                     'msg' => __('lang_v1.success'),
@@ -385,116 +380,6 @@ class SellReturnController extends Controller
 
         return $output;
     }
-
-    public function storeWithPayment(Request $request)
-{
-    if (!auth()->user()->can('access_sell_return') && !auth()->user()->can('access_own_sell_return')) {
-        abort(403, 'Unauthorized action.');
-    }
-
-    DB::beginTransaction();
-    try {
-        \Log::info('Received request to store sell return with payment.');
-
-        // Retrieve necessary data from the request
-        $transactionId = $request->input('transaction_id');
-        \Log::info('Transaction ID: ' . $transactionId);
-
-        // Store sell return
-        $input = $request->except('_token');
-        $business_id = $request->session()->get('user.business_id');
-        $user_id = $request->session()->get('user.id');
-
-        // Check if subscribed or not
-        if (!$this->moduleUtil->isSubscribed($business_id)) {
-            return $this->moduleUtil->expiredResponse(action([\App\Http\Controllers\SellReturnController::class, 'index']));
-        }
-
-        // Add sell return
-        $sell_return = $this->transactionUtil->addSellReturn($input, $business_id, $user_id);
-
-        // Add payment
-        $transaction_id = $sell_return->id;
-        $transaction = Transaction::where('business_id', $business_id)->with(['contact'])->findOrFail($transaction_id);
-
-        if ($transaction->payment_status != 'paid') {
-            $inputs = [
-                'amount' => $transaction->final_total,
-                'method' => 'cash', // Set payment method to cash
-                'note' => '', // Add any note if needed
-                // Add other required payment fields here
-            ];
-
-            // Set additional fields based on the payment method (if necessary)
-            // For cash payment, no additional fields need to be set
-
-            // Add payment
-            $inputs['paid_on'] = $this->transactionUtil->uf_date($request->input('paid_on'), true);
-            $inputs['transaction_id'] = $transaction->id;
-            $inputs['amount'] = $this->transactionUtil->num_uf($inputs['amount']);
-            $inputs['created_by'] = auth()->user()->id;
-            $inputs['payment_for'] = $transaction->contact_id;
-
-            // Generate reference number
-            $inputs['payment_ref_no'] = $this->transactionUtil->generateReferenceNumber('sell_payment', 1);
-            $inputs['business_id'] = $request->session()->get('business.id');
-            // Set the document (if applicable)
-            // $inputs['document'] = $this->transactionUtil->uploadFile($request, 'document', 'documents');
-
-            // Add payment record
-            $tp = TransactionPayment::create($inputs);
-
-            // Update payment status
-            $payment_status = $this->transactionUtil->updatePaymentStatus($transaction_id, $transaction->final_total);
-            $transaction->payment_status = $payment_status;
-
-            // Log payment activity
-            $this->transactionUtil->activityLog($transaction, 'payment_edited');
-
-            // Commit transaction
-            DB::commit();
-
-            // Log successful operation
-            \Log::info('Sell return stored with payment successfully.');
-
-            // Prepare success response
-            $output = [
-                'success' => 1,
-                'msg' => __('lang_v1.success'),
-                // Add any additional data to be sent in the response
-            ];
-        } else {
-            // Payment already made, prepare error response
-            $output = [
-                'success' => 0,
-                'msg' => __('lang_v1.payment_already_made'),
-                // Add any additional data to be sent in the response
-            ];
-        }
-    } catch (\Exception $e) {
-        // Log any errors that occur
-        \Log::error('Error occurred while storing sell return with payment: ' . $e->getMessage());
-        DB::rollBack();
-
-        // Handle exception and prepare error response
-        $msg = __('messages.something_went_wrong');
-
-        // Prepare detailed error message (if needed)
-        if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {
-            $msg = $e->getMessage();
-        } else {
-            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
-        }
-
-        $output = [
-            'success' => 0,
-            'msg' => $msg,
-            // Add any additional data to be sent in the response
-        ];
-    }
-
-    return $output;
-}
     /**
      * Display the specified resource.
      *
