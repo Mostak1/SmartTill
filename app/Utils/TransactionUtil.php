@@ -1387,14 +1387,14 @@ class TransactionUtil extends Util
 
         //Subtotal
         $output['subtotal_label'] = $il->sub_total_label.':';
-        $output['subtotal'] = ($transaction->total_before_tax != 0) ? $this->num_f($transaction->total_before_tax, $show_currency, $business_details) : 0;
+        $output['subtotal'] = ($transaction->total_before_tax != 0) ?$transaction->total_before_tax : 0;
         $output['subtotal_unformatted'] = ($transaction->total_before_tax != 0) ? $transaction->total_before_tax : 0;
 
         //round off
         $output['round_off_label'] = ! empty($il->round_off_label) ? $il->round_off_label.':' : __('lang_v1.round_off').':';
         $output['round_off'] = $this->num_f($transaction->round_off_amount, $show_currency, $business_details);
         $output['round_off_amount'] = $transaction->round_off_amount;
-        $output['total_exempt'] = $this->num_f($total_exempt, $show_currency, $business_details);
+        $output['total_exempt'] = $total_exempt;
         $output['total_exempt_uf'] = $total_exempt;
 
         $taxed_subtotal = $output['subtotal_unformatted'] - $total_exempt;
@@ -1463,10 +1463,10 @@ class TransactionUtil extends Util
         //Total
         if ($transaction_type == 'sell_return') {
             $output['total_label'] = $invoice_layout->cn_amount_label.':';
-            $output['total'] = $this->num_f($transaction->final_total, $show_currency, $business_details);
+            $output['total'] = $transaction->final_total;
         } else {
             $output['total_label'] = $invoice_layout->total_label.':';
-            $output['total'] = $this->num_f($transaction->final_total, $show_currency, $business_details);
+            $output['total'] = $transaction->final_total;
         }
         if (! empty($il->common_settings['show_total_in_words'])) {
             $word_format = isset($il->common_settings['num_to_word_format']) ? $il->common_settings['num_to_word_format'] : 'international';
@@ -1476,11 +1476,14 @@ class TransactionUtil extends Util
         $output['total_unformatted'] = $transaction->final_total;
 
         //Paid & Amount due, only if final
+        if ($transaction_type == 'sell' && $transaction->status == 'draft') {
+            $output['status']= 'DRAFT';
+        }
         if ($transaction_type == 'sell' && $transaction->status == 'final') {
             $paid_amount = $this->getTotalPaid($transaction->id);
             $due = $transaction->final_total - $paid_amount;
 
-            $output['total_paid'] = ($paid_amount == 0) ? 0 : $this->num_f($paid_amount, $show_currency, $business_details);
+            $output['total_paid'] = ($paid_amount == 0) ? 0 : $paid_amount;
             $output['total_paid_label'] = $il->paid_label;
             $output['total_due'] = ($due == 0) ? 0 : $this->num_f($due, $show_currency, $business_details);
             $output['total_due_label'] = $il->total_due_label;
@@ -1990,10 +1993,10 @@ class TransactionUtil extends Util
                 'unit_price_exc_tax' => $this->num_f($line->unit_price, false, $business_details),
                 'base_unit_price' => $this->num_f($base_unit_price, false, $business_details),
                 'price_exc_tax' => $line->quantity * $line->unit_price,
-                'unit_price_before_discount' => $this->num_f($line->unit_price_before_discount, false, $business_details),
+                'unit_price_before_discount' => $line->unit_price_before_discount,
                 'unit_price_before_discount_uf' => $line->unit_price_before_discount,
                 //Fields for 4th column
-                'line_total' => $this->num_f($line->unit_price_inc_tax * $line->quantity, false, $business_details),
+                'line_total' =>$line->unit_price_inc_tax * $line->quantity,
                 'line_total_uf' => $line->unit_price_inc_tax * $line->quantity,
                 'line_total_exc_tax' => $this->num_f($line->unit_price * $line->quantity, false, $business_details),
                 'line_total_exc_tax_uf' => $line->unit_price * $line->quantity,
@@ -2119,7 +2122,7 @@ class TransactionUtil extends Util
                         'price_exc_tax' => $modifier_line->quantity * $modifier_line->unit_price,
 
                         //Fields for 4th column
-                        'line_total' => $this->num_f($modifier_line->unit_price_inc_tax * $line->quantity, false, $business_details),
+                        'line_total' => $modifier_line->unit_price_inc_tax * $line->quantity,
                     ];
 
                     if ($il->show_sku == 1) {
@@ -2203,7 +2206,7 @@ class TransactionUtil extends Util
                 'unit_price_exc_tax' => $this->num_f($line->unit_price, false, $business_details),
 
                 //Fields for 4th column
-                'line_total' => $this->num_f($line->unit_price_inc_tax * $line->quantity_returned, false, $business_details),
+                'line_total' => $line->unit_price_inc_tax * $line->quantity_returned,
             ];
             $line_array['line_discount'] = 0;
 
