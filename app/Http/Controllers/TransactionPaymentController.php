@@ -106,6 +106,7 @@ class TransactionPaymentController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('Store method initiated.', ['request' => $request->all()]);
         try {
             $business_id = $request->session()->get('user.business_id');
             $transaction_id = $request->input('transaction_id');
@@ -180,19 +181,19 @@ class TransactionPaymentController extends Controller
                 $transaction->payment_status = $payment_status;
 
                 $this->transactionUtil->activityLog($transaction, 'payment_edited', $transaction_before);
-                $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
+                // $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
                 DB::commit();
             }
 
             $output = [
                 'success' => 1,
                 'msg' => __('purchase.payment_added_success'),
-                'receipt' =>$receipt,
+                'receipt' => 1,
                 'transaction_id' => $transaction_id,
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            $msg = __('messages.something_went_wrong');
+            $msg = __('messages.something_went_wrong Find to solve');
 
             if (get_class($e) == \App\Exceptions\AdvanceBalanceNotAvailable::class) {
                 $msg = $e->getMessage();

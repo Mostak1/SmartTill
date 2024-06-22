@@ -128,7 +128,7 @@
 
                 var line_total = line_unit_price * line_total_quantity * line_multiplier;
                 $(this).find('span.ingredient_total_price').text(__currency_trans_from_en(line_total, true));
-                $(this).find('span.row_final_quantity').text(__currency_trans_from_en(line_final_quantity, false));
+                $(this).find('span.row_final_quantity').text(line_final_quantity.toFixed(3));
 
                 var line_unit_name = '';
 

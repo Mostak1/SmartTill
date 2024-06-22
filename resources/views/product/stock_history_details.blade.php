@@ -148,8 +148,8 @@
 						<a href="#" data-href="{{action([\App\Http\Controllers\StockAdjustmentController::class, 'show'], $history['sele_id']) }}" class="btn-modal" data-container=".view_modal" data-target="#recipe_modal">{{$history['ref_no']}}</a>
 						
 						@elseif ($history['type_label'] == 'Sell Return')
-
-						   <a href="#" class="btn-modal" data-container=".view_modal" data-href="{{action('\App\Http\Controllers\TransactionPaymentController@show', $history['sele_id'])}}">{{$history['ref_no']}}</a>
+						
+						   <a href="#" class="btn-modal" data-container=".view_modal" data-href="{{action('\App\Http\Controllers\SellReturnController@show', $history['sele_id'])}}">{{$history['ref_no']}}</a>
 						
 						@else
 						{{$history['ref_no']}}
@@ -178,5 +178,3 @@
 		</table>
 	</div>
 </div>
-
-<div class="modal fade" id="recipe_modal" role="dialog" aria-labelledby="gridSystemModalLabel"></div>

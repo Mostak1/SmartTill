@@ -133,12 +133,12 @@
 									<td>{{$history->h_type}}</td>
 									<td>
 										@can('view_purchase_price')
-											{{ number_format($history->old_price, 2) }}
+											{!! $history->old_price !!}
 										@endcan
 									</td>
-									<td>{{ number_format($history->new_price, 2) }}</td>
+									<td>{!! $history->new_price !!}</td>
 									<td>{{ \App\User::find($history->updated_by)->first_name }} {{ \App\User::find($history->updated_by)->last_name }}</td>
-									<td>{{$history->ref_no}}</td>
+									<td>{!! $history->ref_no !!}</td>
 									<td>{{ Carbon::parse($history->updated_at)->format('d-m-Y, h:i A') }}</td>
 								</tr>
 							@empty

@@ -16,7 +16,7 @@
 				$max_qty_rule = !empty($variation->variation_location_details[0]->qty_available) ? $variation->variation_location_details[0]->qty_available : 0;
 				$qty_available = $max_qty_rule;
 				$max_qty_rule = $max_qty_rule / $multiplier;
-				$max_qty_msg = __('validation.custom-messages.quantity_not_available', ['qty'=> number_format($max_qty_rule, 2), 'unit' => $ingredient['unit']  ]);
+				$max_qty_msg = __('validation.custom-messages.quantity_not_available', ['qty'=> number_format($max_qty_rule, 3), 'unit' => $ingredient['unit']  ]);
 			}
 			
 		@endphp
@@ -25,7 +25,7 @@
 			type="text" 
 			data-min="1" 
 			class="form-control input-sm input_number mousetrap total_quantities" 
-			value="{{@format_quantity($ingredient['quantity'])}}" 
+			value="{{ number_format($ingredient['quantity'], 3)}}" 
 			name="ingredients[{{$ingredient['id']}}][quantity]" 
 			data-allow-overselling="@if(empty($pos_settings['allow_overselling'])){{'false'}}@else{{'true'}}@endif"
 			@if($allow_decimal) 
@@ -73,14 +73,14 @@
 			</span>
 		</div>
 	</td>
-	<td>
+	<td style="max-width: 200px">
 		<div class="input-group">
-			<input type="text" name="ingredients[{{$ingredient['id']}}][mfg_waste_percent]" value="{{@format_quantity($ingredient['waste_percent'])}}" class="form-control input-sm input_number mfg_waste_percent">
+			<input type="text" name="ingredients[{{$ingredient['id']}}][mfg_waste_percent]" value="{{number_format($ingredient['waste_percent'], 3)}}" class="form-control input-sm input_number mfg_waste_percent">
 			<span class="input-group-addon"><i class="fa fa-percent"></i></span>
 		</div>
 	</td>
 	<td>
-		<span class="row_final_quantity">{{@format_quantity($ingredient['final_quantity'])}}</span> <span class="row_unit_text">{{$ingredient['unit']}}</span>
+		<span class="row_final_quantity">{{number_format($ingredient['final_quantity'], 3)}}</span> <span class="row_unit_text">{{$ingredient['unit']}}</span>
 	</td>
 	<td>
 		<span class="ingredient_total_price display_currency" data-currency_symbol="true">{{@num_format($ingredient['total_price'])}}</span>

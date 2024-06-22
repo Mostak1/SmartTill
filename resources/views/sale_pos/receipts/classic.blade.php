@@ -27,7 +27,7 @@
     .watermark {
         position: absolute;
         bottom: 60%;
-        left: 5%;
+        left: 16%;
         font-size: 50px;
         color: rgba(80, 74, 74, 0.245) !important;
         /* Adjust the opacity as needed */
@@ -412,7 +412,7 @@
                         @endif
                         @if (!empty($receipt_details->item_discount_label))
                             <td class="text-center">
-                                {{ $line['total_line_discount'] ?? '0.00' }}
+                                ৳ {{ number_format($line['total_line_discount'] ?? '0.00') }}
 
                                 @if (!empty($line['line_discount_percent']))
                                     ({{ $line['line_discount_percent'] }}%)
@@ -614,7 +614,7 @@
                 @foreach ($receipt_details->payments as $payment)
                     <tr>
                         <th>{{ $payment['method'] }}</th>
-                        <td class="text-right">{{ $payment['amount'] }}</td>
+                        <td class="text-right">৳ {{ number_format($payment['amount']) }}</td>
                         {{-- <td class="text-right">
                             {{$payment['date']}}
                         </td> --}}
@@ -628,7 +628,7 @@
                         {!! $receipt_details->total_paid_label !!}
                     </th>
                     <td class="text-right">
-                        {{ $receipt_details->total_paid }}
+                        ৳ {{ number_format($receipt_details->total_paid)}}
                     </td>
                 </tr>
             @endif

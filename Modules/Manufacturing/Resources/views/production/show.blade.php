@@ -108,9 +108,9 @@
                                             <small> @lang('lang_v1.lot_n_expiry'):  {{$ingredient['lot_numbers']}}</small>
                                         @endif
                                     </td>
-                                    <td>{{@format_quantity($ingredient['quantity'])}} {{$ingredient['unit']}}</td>
-                                    <td>{{@format_quantity($ingredient['waste_percent'])}} %</td>
-                                    <td>{{@format_quantity($ingredient['final_quantity'])}} {{$ingredient['unit']}}</td>
+                                    <td>{{ number_format($ingredient['quantity'], 3) }} {{$ingredient['unit']}}</td>
+                                    <td>{{ number_format($ingredient['waste_percent'], 3) }} %</td>
+                                    <td>{{ number_format($ingredient['final_quantity'], 3) }} {{$ingredient['unit']}}</td>
                                     @php
                                         $price = $ingredient['total_price'];
 
@@ -142,9 +142,9 @@
                                                     <small> @lang('lang_v1.lot_n_expiry'):  {{$ingredient['lot_numbers']}}</small>
                                                 @endif
                                             </td>
-                                            <td>{{@format_quantity($ingredient['quantity'])}} {{$ingredient['unit']}}</td>
-                                            <td>{{@format_quantity($ingredient['waste_percent'])}} %</td>
-                                            <td>{{@format_quantity($ingredient['final_quantity'])}} {{$ingredient['unit']}}</td>
+                                            <td>{{ number_format($ingredient['quantity'], 3)}} {{$ingredient['unit']}}</td>
+                                            <td>{{ number_format($ingredient['waste_percent'], 3)}} %</td>
+                                            <td>{{ number_format($ingredient['final_quantity'], 3)}} {{$ingredient['unit']}}</td>
                                             @php
                                                 $price = $ingredient['total_price'];
                                                 $total_ingredient_price += $price;

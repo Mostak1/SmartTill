@@ -79,7 +79,7 @@ class ProductUtil extends Util
             VariationPriceHistory::create([
                 'variation_id' => $product->id,
                 'old_price' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
-                'new_price' => $this->num_uf($selling_price_inc_tax) * $foreign_cat->description,
+                'new_price' => ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
                 'updated_by' => auth()->id(),
                 'type' => 'product',
                 'h_type' => 'Opening'
@@ -1027,7 +1027,7 @@ class ProductUtil extends Util
                         'updated_by' => auth()->id(),
                         'type' => 'product',
                         'h_type' => 'Purchase',
-                        'ref_no' => $variation_data['ref_no']
+                        'ref_no' => '<a href="#" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], $variation_data['sele_id']) . '" class="btn-modal" data-container=".view_modal">' . $variation_data['ref_no'] . '</a>'
                     ]);
                 }
             }
@@ -1065,7 +1065,7 @@ class ProductUtil extends Util
                         'updated_by' => auth()->id(),
                         'type' => 'product',
                         'h_type' => 'Purchase',
-                        'ref_no' => $variation_data['ref_no']
+                        'ref_no' => '<a href="#" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], $variation_data['sele_id']) . '" class="btn-modal" data-container=".view_modal">' . $variation_data['ref_no'] . '</a>'
                     ]);
                 }
             }
@@ -1330,6 +1330,7 @@ class ProductUtil extends Util
         $updated_purchase_lines = [];
         $updated_purchase_line_ids = [0];
         $exchange_rate = ! empty($transaction->exchange_rate) ? $transaction->exchange_rate : 1;
+        $foreign_cat = Category::where('id', 66)->first();
 
         foreach ($input_data as $data) {
             $multiplier = 1;
@@ -1357,6 +1358,7 @@ class ProductUtil extends Util
                 $purchase_line = new PurchaseLine();
                 $purchase_line->product_id = $data['product_id'];
                 $purchase_line->variation_id = $data['variation_id'];
+                $product_cat = Product::where('id', $data['product_id'])->first();
 
                 //Increase quantity only if status is received
                 if ($transaction->status == 'received') {
@@ -1364,19 +1366,35 @@ class ProductUtil extends Util
                 }
             }
 
-            $purchase_line->quantity = $new_quantity;
-            $purchase_line->pp_without_discount = ($this->num_uf($data['pp_without_discount'], $currency_details) * $exchange_rate) / $multiplier;
-            $purchase_line->discount_percent = $this->num_uf($data['discount_percent'], $currency_details);
-            $purchase_line->purchase_price = ($this->num_uf($data['purchase_price'], $currency_details) * $exchange_rate) / $multiplier;
-            $purchase_line->purchase_price_inc_tax = ($this->num_uf($data['purchase_price_inc_tax'], $currency_details) * $exchange_rate) / $multiplier;
-            $purchase_line->item_tax = ($this->num_uf($data['item_tax'], $currency_details) * $exchange_rate) / $multiplier;
-            $purchase_line->tax_id = $data['purchase_line_tax_id'];
-            $purchase_line->lot_number = ! empty($data['lot_number']) ? $data['lot_number'] : null;
-            $purchase_line->mfg_date = ! empty($data['mfg_date']) ? $this->uf_date($data['mfg_date']) : null;
-            $purchase_line->exp_date = ! empty($data['exp_date']) ? $this->uf_date($data['exp_date']) : null;
-            $purchase_line->sub_unit_id = ! empty($data['sub_unit_id']) ? $data['sub_unit_id'] : null;
-            $purchase_line->purchase_order_line_id = ! empty($data['purchase_order_line_id']) ? $data['purchase_order_line_id'] : null;
-            $purchase_line->purchase_requisition_line_id = ! empty($data['purchase_requisition_line_id']) && $transaction->type == 'purchase_order' ? $data['purchase_requisition_line_id'] : null;
+            if ($product_cat->category_id == 66) {
+                $purchase_line->quantity = $new_quantity;
+                $purchase_line->pp_without_discount = (($this->num_uf($data['pp_without_discount'], $currency_details) * $exchange_rate) / $multiplier) * $foreign_cat->description;
+                $purchase_line->discount_percent = $this->num_uf($data['discount_percent'], $currency_details);
+                $purchase_line->purchase_price = (($this->num_uf($data['purchase_price'], $currency_details) * $exchange_rate) / $multiplier) * $foreign_cat->description;
+                $purchase_line->purchase_price_inc_tax = (($this->num_uf($data['purchase_price_inc_tax'], $currency_details) * $exchange_rate) / $multiplier) * $foreign_cat->description;
+                $purchase_line->item_tax = ($this->num_uf($data['item_tax'], $currency_details) * $exchange_rate) / $multiplier;
+                $purchase_line->tax_id = $data['purchase_line_tax_id'];
+                $purchase_line->lot_number = ! empty($data['lot_number']) ? $data['lot_number'] : null;
+                $purchase_line->mfg_date = ! empty($data['mfg_date']) ? $this->uf_date($data['mfg_date']) : null;
+                $purchase_line->exp_date = ! empty($data['exp_date']) ? $this->uf_date($data['exp_date']) : null;
+                $purchase_line->sub_unit_id = ! empty($data['sub_unit_id']) ? $data['sub_unit_id'] : null;
+                $purchase_line->purchase_order_line_id = ! empty($data['purchase_order_line_id']) ? $data['purchase_order_line_id'] : null;
+                $purchase_line->purchase_requisition_line_id = ! empty($data['purchase_requisition_line_id']) && $transaction->type == 'purchase_order' ? $data['purchase_requisition_line_id'] : null;
+            } else {
+                $purchase_line->quantity = $new_quantity;
+                $purchase_line->pp_without_discount = ($this->num_uf($data['pp_without_discount'], $currency_details) * $exchange_rate) / $multiplier;
+                $purchase_line->discount_percent = $this->num_uf($data['discount_percent'], $currency_details);
+                $purchase_line->purchase_price = ($this->num_uf($data['purchase_price'], $currency_details) * $exchange_rate) / $multiplier;
+                $purchase_line->purchase_price_inc_tax = ($this->num_uf($data['purchase_price_inc_tax'], $currency_details) * $exchange_rate) / $multiplier;
+                $purchase_line->item_tax = ($this->num_uf($data['item_tax'], $currency_details) * $exchange_rate) / $multiplier;
+                $purchase_line->tax_id = $data['purchase_line_tax_id'];
+                $purchase_line->lot_number = ! empty($data['lot_number']) ? $data['lot_number'] : null;
+                $purchase_line->mfg_date = ! empty($data['mfg_date']) ? $this->uf_date($data['mfg_date']) : null;
+                $purchase_line->exp_date = ! empty($data['exp_date']) ? $this->uf_date($data['exp_date']) : null;
+                $purchase_line->sub_unit_id = ! empty($data['sub_unit_id']) ? $data['sub_unit_id'] : null;
+                $purchase_line->purchase_order_line_id = ! empty($data['purchase_order_line_id']) ? $data['purchase_order_line_id'] : null;
+                $purchase_line->purchase_requisition_line_id = ! empty($data['purchase_requisition_line_id']) && $transaction->type == 'purchase_order' ? $data['purchase_requisition_line_id'] : null;
+            }
 
             if (! empty($data['secondary_unit_quantity'])) {
                 $purchase_line->secondary_unit_quantity = $this->num_uf($data['secondary_unit_quantity']);
@@ -1394,6 +1412,7 @@ class ProductUtil extends Util
                 $variation_data['purchase_price'] = $purchase_line->purchase_price;
                 $variation_data['product_id'] = $data['product_id'];
                 $variation_data['ref_no'] = $transaction->ref_no;
+                $variation_data['sele_id'] = $transaction->id;
 
                 $this->updateProductFromPurchase($variation_data);
             }
@@ -2143,6 +2162,7 @@ class ProductUtil extends Util
                                 ->whereIn('transactions.type', ['sell', 'purchase', 'stock_adjustment', 'opening_stock', 'sell_transfer', 'purchase_transfer', 'production_purchase', 'purchase_return', 'sell_return', 'production_sell'])
                                 ->select(
                                     'transactions.id as transaction_id',
+                                    'transactions.return_parent_id as return_id',
                                     'transactions.type as transaction_type',
                                     'sl.quantity as sell_line_quantity',
                                     'pl.quantity as purchase_line_quantity',
@@ -2315,7 +2335,7 @@ class ProductUtil extends Util
                     'type' => 'purchase_transfer',
                     'type_label' => __('lang_v1.sell_return'),
                     'ref_no' => $stock_line->invoice_no,
-                    'sele_id' => $stock_line->transaction_id,
+                    'sele_id' => $stock_line->return_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             }

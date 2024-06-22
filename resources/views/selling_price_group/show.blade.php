@@ -51,7 +51,7 @@
                         <input type="hidden" id="product_row_index" value="0">
                         <input type="hidden" id="total_amount" name="final_total" value="0">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-condensed"
+                            <table class="table table-bordered table-striped table-condensed text-center"
                                 id="stock_adjustment_product_table">
                                 <thead>
                                     <tr>
@@ -59,7 +59,7 @@
                                         <th>@lang('lang_v1.default_selling_price_inc_tax')</th>
                                         <th>{{ $sellingPriceGroup->name }}
                                             @show_tooltip(('lang_v1.price_group_price_type_tooltip'))</th>
-                                        <th>Final Price</th>
+                                        <th style="width: 300px" >Final Price</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -224,15 +224,15 @@
             });
 
         
-            function updateFinalPrice() {
-                // Retrieve the base price from the data attribute
-                var basePrice = parseFloat($('#base-price').data('base-price'));
+            function updateFinalPrice(context) {
+                // Retrieve the base price from the data attribute within the context
+                var basePrice = parseFloat($(context).find('#base-price').data('base-price'));
                 var finalPrice = basePrice;
 
-                $('.group-price-input').each(function() {
+                $(context).find('.group-price-input').each(function() {
                     var variationId = $(this).data('variation-id');
                     var priceGroupId = $(this).data('price-group-id');
-                    var priceType = $('select[data-variation-id="' + variationId + '"][data-price-group-id="' + priceGroupId + '"]').val();
+                    var priceType = $(context).find('select[data-variation-id="' + variationId + '"][data-price-group-id="' + priceGroupId + '"]').val();
                     var priceValue = parseFloat($(this).val());
 
                     // Handle empty or invalid input values
@@ -247,15 +247,17 @@
                     }
                 });
 
-                $('.final-price').text(finalPrice.toFixed(2));
+                $(context).find('.final-price').text(finalPrice.toFixed(2));
             }
 
             $(document).on('input', '.group-price-input', function() {
-                updateFinalPrice();
+                var context = $(this).closest('tr'); // Get the row context
+                updateFinalPrice(context);
             });
 
             $(document).on('change', '.group-price-type', function() {
-                updateFinalPrice();
+                var context = $(this).closest('tr'); // Get the row context
+                updateFinalPrice(context);
             });
         });
 

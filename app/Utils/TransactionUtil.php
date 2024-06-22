@@ -726,7 +726,7 @@ class TransactionUtil extends Util
                 $edit_ids[] = $payment['payment_id'];
                 $this->editPaymentLine($payment, $transaction, $uf_data);
             } else {
-                $payment_amount = $uf_data ? $this->num_uf($payment['amount']) : $payment['amount'];
+                $payment_amount = $uf_data ? $payment['amount'] : $payment['amount'];
                 if ($payment['method'] == 'advance' && $payment_amount > $contact_balance) {
                     throw new AdvanceBalanceNotAvailable(__('lang_v1.required_advance_balance_not_available'));
                 }
@@ -854,7 +854,7 @@ class TransactionUtil extends Util
             unset($payment['denominations']);
         }
 
-        $payment['amount'] = $uf_data ? $this->num_uf($payment['amount']) : $payment['amount'];
+        $payment['amount'] = $uf_data ? $payment['amount'] : $payment['amount'];
 
         $tp = TransactionPayment::where('id', $payment_id)
                             ->first();
@@ -1018,14 +1018,9 @@ class TransactionUtil extends Util
         if ($il->show_city == 1 && ! empty($location_details->city)) {
             $temp[] = $location_details->city;
         }
-        if ($il->show_state == 1 && ! empty($location_details->state)) {
-            $temp[] = $location_details->state;
-        }
+
         if ($il->show_zip_code == 1 && ! empty($location_details->zip_code)) {
             $temp[] = $location_details->zip_code;
-        }
-        if ($il->show_country == 1 && ! empty($location_details->country)) {
-            $temp[] = $location_details->country;
         }
         if (! empty($temp)) {
             $output['address'] .= implode(', ', $temp);
@@ -1103,7 +1098,7 @@ class TransactionUtil extends Util
                 if (! empty($customer->contact_address)) {
                     $output['customer_info'] .= '<br>';
                 }
-                $output['customer_info'] .= '<b>'.__('contact.mobile').'</b>: '.$customer->mobile;
+                $output['customer_info'] .= '<b>'.__('CID').'</b>: '.$customer->contact_id .'<br>: ';
                 if (! empty($customer->landline)) {
                     $output['customer_info'] .= ', '.$customer->landline;
                 }
@@ -1343,7 +1338,7 @@ class TransactionUtil extends Util
 
             if (! empty($il->common_settings['total_quantity_label'])) {
                 $output['total_quantity_label'] = $il->common_settings['total_quantity_label'];
-                $output['total_quantity'] = $this->num_f($total_quantity, false, $business_details, true);
+                $output['total_quantity'] = $total_quantity;
             }
 
             if (! empty($il->common_settings['total_items_label'])) {
@@ -1352,7 +1347,7 @@ class TransactionUtil extends Util
             }
 
             $output['subtotal_exc_tax'] = $this->num_f($subtotal_exc_tax, true, $business_details);
-            $output['total_line_discount'] = ! empty($total_line_discount) ? $this->num_f($total_line_discount, true, $business_details) : 0;
+            $output['total_line_discount'] = ! empty($total_line_discount) ? $total_line_discount : 0;
         } elseif ($transaction_type == 'sell_return') {
             $parent_sell = Transaction::with('payment_lines')->find($transaction->return_parent_id);
             $lines = $parent_sell->sell_lines;
@@ -1392,31 +1387,31 @@ class TransactionUtil extends Util
 
         //round off
         $output['round_off_label'] = ! empty($il->round_off_label) ? $il->round_off_label.':' : __('lang_v1.round_off').':';
-        $output['round_off'] = $this->num_f($transaction->round_off_amount, $show_currency, $business_details);
+        $output['round_off'] = $transaction->round_off_amount;
         $output['round_off_amount'] = $transaction->round_off_amount;
         $output['total_exempt'] = $total_exempt;
         $output['total_exempt_uf'] = $total_exempt;
 
         $taxed_subtotal = $output['subtotal_unformatted'] - $total_exempt;
-        $output['taxed_subtotal'] = $this->num_f($taxed_subtotal, $show_currency, $business_details);
+        $output['taxed_subtotal'] = $taxed_subtotal;
 
         //Discount
-        $discount_amount = $this->num_f($transaction->discount_amount, $show_currency, $business_details);
+        $discount_amount = $transaction->discount_amount;
         $output['line_discount_label'] = $invoice_layout->discount_label;
         $output['discount_label'] = $invoice_layout->discount_label;
-        $output['discount_label'] .= ($transaction->discount_type == 'percentage') ? ' <small>('.$this->num_f($transaction->discount_amount, false, $business_details).'%)</small> :' : '';
+        $output['discount_label'] .= ($transaction->discount_type == 'percentage') ? ' <small>('.$transaction->discount_amount.'%)</small> :' : '';
 
         if ($transaction->discount_type == 'percentage') {
             $discount = ($transaction->discount_amount / 100) * $transaction->total_before_tax;
         } else {
             $discount = $transaction->discount_amount;
         }
-        $output['discount'] = ($discount != 0) ? $this->num_f($discount, $show_currency, $business_details) : 0;
+        $output['discount'] = ($discount != 0) ? $discount : 0;
 
         //reward points
         if ($business_details->enable_rp == 1 && ! empty($transaction->rp_redeemed)) {
             $output['reward_point_label'] = $business_details->rp_name;
-            $output['reward_point_amount'] = $this->num_f($transaction->rp_redeemed_amount, $show_currency, $business_details);
+            $output['reward_point_amount'] = $transaction->rp_redeemed_amount;
         }
 
         //Format tax
@@ -1425,10 +1420,11 @@ class TransactionUtil extends Util
             foreach ($output['taxes'] as $key => $value) {
                 $total_tax += $value;
 
-                $output['taxes'][$key] = $this->num_f($value, $show_currency, $business_details);
+                $output['taxes'][$key] = $value;
             }
 
-            $output['taxes'][trans('lang_v1.total_tax')] = $this->num_f($total_tax, $show_currency, $business_details);
+            $output['taxes'][trans('lang_v1.total_tax')] = $total_tax;
+            
         }
 
         //Order Tax
@@ -1508,7 +1504,7 @@ class TransactionUtil extends Util
                         $method = !empty($payment_types[$value['method']]) ? $payment_types[$value['method']] : '';
                         $payment_entry = [
                             'method' => $method,
-                            'amount' => $this->num_f($value['amount'], $show_currency, $business_details),
+                            'amount' => $value['amount'],
                             'date' => $this->format_date($value['paid_on'], false, $business_details),
                         ];
             
@@ -2052,7 +2048,7 @@ class TransactionUtil extends Util
                 $line_array['line_discount_percent'] = $this->num_f($line->line_discount_amount, false, $business_details);
             }
 
-            $line_array['total_line_discount'] = $this->num_f($line_array['line_discount_uf'] * $line_array['quantity_uf'], false, $business_details);
+            $line_array['total_line_discount'] = $line_array['line_discount_uf'] * $line_array['quantity_uf'];
 
             if ($il->show_brand == 1) {
                 $line_array['brand'] = ! empty($brand->name) ? $brand->name : '';
@@ -4052,7 +4048,7 @@ class TransactionUtil extends Util
         $is_credit_sale = isset($input['is_credit_sale']) && $input['is_credit_sale'] == 1 ? true : false;
         if (! empty($input['payment']) && ! $is_credit_sale) {
             foreach ($input['payment'] as $payment) {
-                $curr_total_payment += $this->num_uf($payment['amount']);
+                $curr_total_payment += $payment['amount'];
             }
         }
 
