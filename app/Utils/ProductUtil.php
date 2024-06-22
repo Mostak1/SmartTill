@@ -74,12 +74,13 @@ class ProductUtil extends Util
                 'currency_rate' => $foreign_cat->description,
                 'is_foreign' => 1,
             ];
-
+            $oldPrice = $this->num_uf($dpp_inc_tax) * $foreign_cat->description;
+            $newPrice = ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10;
             // Create a new price history entry
             VariationPriceHistory::create([
                 'variation_id' => $product->id,
-                'old_price' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
-                'new_price' => ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
+                'old_price' => '$ '.number_format($dpp_inc_tax,2).'<br>৳ '.number_format($oldPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
+                'new_price' => '$ '.number_format($selling_price_inc_tax,2).'<br>৳ '.number_format($newPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
                 'updated_by' => auth()->id(),
                 'type' => 'product',
                 'h_type' => 'Opening'
