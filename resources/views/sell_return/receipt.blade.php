@@ -202,10 +202,10 @@
                 </div>
 				<div class="text-center">
 					{{-- <span>{{$receipt_details->payment}}</span> --}}
-					{{-- @foreach ($receipt_details->payment as $item)
+					@foreach ($receipt_details->payment as $item)
 						<span>{{$item->method}}</span>
-					@endforeach --}}
-					<h2>REFUND PAID</h2>
+					@endforeach
+					<h5>REFUND PAID</h5>
 
 				</div>
                 <div class="row color-555">

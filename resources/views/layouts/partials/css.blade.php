@@ -72,6 +72,22 @@
 	  -webkit-transform: rotate(315deg);
 	  transform: rotate(315deg);
 	}
+
+	.category-subtotal {
+    display: flex;
+    justify-content: space-between;
+	}
+
+	.category-name {
+		flex: 1;
+		text-align: left;
+		width: 250px;
+	}
+
+	.category-amount {
+		flex: 1;
+		text-align: right;
+	}
 </style>
 @if(!empty($__system_settings['additional_css']))
     {!! $__system_settings['additional_css'] !!}

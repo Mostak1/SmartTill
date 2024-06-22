@@ -169,7 +169,7 @@ function calculateRecipeTotal() {
         }
 
         // Update the final quantity display
-        $(this).find('.row_final_quantity').text(final_quantity.toFixed(2));
+        $(this).find('.row_final_quantity').text(final_quantity.toFixed(3));
 
 		// var line_total = line_unit_price * final_quantity * multiplier;
         // Calculate line total based on input quantity and not final quantity

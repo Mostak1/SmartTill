@@ -49,14 +49,14 @@
 			</span>
 		</div>
 	</td>
-	<td>
+	<td style="max-width: 200px; ">
         <div class="input-group">
-            {!! Form::text('ingredients[' . $row_index . '][waste_percent]', !empty($ingredient->waste_percent) ? number_format($ingredient->waste_percent, 4) : 0, ['class' => 'form-control input_number waste_percent input-sm', 'placeholder' => __('Waste percent')]); !!}
+            {!! Form::text('ingredients[' . $row_index . '][waste_percent]', !empty($ingredient->waste_percent) ? number_format($ingredient->waste_percent, 3) : 0, ['class' => 'form-control input_number waste_percent input-sm', 'placeholder' => __('Waste percent')]); !!}
             <span class="input-group-addon"><i class="fa fa-percent"></i></span>
         </div>
     </td>
     <td>
-        <span class="row_final_quantity">{{@format_quantity($ingredient->quantity)}}</span> <span class="row_unit_text">{!! $ingredient->unit !!}</span>
+        <span class="row_final_quantity">{{ number_format($ingredient->quantity, 3) }}</span> <span class="row_unit_text">{!! $ingredient->unit !!}</span>
     </td>
 	@php
 		$price = !empty($ingredient->quantity) ? $ingredient->quantity * $ingredient->dpp_inc_tax : $ingredient->dpp_inc_tax;

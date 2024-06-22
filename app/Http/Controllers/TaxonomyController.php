@@ -278,19 +278,20 @@ class TaxonomyController extends Controller
                         $foreign_variation->default_sell_price = $foreign_variation->foreign_s_price * $category->description;
 
                         // Update the variation's price
-                        $newPrice = $foreign_variation->foreign_s_price_inc_tex * $category->description;
+                        $old_price = $foreign_variation->dpp_inc_tax;
+                        $newPrice = ceil(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
                         if ($foreign_variation->sell_price_inc_tax != $newPrice) {
                             // Create a new price history entry
                             VariationPriceHistory::create([
                                 'variation_id' => $foreign_variation->product_id,
-                                'old_price' => $foreign_variation->dpp_inc_tax,
-                                'new_price' => $newPrice,
+                                'old_price' => '$ '.number_format($foreign_variation->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($old_price,2).'<br>$⇄৳ '.number_format($category->description,2),
+                                'new_price' => '$ '.number_format($foreign_variation->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($newPrice,2).'<br>$⇄৳ '.number_format($category->description,2),
                                 'updated_by' => auth()->id(),
                                 'type' => 'product',
-                                'h_type' => 'Edited'
+                                'h_type' => 'Dollar Rate Change'
                             ]);
                         }
-                        $foreign_variation->sell_price_inc_tax = $foreign_variation->foreign_s_price_inc_tex * $category->description;
+                        $foreign_variation->sell_price_inc_tax = ceil(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
 
                         $foreign_variation->save();
                     }

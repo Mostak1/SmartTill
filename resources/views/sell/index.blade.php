@@ -77,7 +77,7 @@
                         <td class="footer_total_paid"></td>
                         <td class="footer_total_remaining"></td>
                         <td class="footer_total_sell_return_due"></td>
-                        <td colspan="12"></td>
+                        <td colspan="14"></td>
                     </tr>
                 </tfoot>
             </table>            

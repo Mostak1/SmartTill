@@ -43,10 +43,10 @@
 											{{$ingredient['full_name']}}
 										</td>
 										<td><span>{{ number_format($ingredient['quantity'], 3) }}</span> {{$ingredient['unit']}}</td>
-										<td><span>{{ number_format($ingredient['waste_percent'], 4) }}</span>%</td>
+										<td><span>{{ number_format($ingredient['waste_percent'], 3) }}</span>%</td>
 										<td>
 											<span>
-												{{ number_format($ingredient['quantity'] * (100 - $ingredient['waste_percent']) / 100, 3) }}
+												{{ number_format(($ingredient['quantity'] * (100 - $ingredient['waste_percent']) / 100), 3) }}
 											</span> {{$ingredient['unit']}}
 										</td>
 										<td><span class="display_currency" data-currency_symbol="true">{{$ingredient_price}}</span></td>
@@ -70,7 +70,7 @@
 											{{$ingredient['full_name']}}
 										</td>
 										<td><span>{{ number_format($ingredient['quantity'], 3)}}</span> {{$ingredient['unit']}}</td>
-										<td><span>{{ number_format($ingredient['waste_percent'], 4)}}</span>%</td>
+										<td><span>{{ number_format($ingredient['waste_percent'], 3)}}</span>%</td>
 										<td><span class="display_currency" data-currency_symbol="true">{{$ingredient['quantity']*$ingredient['dpp_inc_tax']*$ingredient['multiplier']}}</span></td>
 									</tr>
 								@endforeach
@@ -88,15 +88,15 @@
       		<div class="row">
       			<div class="col-md-6">
       				<strong>@lang('manufacturing::lang.wastage'):</strong>
-      				{{$recipe->waste_percent ?? 0}} % <br>
+      				{{ number_format($recipe->waste_percent, 3) ?? 0}} % <br>
       				<strong>@lang('manufacturing::lang.total_output_quantity'):</strong>
-      				@if(!empty($recipe->total_quantity)){{number_format($recipe->total_quantity, 3)}}@else 0 @endif @if(!empty($recipe->sub_unit)) {{$recipe->sub_unit->short_name}} @else {{$recipe->variation->product->unit->short_name}} @endif
+      				@if(!empty($recipe->total_quantity)){{number_format($recipe->total_quantity)}}@else 0 @endif @if(!empty($recipe->sub_unit)) {{$recipe->sub_unit->short_name}} @else {{$recipe->variation->product->unit->short_name}} @endif
       			</div>
       			<div class="col-md-6">
       				<strong>@lang('manufacturing::lang.extra_cost'):</strong>
       				<span ></span>{{@num_format($recipe->extra_cost)}} @if($recipe->production_cost_type == 'percentage') % @elseif ($recipe->production_cost_type == 'per_unit') (@lang('manufacturing::lang.per_unit')) @endif <br>
       				<strong>@lang('sale.total'):</strong>
-      				<span class="display_currency" data-currency_symbol="true">{{$recipe->final_price}}</span>
+      				<span class="display_currency" data-currency_symbol="true">{{ number_format($recipe->final_price, 2) }}</span>
       			</div>
       		</div>
       		<div class="row">

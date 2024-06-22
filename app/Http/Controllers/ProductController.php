@@ -874,7 +874,7 @@ class ProductController extends Controller
 
                 $variation_history = Variation::find($single_data['single_variation_id']);
                 $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
-                $newPrice = $this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description;
+                $newPrice = ceil(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description)/10)*10;
                 $userId = auth()->id();
 
                 // Update the variation's price
@@ -882,8 +882,8 @@ class ProductController extends Controller
                     // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $id,
-                        'old_price' => $oldPrice,
-                        'new_price' => $newPrice,
+                        'old_price' => '$ '.number_format($variation->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($oldPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
+                        'new_price' => '$ '.number_format($variation->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($newPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
                         'updated_by' => $userId,
                         'type' => 'product',
                         'h_type' => 'Edited'
@@ -2056,7 +2056,8 @@ class ProductController extends Controller
             \Log::emergency('File: ' . $e->getFile() . ' Line: ' . $e->getLine() . ' Message: ' . $e->getMessage());
             $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
         }
-        return redirect('/selling-price-group')->with('status', $output);
+        // return redirect('/selling-price-group')->with('status', $output);
+        return redirect()->back()->with('status', $output);
     }
 
     public function viewGroupPrice($id)

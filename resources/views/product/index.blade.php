@@ -296,7 +296,6 @@
             { data: 'sub_sku', name: 'v.sub_sku' },
             { data: 'category_name', name: 'cat.name' },
             { data: 'brand_name', name: 'b.name' },
-            { data: 'transaction_date', name: 't.transaction_date'},
             { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
             { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
             { data: 'subtotal', name: 'subtotal', searchable: false },
@@ -305,7 +304,7 @@
             let api = this.api();
             
             // Calculate the total quantity sold
-            let totalQtySold = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
+            let totalQtySold = api.column(5, { page: 'current' }).data().reduce(function (a, b) {
                 // Filter out non-numeric characters and then parse the numeric value
                 let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
                 return parseFloat(a) + numericValueB;
@@ -313,7 +312,7 @@
             
 
             // Calculate the total sold subtotal
-            let totalSubtotal = api.column(7, { page: 'current' }).data().reduce(function (a, b) {
+            let totalSubtotal = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
                 // Filter out non-numeric characters and then parse the numeric value
                 let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
                 return parseFloat(a) + numericValueB;
@@ -362,12 +361,11 @@ $(document).ready(function(){
                 }
             },
             columnDefs: [ {
-                "targets": [7, 8],
+                "targets": [6, 7],
                 "orderable": false,
                 "searchable": false
             } ],
             columns: [
-                { data: 'transaction_date', name: 'transaction_date'  },
                 { data: 'invoice_no', name: 'invoice_no'},
                 { data: 'parent_sale', name: 'T1.invoice_no'},
                 { data: 'name', name: 'contacts.name'},

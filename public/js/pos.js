@@ -1731,13 +1731,12 @@ function pos_total_row() {
     });
     $('span.price_total').html(__currency_trans_from_en(price_total, false));
 
-    // Update the category subtotals
     var category_subtotals_html = '';
-    for (var category in category_subtotals) {
-        category_subtotals_html += '<b>' + category + '(' + category_subtotals[category].count + '):</b> ' + __currency_trans_from_en(category_subtotals[category].subtotal, false) + '<br>';
-    }
+        for (var category in category_subtotals) {
+            category_subtotals_html += '<div class="category-subtotal"><span class="category-name"><b>' + category + ' (' + category_subtotals[category].count + '):</b></span><span class="category-amount">' + __currency_trans_from_en(category_subtotals[category].subtotal, false) + '</span></div>';
+        }
 
-    $('#category_subtotals').html(category_subtotals_html);
+        $('#category_subtotals').html(category_subtotals_html);
 
     calculate_billing_details(price_total);
 }

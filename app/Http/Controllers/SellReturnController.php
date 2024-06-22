@@ -63,7 +63,7 @@ class SellReturnController extends Controller
         }
 
         $today = $request->get('transaction_date');
-        $today = $request->get('transaction_date');
+
         $business_id = request()->session()->get('user.business_id');
         if (request()->ajax()) {
             $sells = Transaction::leftJoin('contacts', 'transactions.contact_id', '=', 'contacts.id')
@@ -581,7 +581,7 @@ class SellReturnController extends Controller
                 $output['printer_config'] = $this->businessUtil->printerConfig($business_id, $location_details->printer_id);
                 $output['data'] = $receipt_details;
             } else {
-                $output['html_content'] = view('sell_return.receipt', compact('receipt_details'))->render();
+                $output['html_content'] = view('sell_return.receipt_copy', compact('receipt_details'))->render();
             }
         }
 

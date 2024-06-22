@@ -36,7 +36,7 @@
         .watermark {
             position: absolute;
             bottom: 60%;
-            left: 16%;
+            left: 20%;
             font-size: 50px;
             color: rgba(80, 74, 74, 0.245) !important;
             /* Adjust the opacity as needed */
@@ -130,6 +130,7 @@
                             <b>{{ $receipt_details->tax_label2 }}</b> {{ $receipt_details->tax_info2 }}
                         @endif
             @endif
+            <br>
             <!-- Title of receipt -->
             @if (!empty($receipt_details->invoice_heading))
                 <br /><span class="sub-headings">{!! $receipt_details->invoice_heading !!}</span>
@@ -161,15 +162,18 @@
             </p>
         </div> --}}
         <div class="border-top textbox-info">
-            <p class="f-left"><strong>{!! $receipt_details->invoice_no_prefix !!} : {{ $receipt_details->invoice_no }}</strong></p>
+            <p class="f-left"><strong>{!! $receipt_details->invoice_no_prefix !!} : {{ $receipt_details->invoice_no }}</strong> </p>
             <p class="f-right">
-                
+                <strong>{{ $receipt_details->customer_label ?? '' }}</strong>
             </p>
         </div>
         <div class="textbox-info">
-            <p class="f-left"><strong>{!! $receipt_details->date_label !!} : {{ $receipt_details->invoice_date }}</strong></p>
-            <p class="f-right">
-                
+            <p class="f-left"><strong>{!! $receipt_details->date_label !!} : {{ $receipt_details->invoice_date }}</strong> <br> <strong>Counter:</strong> {{ Auth::user()->username }}</p>
+
+            <p style="text-align: right" class="f-right">
+                @if (!empty($receipt_details->customer_info))
+                        {!! $receipt_details->customer_info !!}
+                @endif
             </p>
         </div>
 
@@ -588,30 +592,30 @@
         </table>
         @if (!empty($receipt_details->total_quantity_label))
             <div class="flex-box">
-                <p class="left text-right">
+                <p class="width-70 left text-right">
                     {!! $receipt_details->total_quantity_label !!}
                 </p>
-                <p class="width-50 text-right">
+                <p class="width-30 text-right">
                     {{ $receipt_details->total_quantity }}
                 </p>
             </div>
         @endif
         @if (!empty($receipt_details->total_items_label))
             <div class="flex-box">
-                <p class="left text-right">
+                <p class="width-70 left text-right">
                     {!! $receipt_details->total_items_label !!}
                 </p>
-                <p class="width-50 text-right">
+                <p class="width-30 text-right">
                     {{ $receipt_details->total_items }}
                 </p>
             </div>
         @endif
         @if (empty($receipt_details->hide_price))
             <div class="flex-box">
-                <p class="left text-right sub-headings">
+                <p class="width-70 left text-right sub-headings">
                     {!! $receipt_details->subtotal_label !!}
                 </p>
-                <p class="width-50 text-right sub-headings">
+                <p class="width-30 text-right sub-headings">
                     ৳ {{ number_format($receipt_details->subtotal) }}
                 </p>
             </div>
@@ -619,10 +623,10 @@
             <!-- Shipping Charges -->
             @if (!empty($receipt_details->shipping_charges))
                 <div class="flex-box">
-                    <p class="left text-right">
+                    <p class="width-70 left text-right">
                         {!! $receipt_details->shipping_charges_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         {{ $receipt_details->shipping_charges }}
                     </p>
                 </div>
@@ -630,10 +634,10 @@
 
             @if (!empty($receipt_details->packing_charge))
                 <div class="flex-box">
-                    <p class="left text-right">
+                    <p class="width-70 left text-right">
                         {!! $receipt_details->packing_charge_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         {{ $receipt_details->packing_charge }}
                     </p>
                 </div>
@@ -642,11 +646,11 @@
             <!-- Discount -->
             @if (!empty($receipt_details->discount))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->discount_label !!}
                     </p>
 
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         (-) {{ $receipt_details->discount }}
                     </p>
                 </div>
@@ -654,11 +658,11 @@
 
             @if (!empty($receipt_details->total_line_discount))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->line_discount_label !!}
                     </p>
 
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         (-) {{ $receipt_details->total_line_discount }}
                     </p>
                 </div>
@@ -667,11 +671,11 @@
             @if (!empty($receipt_details->additional_expenses))
                 @foreach ($receipt_details->additional_expenses as $key => $val)
                     <div class="flex-box">
-                        <p class="width-50 text-right">
+                        <p class="width-70 text-right">
                             {{ $key }}:
                         </p>
 
-                        <p class="width-50 text-right">
+                        <p class="width-30 text-right">
                             (+)
                             {{ $val }}
                         </p>
@@ -681,11 +685,11 @@
 
             @if (!empty($receipt_details->reward_point_label))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->reward_point_label !!}
                     </p>
 
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         (-) {{ $receipt_details->reward_point_amount }}
                     </p>
                 </div>
@@ -693,10 +697,10 @@
 
             @if (!empty($receipt_details->tax))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->tax_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         (+) {{ $receipt_details->tax }}
                     </p>
                 </div>
@@ -704,20 +708,20 @@
 
             @if ($receipt_details->round_off_amount > 0)
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->round_off_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         {{ $receipt_details->round_off }}
                     </p>
                 </div>
             @endif
 
             <div class="flex-box">
-                <p class="width-50 text-right sub-headings">
+                <p class="width-70 text-right sub-headings">
                     {!! $receipt_details->total_label !!}
                 </p>
-                <p class="width-50 text-right sub-headings">
+                <p class="width-30 text-right sub-headings">
                     ৳ {{ number_format($receipt_details->total) }}
                 </p>
             </div>
@@ -731,8 +735,8 @@
             @if (!empty($receipt_details->payments))
                 @foreach ($receipt_details->payments as $payment)
                     <div class="flex-box">
-                        <p class="width-50 text-right">{{ $payment['method'] }} ({{ $payment['date'] }}) </p>
-                        <p class="width-50 text-right">৳ {{ number_format($payment['amount']) }}</p>
+                        <p class="width-70 text-right">Method {{ $payment['method'] }} @if (!empty($receipt_details->total_due)) ({{ $payment['date'] }}) @endif</p>
+                        <p class="width-30 text-right">৳ {{ number_format($payment['amount']) }}</p>
                     </div>
                 @endforeach
             @endif
@@ -740,10 +744,10 @@
             <!-- Total Paid-->
             @if (!empty($receipt_details->total_paid))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->total_paid_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         ৳ {{ number_format($receipt_details->total_paid) }}
                     </p>
                 </div>
@@ -756,10 +760,10 @@
                 </div>
 
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->total_due_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         {{ $receipt_details->total_due }}
                     </p>
                 </div>
@@ -767,10 +771,10 @@
 
             @if (!empty($receipt_details->all_due))
                 <div class="flex-box">
-                    <p class="width-50 text-right">
+                    <p class="width-70 text-right">
                         {!! $receipt_details->all_bal_label !!}
                     </p>
-                    <p class="width-50 text-right">
+                    <p class="width-30 text-right">
                         {{ $receipt_details->all_due }}
                     </p>
                 </div>

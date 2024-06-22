@@ -1792,14 +1792,14 @@ class ReportController extends Controller
                     ->where('CG.id', $customer_group_id);
             }
 
-            $category_id = $request->get('category_id', null);
-            if (!empty($category_id)) {
-                $query->where('p.category_id', $category_id);
+            $category_ids = request()->get('category_id', null);
+            if (!empty($category_ids)) {
+                $query->whereIn('p.category_id', $category_ids);
             }
 
-            $brand_id = $request->get('brand_id', null);
-            if (!empty($brand_id)) {
-                $query->where('p.brand_id', $brand_id);
+            $brand_ids = $request->get('brand_id', null);
+            if (!empty($brand_ids)) {
+                $query->whereIn('p.brand_id', $brand_ids);
             }
 
             return Datatables::of($query)
