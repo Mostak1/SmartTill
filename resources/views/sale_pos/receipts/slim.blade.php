@@ -24,7 +24,6 @@
             position: relative;
             width: 100%;
             height: fit-content;
-            /* Full viewport height */
             overflow: hidden;
         }
 

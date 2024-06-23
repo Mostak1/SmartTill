@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\Log;
 use App\BusinessLocation;
 use App\Contact;
 use App\Events\TransactionPaymentAdded;
@@ -61,12 +61,16 @@ class TransactionPaymentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    
+
     private function receiptContent(
         $business_id,
         $location_id,
         $transaction_id,
         $printer_type = null
     ) {
+        Log::info("Entering receiptContent function.");
+    
         $output = [
             'is_enabled' => false,
             'print_type' => 'browser',
@@ -74,35 +78,58 @@ class TransactionPaymentController extends Controller
             'printer_config' => [],
             'data' => [],
         ];
-
-        $business_details = $this->businessUtil->getDetails($business_id);
-        $location_details = BusinessLocation::find($location_id);
-
-        //Check if printing of invoice is enabled or not.
-        if ($location_details->print_receipt_on_invoice == 1) {
-            //If enabled, get print type.
-            $output['is_enabled'] = true;
-
-            $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
-
-            //Check if printer setting is provided.
-            $receipt_printer_type = is_null($printer_type) ? $location_details->receipt_printer_type : $printer_type;
-
-            $receipt_details = $this->transactionUtil->getReceiptDetails($transaction_id, $location_id, $invoice_layout, $business_details, $location_details, $receipt_printer_type);
-
-            //If print type browser - return the content, printer - return printer config data, and invoice format config
-            $output['print_title'] = $receipt_details->invoice_no;
-            if ($receipt_printer_type == 'printer') {
-                $output['print_type'] = 'printer';
-                $output['printer_config'] = $this->businessUtil->printerConfig($business_id, $location_details->printer_id);
-                $output['data'] = $receipt_details;
+    
+        Log::info("Initializing output array.");
+    
+        try {
+            $business_details = $this->businessUtil->getDetails($business_id);
+            Log::info("Business details retrieved for business_id: $business_id");
+    
+            $location_details = BusinessLocation::find($location_id);
+            Log::info("Location details retrieved for location_id: $location_id");
+    
+            // Check if printing of invoice is enabled or not.
+            if ($location_details->print_receipt_on_invoice == 1) {
+                Log::info("Printing of invoice is enabled.");
+    
+                // If enabled, get print type.
+                $output['is_enabled'] = true;
+    
+                $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
+                Log::info("Invoice layout retrieved.");
+    
+                // Check if printer setting is provided.
+                $receipt_printer_type = is_null($printer_type) ? $location_details->receipt_printer_type : $printer_type;
+                Log::info("Receipt printer type determined: $receipt_printer_type");
+    
+                $receipt_details = $this->transactionUtil->getReceiptDetails($transaction_id, $location_id, $invoice_layout, $business_details, $location_details, $receipt_printer_type);
+                Log::info("Receipt details retrieved for transaction_id: $transaction_id");
+    
+                // If print type is browser - return the content, printer - return printer config data, and invoice format config
+                $output['print_title'] = 'Printer';
+                if ($receipt_printer_type == 'printer') {
+                    Log::info("Receipt printer type is printer.");
+                    $output['print_type'] = 'printer';
+                    $output['printer_config'] = $this->businessUtil->printerConfig($business_id, $location_details->printer_id);
+                    Log::info("Printer config retrieved.");
+                    $output['data'] = $receipt_details;
+                } else {
+                    Log::info("Receipt printer type is not printer, rendering HTML content.");
+                    $output['html_content'] = view('sell_return.receipt', compact('receipt_details'))->render();
+                }
             } else {
-                $output['html_content'] = view('sell_return.receipt', compact('receipt_details'))->render();
+                Log::info("Printing of invoice is not enabled.");
             }
+        } catch (Exception $e) {
+            Log::error("Error in receiptContent function: " . $e->getMessage());
+            // Optionally, you can rethrow the exception if needed
+            // throw $e;
         }
-
+    
+        Log::info("Exiting receiptContent function.");
         return $output;
     }
+    
 
     public function store(Request $request)
     {
@@ -117,7 +144,6 @@ class TransactionPaymentController extends Controller
             if (!(auth()->user()->can('purchase.payments') || auth()->user()->can('hms.add_booking_payment') || auth()->user()->can('sell.payments') || auth()->user()->can('all_expense.access') || auth()->user()->can('view_own_expense'))) {
                 abort(403, 'Unauthorized action.');
             }
-
             if ($transaction->payment_status != 'paid') {
                 $inputs = $request->only([
                     'amount', 'method', 'note', 'card_number', 'card_holder_name',
@@ -181,14 +207,14 @@ class TransactionPaymentController extends Controller
                 $transaction->payment_status = $payment_status;
 
                 $this->transactionUtil->activityLog($transaction, 'payment_edited', $transaction_before);
-                // $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
+                $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
                 DB::commit();
             }
 
             $output = [
                 'success' => 1,
                 'msg' => __('purchase.payment_added_success'),
-                'receipt' => 1,
+                'receipt' => $receipt,
                 'transaction_id' => $transaction_id,
             ];
         } catch (\Exception $e) {

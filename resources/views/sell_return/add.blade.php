@@ -203,8 +203,8 @@
 						</a>
                         <button style="margin-left: 15px" type="button" id="save_with_payment_button"
                             class="btn btn-primary pull-right">Save With Payment</button>
-                        <button type="submit" class="btn btn-primary pull-right"
-                            id="save_button">@lang('messages.save')</button>
+                        {{-- <button type="submit" class="btn btn-primary pull-right"
+                            id="save_button">@lang('messages.save')</button> --}}
                     </div>
                 </div>
             </div>

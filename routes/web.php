@@ -388,7 +388,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('export-product-price', [SellingPriceGroupController::class, 'export']);
     Route::post('import-product-price', [SellingPriceGroupController::class, 'import']);
     Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
-    Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
+    // Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
 
     Route::resource('selling-price-group', SellingPriceGroupController::class);
 

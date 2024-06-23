@@ -18,6 +18,10 @@
         {!! Form::label('description', __( 'lang_v1.description' ) . ':') !!}
           {!! Form::textarea('description', null, ['class' => 'form-control','placeholder' => __( 'lang_v1.description' ), 'rows' => 3]); !!}
       </div>
+      <div class="form-group" id="copy_group_id">
+        {!! Form::label('copy_group_id', 'Copy From Group'.':') !!}
+        {!! Form::select('copy_group_id', $price_groups, null, ['class' => 'form-control', 'placeholder' => __('lang_v1.none'), 'style' => 'width: 100%;']); !!}
+    </div>
     </div>
 
     <div class="modal-footer">

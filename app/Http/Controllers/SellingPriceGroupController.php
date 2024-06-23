@@ -89,8 +89,10 @@ class SellingPriceGroupController extends Controller
         if (!auth()->user()->can('product.create')) {
             abort(403, 'Unauthorized action.');
         }
+        $business_id = request()->session()->get('user.business_id');
 
-        return view('selling_price_group.create');
+        $price_groups = SellingPriceGroup::where('business_id', $business_id)->pluck('name', 'id');
+        return view('selling_price_group.create', compact('price_groups'));
     }
 
     /**
@@ -107,6 +109,7 @@ class SellingPriceGroupController extends Controller
 
         try {
             $input = $request->only(['name', 'description']);
+            // dd($request->copy_group_id);
             $business_id = $request->session()->get('user.business_id');
             $input['business_id'] = $business_id;
 
@@ -114,7 +117,17 @@ class SellingPriceGroupController extends Controller
 
             //Create a new permission related to the created selling price group
             Permission::create(['name' => 'selling_price_group.' . $spg->id]);
-
+            // Retrieve the variation group prices from the provided copy_group_id
+            $variation_group_prices = VariationGroupPrice::where('price_group_id', $request->copy_group_id)->get();
+            // Iterate over the retrieved variation group prices and create new entries for the new selling price group
+            foreach ($variation_group_prices as $variation_group_price) {
+                VariationGroupPrice::create([
+                    'price_group_id' => $spg->id,
+                    'variation_id' => $variation_group_price->variation_id,
+                    'price_inc_tax' => $variation_group_price->price_inc_tax,
+                    'price_type' => $variation_group_price->price_type,
+                ]);
+            }
             $output = [
                 'success' => true,
                 'data' => $spg,
@@ -517,15 +530,15 @@ class SellingPriceGroupController extends Controller
 
                 $business_id = $request->session()->get('user.business_id');
                 Log::info('Business ID retrieved', ['business_id' => $business_id]);
-                $product1 = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id);
-                if (!$product1) {
-                    throw new \Exception('No product details retrieved from variation');
-                }
-                Log::info('Product details retrieved from variation', ['product1' => $product1]);
-                // Ensure product1 contains a valid id
-                if (!isset($product1->product_id)) {
-                    throw new \Exception('Product ID not found in variation details');
-                }
+                // $product1 = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id);
+                // if (!$product1) {
+                //     throw new \Exception('No product details retrieved from variation');
+                // }
+                // Log::info('Product details retrieved from variation', ['product1' => $product1]);
+                // // Ensure product1 contains a valid id
+                // if (!isset($product1->product_id)) {
+                //     throw new \Exception('Product ID not found in variation details');
+                // }
                 $variation = Variation::where('id', $variation_id)
                     ->whereHas('product', function ($query) use ($business_id) {
                         $query->where('business_id', $business_id);

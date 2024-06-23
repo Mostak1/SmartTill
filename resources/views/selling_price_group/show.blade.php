@@ -160,13 +160,18 @@
                             $(this).val(null);
                             stock_adjustment_product_row(ui.item.variation_id);
                         } else {
-                            alert(LANG.out_of_stock);
+                            // alert(LANG.out_of_stock);
+                            $(this).val(null);
+                            stock_adjustment_product_row(ui.item.variation_id);
                         }
                     }
                 }).autocomplete('instance')._renderItem = function(ul, item) {
                     if (item.qty_available <= 0) {
-                        return $('<li class="ui-state-disabled">' + item.name + ' (' + item.sub_sku +
-                            ') (Out of stock)</li>').appendTo(ul);
+                        var string = '<div>' + item.name + ' (' + item.sub_sku + ') ';
+                        if (item.brand_id) {
+                            string += '<br>Brand: ' + item.brand.name + '</div>';
+                        }
+                        return $('<li>').append(string).appendTo(ul);
                     } else {
                         var string = '<div>' + item.name + ' (' + item.sub_sku + ') ';
                         if (item.brand_id) {
