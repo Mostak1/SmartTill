@@ -335,7 +335,7 @@ $(document).ready(function(){
             serverSide: true,
             aaSorting: [[0, 'desc']],
             "ajax": {
-                "url": "/sell-return",
+                "url": "/today-sell-return",
                 "data": function ( d ) {
 
                     d.customer_id = $('#sell_list_filter_customer_id').val();
@@ -366,14 +366,15 @@ $(document).ready(function(){
                 "searchable": false
             } ],
             columns: [
-                { data: 'invoice_no', name: 'invoice_no'},
+                { data: 'product', name: 'product'},
+                { data: 'sku', name: 'sku'},
+                { data: 'category', name: 'category'},
+                { data: 'brand', name: 'brand'},
                 { data: 'parent_sale', name: 'T1.invoice_no'},
-                { data: 'name', name: 'contacts.name'},
-                { data: 'business_location', name: 'bl.name'},
                 { data: 'payment_status', name: 'payment_status'},
+                { data: 'current_stock', name: 'current_stock'},
+                { data: 'total_return_qty', name: 'total_return_qty'},
                 { data: 'final_total', name: 'final_total'},
-                { data: 'payment_due', name: 'payment_due'},
-                { data: 'action', name: 'action'}
             ],
             "fnDrawCallback": function (oSettings) {
                 var total_sell = sum_table_col($('#sell_return_table'), 'final_total');

@@ -377,7 +377,8 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/sell-return/add/{id}', [SellReturnController::class, 'add']);
     Route::post('/sell-return/store-with-payment', [SellReturnController::class, 'storeWithPayment']);
     Route::post('/sell-return/store-with-payment', [SellReturnController::class, 'storeWithPayment']);
-
+    // Custome 
+    Route::get('today-sell-return', [SellReturnController::class, 'todaySellReturn']);
     //Backup
     Route::get('backup/download/{file_name}', [BackUpController::class, 'download']);
     Route::get('backup/{id}/delete', [BackUpController::class, 'delete'])->name('delete_backup');
@@ -385,9 +386,12 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
 
     Route::get('selling-price-group/activate-deactivate/{id}', [SellingPriceGroupController::class, 'activateDeactivate']);
     Route::get('update-product-price', [SellingPriceGroupController::class, 'updateProductPrice'])->name('update-product-price');
+    Route::get('update-price-group/{id}', [SellingPriceGroupController::class, 'updatePriceGroup'])->name('update-price-group');
     Route::get('export-product-price', [SellingPriceGroupController::class, 'export']);
     Route::post('import-product-price', [SellingPriceGroupController::class, 'import']);
     Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
+    Route::delete('/selling-price-group/{id}/remove-item/{item_id}', [SellingPriceGroupController::class, 'removeItem'])
+    ->name('selling-price-group.remove-item');
     // Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
 
     Route::resource('selling-price-group', SellingPriceGroupController::class);

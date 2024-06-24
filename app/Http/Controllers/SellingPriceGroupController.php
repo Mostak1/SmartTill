@@ -209,13 +209,100 @@ class SellingPriceGroupController extends Controller
                     }
                     return number_format($profit, 2) . ' %';
                 })
-                ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price'])
+                ->addColumn('Remove', function ($row) {
+                    return '<a href="' . route('selling-price-group.remove-item', [$row->price_group_id, $row->variation_id]) . '" class="remove_group_item text-danger" title="Remove"><i class="fa fa-times" style="cursor:pointer;"></i></a>';
+                })
+                ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price', 'Remove'])
                 ->make(true);
         }
         return view('selling_price_group.show')
             ->with(compact('sellingPriceGroup', 'business_locations', 'price_groups'));
     }
+    public function removeItem($id, $item_id)
+    {
+        if (!auth()->user()->can('product.delete')) {
+            return response()->json(['success' => false, 'msg' => 'Unauthorized action.'], 403);
+        }
 
+        try {
+            // Find the item and delete it
+            $item = VariationGroupPrice::where('price_group_id', $id)->where('variation_id', $item_id)->first();
+
+            if ($item) {
+                $item->delete();
+                return response()->json(['success' => true, 'msg' => 'Product removed successfully.']);
+            } else {
+                return response()->json(['success' => false, 'msg' => 'Product not found.']);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'msg' => 'Something went wrong. Please try again.']);
+        }
+    }
+    public function updatePriceGroup($id)
+    {
+        if (!auth()->user()->can('product.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $sellingPriceGroup = SellingPriceGroup::findOrFail($id);
+        $business_id = request()->session()->get('user.business_id');
+        $business_locations = BusinessLocation::forDropdown($business_id);
+        $price_groups = SellingPriceGroup::where('business_id', $business_id)
+            ->active()
+            ->get();
+        $variationProducts = VariationGroupPrice::with(['variation.product'])
+            ->where('price_group_id', $id)
+            ->select('variation_id', 'price_group_id', 'price_inc_tax', 'price_type');
+        $products = $variationProducts->get();
+        if (request()->ajax()) {
+
+
+            return Datatables::of($variationProducts)
+                ->addColumn('product', function ($row) {
+                    return $row->variation->product->name . ' (' . $row->variation->name . ')';
+                })
+                ->addColumn('sku', function ($row) {
+                    return $row->variation->sub_sku;
+                })
+                ->addColumn('selling_price', function ($row) {
+                    return number_format($row->variation->sell_price_inc_tax, 0);
+                })
+                ->addColumn('price_group', function ($row) {
+                    if ($row->price_type == 'percentage') {
+                        $price = 100 - $row->price_inc_tax . ' %';
+                        $html = $price . '%';
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
+                        $html = $price . 'Fixed';
+                    }
+                    return $price;
+                })
+                ->addColumn('price_group_price', function ($row) {
+
+                    if ($row->price_type == 'percentage') {
+                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+                        $html = $price . '%';
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $html = $price . 'Fixed';
+                    }
+                    return $price;
+                })
+                ->addColumn('profit_per', function ($row) {
+
+                    if ($row->price_type == 'percentage') {
+                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+                    } elseif ($row->price_type == 'fixed') {
+                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+                    }
+                    return number_format($profit, 2) . ' %';
+                })
+                ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price'])
+                ->make(true);
+        }
+        return view('selling_price_group.update_price_group')->with(compact('sellingPriceGroup', 'business_locations', 'price_groups', 'products'));
+    }
     /**
      * Show the form for editing the specified resource.
      *
@@ -326,6 +413,7 @@ class SellingPriceGroupController extends Controller
 
         return view('selling_price_group.update_product_price');
     }
+
 
     /**
      * Exports selling price group prices for all the products in xls format

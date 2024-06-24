@@ -2,8 +2,10 @@
     use Carbon\Carbon;
     $start_date = Carbon::parse($start_date);
     $end_date = Carbon::parse($end_date);
+    $currentDateTime = date('Y-m-d 00:00:00');
 @endphp
 <h3 class="text-center">Report Show From {{$start_date->format('d-F-Y')}} TO {{$end_date->format('d-F-Y')}}</h3>
+{{-- <h3 class="text-center">Report Show From {{$start_date}} TO {{$end_date}}</h3> --}}
 
 <div class="col-xs-6">
     @php

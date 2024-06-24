@@ -4205,6 +4205,7 @@ class ReportController extends Controller
                 $queryReturn->where('t.location_id', request()->location_id);
             }
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
+                
                 $start = request()->start_date;
                 $end = request()->end_date;
                 $query->whereDate('sale.transaction_date', '>=', $start)

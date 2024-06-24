@@ -666,4 +666,225 @@ class SellReturnController extends Controller
             'redirect_url' => action([\App\Http\Controllers\SellReturnController::class, 'add'], [$sell->id]),
         ];
     }
+    public function todaySellReturn(Request $request)
+    {
+        if (!auth()->user()->can('access_sell_return') && !auth()->user()->can('access_own_sell_return')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $today = $request->get('transaction_date');
+
+        $business_id = request()->session()->get('user.business_id');
+
+        if (request()->ajax()) {
+            $permitted_locations = auth()->user()->permitted_locations();
+            $sells = Transaction::leftJoin('contacts', 'transactions.contact_id', '=', 'contacts.id')
+
+                ->join(
+                    'business_locations AS bl',
+                    'transactions.location_id',
+                    '=',
+                    'bl.id'
+                )
+                ->join(
+                    'transactions as T1',
+                    'transactions.return_parent_id',
+                    '=',
+                    'T1.id'
+                )
+                ->leftJoin(
+                    'transaction_payments AS TP',
+                    'transactions.id',
+                    '=',
+                    'TP.transaction_id'
+                )
+                ->leftJoin(
+                    'transaction_sell_lines AS TSL',
+                    'T1.id',
+                    '=',
+                    'TSL.transaction_id'
+                )
+                ->leftJoin(
+                    'products AS p',
+                    'TSL.product_id',
+                    '=',
+                    'p.id'
+                )
+                ->join('units', 'p.unit_id', '=', 'units.id')
+                ->join('variations as v', 'v.product_id', '=', 'p.id')
+                ->leftJoin('variation_location_details as vld', function ($join) use ($permitted_locations) {
+                    $join->on('vld.variation_id', '=', 'v.id');
+                    if ($permitted_locations != 'all') {
+                        $join->whereIn('vld.location_id', $permitted_locations);
+                    }
+                })
+                ->leftJoin(
+                    'categories AS c',
+                    'p.category_id',
+                    '=',
+                    'c.id'
+                )
+                ->leftJoin(
+                    'brands AS b',
+                    'p.brand_id',
+                    '=',
+                    'b.id'
+                )
+                ->where('transactions.business_id', $business_id)
+                ->where('transactions.type', 'sell_return')
+                ->where('transactions.status', 'final')
+                ->select(
+                    'transactions.id',
+                    'transactions.transaction_date',
+                    'transactions.invoice_no',
+                    'contacts.name',
+                    'p.name as product',
+                    'p.sku as sku',
+                    'p.enable_stock',
+                    'c.name as category',
+                    'b.name as brand',
+                    'units.actual_name as unit',
+                    'contacts.supplier_business_name',
+                    'transactions.final_total',
+                    'transactions.payment_status',
+                    'bl.name as business_location',
+                    'T1.invoice_no as parent_sale',
+                    'T1.id as parent_sale_id',
+                    DB::raw('SUM(TP.amount) as amount_paid'),
+                    DB::raw('SUM(TSL.quantity_returned) as total_return_qty'),
+                    DB::raw('SUM(vld.qty_available) as current_stock')
+                );
+
+            if (!empty($today)) {
+                $sells->whereDate('transactions.transaction_date', $today);
+            }
+
+            $permitted_locations = auth()->user()->permitted_locations();
+            if ($permitted_locations != 'all') {
+                $sells->whereIn('transactions.location_id', $permitted_locations);
+            }
+
+            if (!auth()->user()->can('access_sell_return') && auth()->user()->can('access_own_sell_return')) {
+                $sells->where('transactions.created_by', request()->session()->get('user.id'));
+            }
+
+            //Add condition for created_by,used in sales representative sales report
+            if (request()->has('created_by')) {
+                $created_by = request()->get('created_by');
+                if (!empty($created_by)) {
+                    $sells->where('transactions.created_by', $created_by);
+                }
+            }
+
+            //Add condition for location,used in sales representative expense report
+            if (request()->has('location_id')) {
+                $location_id = request()->get('location_id');
+                if (!empty($location_id)) {
+                    $sells->where('transactions.location_id', $location_id);
+                }
+            }
+
+            if (!empty(request()->customer_id)) {
+                $customer_id = request()->customer_id;
+                $sells->where('contacts.id', $customer_id);
+            }
+            if (!empty(request()->start_date) && !empty(request()->end_date)) {
+                $start = request()->start_date;
+                $end = request()->end_date;
+                $sells->whereDate('transactions.transaction_date', '>=', $start)
+                    ->whereDate('transactions.transaction_date', '<=', $end);
+            }
+
+            $sells->groupBy('TSL.id');
+
+            return Datatables::of($sells)
+                ->addColumn(
+                    'action',
+                    '<div class="btn-group">
+                    <button type="button" class="btn btn-info dropdown-toggle btn-xs" 
+                        data-toggle="dropdown" aria-expanded="false">' .
+                        __('messages.actions') .
+                        '<span class="caret"></span><span class="sr-only">Toggle Dropdown
+                        </span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                        <li><a href="#" class="btn-modal" data-container=".view_modal" data-href="{{action(\'App\Http\Controllers\SellReturnController@show\', [$parent_sale_id])}}"><i class="fas fa-eye" aria-hidden="true"></i> @lang("messages.view")</a></li>
+                        <li><a href="{{action(\'App\Http\Controllers\SellReturnController@add\', [$parent_sale_id])}}" ><i class="fa fa-edit" aria-hidden="true"></i> @lang("messages.edit")</a></li>
+                        <li><a href="{{action(\'App\Http\Controllers\SellReturnController@destroy\', [$id])}}" class="delete_sell_return" ><i class="fa fa-trash" aria-hidden="true"></i> @lang("messages.delete")</a></li>
+                        <li><a href="#" class="print-invoice" data-href="{{action(\'App\Http\Controllers\SellReturnController@printInvoice\', [$id])}}"><i class="fa fa-print" aria-hidden="true"></i> @lang("messages.print")</a></li>
+
+                    @if($payment_status != "paid")
+                        <li><a href="{{action(\'App\Http\Controllers\TransactionPaymentController@addPayment\', [$id])}}" class="add_payment_modal"><i class="fas fa-money-bill-alt"></i> @lang("purchase.add_payment")</a></li>
+                    @endif
+
+                    <li><a href="{{action(\'App\Http\Controllers\TransactionPaymentController@show\', [$id])}}" class="view_payment_modal"><i class="fas fa-money-bill-alt"></i> @lang("purchase.view_payments")</a></li>
+                    </ul>
+                    </div>'
+                )
+                ->removeColumn('id')
+                ->editColumn(
+                    'final_total',
+                    '<span class="display_currency final_total" data-currency_symbol="true" data-orig-value="{{$final_total}}">{{$final_total}}</span>'
+                )
+                ->editColumn('parent_sale', function ($row) {
+                    return '<button type="button" class="btn btn-link btn-modal" data-container=".view_modal" data-href="' . action([\App\Http\Controllers\SellController::class, 'show'], [$row->parent_sale_id]) . '">' . $row->parent_sale . '</button>';
+                })
+                ->editColumn('name', '@if(!empty($supplier_business_name)) {{$supplier_business_name}}, <br> @endif {{$name}}')
+                ->editColumn(
+                    'payment_status',
+                    '<p class="view_payment_modal payment-status payment-status-label" data-orig-value="{{$payment_status}}" data-status-name="{{$payment_status}}"><span class="label @payment_status($payment_status)">{{$payment_status}}</span></p>'
+                )
+                ->addColumn('payment_due', function ($row) {
+                    $due = $row->final_total - $row->amount_paid;
+                    return '<span class="display_currency payment_due" data-currency_symbol="true" data-orig-value="' . $due . '">' . $due . '</sapn>';
+                })
+                ->addColumn('product', function ($row) {
+                    return '<span>' . $row->product . '</sapn>';
+                })
+                ->addColumn('sku', function ($row) {
+                    return '<span>' . $row->sku . '</sapn>';
+                })
+                ->addColumn('category', function ($row) {
+                    return '<span>' . $row->category . '</sapn>';
+                })
+                ->addColumn('brand', function ($row) {
+                    return '<span>' . $row->brand . '</sapn>';
+                })
+                ->editColumn('total_return_qty', function ($row) {
+                    if ($row->enable_stock) {
+                        $stock = $this->productUtil->num_f($row->total_return_qty, false, null, true);
+
+                        return $stock . ' ' . $row->unit;
+                    } else {
+                        return '--';
+                    }
+                })
+                ->editColumn('current_stock', function ($row) {
+                    if ($row->enable_stock) {
+                        $stock = $this->productUtil->num_f($row->current_stock, false, null, true);
+
+                        return $stock . ' ' . $row->unit;
+                    } else {
+                        return '--';
+                    }
+                })
+                ->setRowAttr([
+                    'data-href' => function ($row) {
+                        if (auth()->user()->can('sell.view')) {
+                            return  action([\App\Http\Controllers\SellReturnController::class, 'show'], [$row->parent_sale_id]);
+                        } else {
+                            return '';
+                        }
+                    },
+                ])
+                ->rawColumns(['final_total', 'action', 'parent_sale', 'payment_status', 'payment_due', 'name', 'product', 'sku', 'category', 'brand', 'total_return_qty', 'current_stock'])
+                ->make(true);
+        }
+        $business_locations = BusinessLocation::forDropdown($business_id, false);
+        $customers = Contact::customersDropdown($business_id, false);
+
+        $sales_representative = User::forDropdown($business_id, false, false, true);
+
+        return view('sell_return.index')->with(compact('business_locations', 'customers', 'sales_representative'));
+    }
 }

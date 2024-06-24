@@ -3,7 +3,8 @@
 @section('content')
     <!-- Content Header (Page header) -->
     <section class="content-header">
-        <a href="{{action([\App\Http\Controllers\SellingPriceGroupController::class, 'index'])}}"><h3>Selling Price Group: {{ $sellingPriceGroup->name }}</h3></a>
+        <a href="{{action('App\Http\Controllers\SellingPriceGroupController@show',$sellingPriceGroup->id)}}">
+        <h3>Selling Price Group Edit: {{ $sellingPriceGroup->name }}</h3></a>
     </section>
     <!-- Main content -->
     <section class="content">
@@ -23,10 +24,9 @@
                             {!! Form::label('location_id', __('purchase.business_location') . ':*') !!}
                             {!! Form::select('location_id', $business_locations, null, [
                                 'class' => 'form-control select2',
-                                'placeholder' => __('messages.please_select'),
-                                'required',
+                                
                             ]) !!}
-                            {!! Form::hidden('selling_price_group_id', $sellingPriceGroup->id,['id'=>'selling_price_group_id'])!!}
+                            {!! Form::hidden('selling_price_group_id', $sellingPriceGroup->id, ['id' => 'selling_price_group_id']) !!}
                         </div>
                     </div>
                     <div class="col-sm-8 col-sm-offset-2">
@@ -39,7 +39,7 @@
                                     'class' => 'form-control',
                                     'id' => 'search_product_for_srock_adjustment',
                                     'placeholder' => __('stock_adjustment.search_product'),
-                                    'disabled',
+                                    
                                 ]) !!}
                             </div>
                         </div>
@@ -58,10 +58,78 @@
                                         <th>@lang('lang_v1.default_selling_price_inc_tax')</th>
                                         <th>{{ $sellingPriceGroup->name }}
                                             @show_tooltip(('lang_v1.price_group_price_type_tooltip'))</th>
-                                        <th style="width: 300px" >Final Price</th>
+                                        <th style="width: 300px">Final Price</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @foreach ($products as $product)
+                                        <tr>
+                                            <td>
+                                                {{ $product->variation->product->name }}
+                                                ({{ $product->variation->sub_sku }})
+                                                {!! Form::hidden('variation_id', $product->variation->id, ['id' => 'variation_id']) !!}
+                                            </td>
+
+                                            <td>
+                                                <span class="display_currency" data-currency_symbol="true" id="base-price"
+                                                    data-base-price="{{ $product->variation->sell_price_inc_tax }}">
+                                                    {{ number_format($product->variation->sell_price_inc_tax, 2) }}
+                                                </span>
+                                            </td>
+                                            <td style="width: 200px;">
+                                                @php
+                                                    if ($product->price_type == 'percentage') {
+                                                        $price = 100 - $product->price_inc_tax;
+                                                        $html = $price . '%';
+                                                    } elseif ($product->price_type == 'fixed') {
+                                                        $price = number_format($product->price_inc_tax, 0);
+                                                        $html = $price . 'Fixed';
+                                                    }
+                                                    $name = 'group_prices[' . $product->variation_id . '][price_type]';
+                                                @endphp
+
+                                                {!! Form::text('group_prices[' . $product->variation->id . '][price]', !empty($price) ? $price : 0, [
+                                                    'class' => 'form-control input_number input-sm group-price-input',
+                                                    'data-variation-id' => $product->variation->id,
+                                                    'data-price-group-id' => $product->price_group_id,
+                                                ]) !!}
+
+                                                @php
+
+                                                @endphp
+                                                <select name={{$name}} class="form-control group-price-type"
+                                                    data-variation-id="{{ $product->variation_id }}"
+                                                    data-price-group-id="{{ $product->price_group_id }}">
+                                                    <option value="fixed"
+                                                        @if ($product->price_type == 'fixed') selected @endif>
+                                                        @lang('lang_v1.fixed')</option>
+                                                    <option value="percentage"
+                                                        @if ($product->price_type == 'percentage') selected @endif>
+                                                        @lang('lang_v1.percentage')</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                @php
+                                                    if ($product->price_type == 'percentage') {
+                                                        $price =
+                                                            ($product->variation->sell_price_inc_tax *
+                                                                $product->price_inc_tax) /
+                                                            100;
+                                                        $html = $price . '%';
+                                                    } elseif ($product->price_type == 'fixed') {
+                                                        $price =
+                                                            $product->variation->sell_price_inc_tax - $product->price_inc_tax;
+                                                        $html = $price . 'Fixed';
+                                                    }
+                                                @endphp
+                                                <span class="final-price" data-currency_symbol="true">{{$price}}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <i class="fa fa-trash remove_product_row cursor-pointer"
+                                                    aria-hidden="true"></i>
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -75,10 +143,9 @@
             </div>
         </div> <!--box end-->
         {!! Form::close() !!}
-        <div class="box box-solid">
+        {{-- <div class="box box-solid">
             <div class="box-header">
                 <h3 class="box-title">@lang('lang_v1.selling_price_group') Product List</h3>
-                 <a href="{{action('App\Http\Controllers\SellingPriceGroupController@updatePriceGroup',$sellingPriceGroup->id)}}" class="btn btn-xs btn-primary "><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</a>
             </div>
             <div class="box-body">
                 <div class="table-responsive">
@@ -92,13 +159,12 @@
                                 <th>Discount</th>
                                 <th>{{ $sellingPriceGroup->name }} Price</th>
                                 <th>Profit Percentage</th>
-                                <th><i class="fa fa-trash"></i></th>
                             </tr>
                         </thead>
                     </table>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </section>
 @stop
 @section('javascript')
@@ -131,44 +197,10 @@
                     {
                         data: 'profit_per',
                         name: 'profit_per'
-                    },
-                    {
-                        data: 'Remove',
-                        name: 'Remove'
                     }
                 ]
             });
-            $(document).on('click', 'a.remove_group_item', function(e) {
-                e.preventDefault();
-                var url = $(this).attr('href');
-                
-                swal({
-                    title: LANG.sure,
-                    icon: 'warning',
-                    buttons: true,
-                    dangerMode: true,
-                }).then(willDelete => {
-                    if (willDelete) {
-                        $.ajax({
-                            method: 'DELETE',
-                            url: url,
-                            dataType: 'json',
-                            success: function(result) {
-                                if (result.success == true) {
-                                    toastr.success(result.msg);
-                                    // Reload the datatable
-                                    $('#selling_price_group_products_table').DataTable().ajax.reload();
-                                } else {
-                                    toastr.error(result.msg);
-                                }
-                            },
-                            error: function(xhr) {
-                                toastr.error(xhr.responseText);
-                            }
-                        });
-                    }
-                });
-            });
+
             // Enable product search when location is selected
             $('select#location_id').change(function() {
                 if ($(this).val()) {
@@ -263,7 +295,7 @@
                 });
             });
 
-        
+
             function updateFinalPrice(context) {
                 // Retrieve the base price from the data attribute within the context
                 var basePrice = parseFloat($(context).find('#base-price').data('base-price'));
@@ -272,7 +304,8 @@
                 $(context).find('.group-price-input').each(function() {
                     var variationId = $(this).data('variation-id');
                     var priceGroupId = $(this).data('price-group-id');
-                    var priceType = $(context).find('select[data-variation-id="' + variationId + '"][data-price-group-id="' + priceGroupId + '"]').val();
+                    var priceType = $(context).find('select[data-variation-id="' + variationId +
+                        '"][data-price-group-id="' + priceGroupId + '"]').val();
                     var priceValue = parseFloat($(this).val());
 
                     // Handle empty or invalid input values
@@ -300,6 +333,5 @@
                 updateFinalPrice(context);
             });
         });
-
     </script>
 @endsection
