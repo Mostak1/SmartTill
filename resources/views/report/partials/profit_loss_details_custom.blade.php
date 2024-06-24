@@ -1,3 +1,10 @@
+@php
+    use Carbon\Carbon;
+    $start_date = Carbon::parse($start_date);
+    $end_date = Carbon::parse($end_date);
+@endphp
+<h3 class="text-center">Report Show From {{$start_date->format('d-F-Y')}} TO {{$end_date->format('d-F-Y')}}</h3>
+
 <div class="col-xs-6">
     @php
         $line_discount = 0;
@@ -79,26 +86,11 @@
         }
         $saleLinePayment = $cash + $card + $bkash;
         $transactionPayment = $pay_cash + $pay_card + $pay_bkash;
-        $duePayment = $transactionPayment - $total_sell_return_inc_tax;
-        foreach ($payReturn as $item) {
-            if ($item->method == 'cash') {
-                $re_cash += $item->amount;
-            }
-            if ($item->method == 'card') {
-                $re_card += $item->amount;
-            } elseif ($item->method == 'custom_pay_1') {
-                $re_bkash += $item->amount;
-            }
-        }
-        $saleLinePayment = $cash + $card + $bkash;
-        $transactionPayment = $pay_cash + $pay_card + $pay_bkash;
-        $duePayment = $transactionPayment - $total_sell_return_inc_tax;
+        $duePayment = $transactionPayment - $saleLinePayment;
+       
     @endphp
-
-
+   
     @component('components.widget')
-        {{-- <h3>{{ $start_date . ' To ' . $end_date . ' Total From Transaction' . $cash + $card + $bkash .'Total From Payment'. $pay_cash+$pay_card + $pay_bkash .' '. $transactionPayment }}</h3> --}}
-        {{-- <h3>{{ $start_date . ' To ' . $end_date . ' Total From Transaction' . $cash + $card + $bkash .'Total From Payment'. $pay_cash+$pay_card + $pay_bkash .' '. $transactionPayment }}</h3> --}}
         <table class="table">
             @foreach ($incomeByCategories as $item)
                 <tr>
@@ -110,18 +102,10 @@
                     </th>
                     <td>
                         <span class="display_currency" data-currency_symbol="true">{{ $item->selling_price }}</span>
-                        <span class="display_currency" data-currency_symbol="true">{{ $item->selling_price }}</span>
-                        <span></span>
+                       
                     </td>
                 </tr>
             @endforeach
-            {{-- <tr>
-                <th>{{ __('lang_v1.total_purchase_shipping_charge') }}:</th>
-                <td>
-                    <span class="display_currency"
-                        data-currency_symbol="true">{{ $data['total_purchase_shipping_charge'] }}</span>
-                </td>
-            </tr> --}}
             <tr>
                 <th>Shipping Income:</th>
                 <td>
@@ -130,14 +114,7 @@
                 </td>
             </tr>
             <tr>
-                <th>Due Payment amount:
-                </th>
-                <td>
-                    <span class="display_currency" data-currency_symbol="true">{{ $duePayment }}</span>
-                </td>
-            </tr>
-            <tr>
-                <th>Due Payment amount:
+                <th>Due Payment Income:
                 </th>
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $duePayment }}</span>
@@ -147,40 +124,23 @@
                 <th>Total amount:
                 </th>
                 <td>
-                    <span class="display_currency" data-currency_symbol="true">{{ $transactionTotal }}</span>
+                    <span class="display_currency" data-currency_symbol="true">{{ $transactionTotal+$duePayment+$data['total_sell_shipping_charge'] }}</span>
                 </td>
             </tr>
-            {{-- <tr>
-            {{-- <tr>
-                <th>Payment amount:
-                </th>
-                <td>
-                    <span class="display_currency" data-currency_symbol="true">{{ $transactionFinalTotal }}</span>
-                </td>
-            </tr> --}}
-         
-            </tr> --}}
-         
             <tr>
                 <th>Final Total:<br>
-
-                    <small class="text-muted">Cash: {{ $cash }}</small> <br>
-                    <small class="text-muted">Bkash: {{ $bkash }}</small> <br>
-                    <small class="text-muted">Card: {{ $card }}</small>
-                    <small class="text-muted">Card: {{ $card }}</small>
+                    <small class="text-muted">Cash: {{ $cash+($pay_cash-$cash)-$re_cash }}</small> <br>
+                    <small class="text-muted">Bkash: {{ $bkash+($pay_bkash-$bkash)-$re_bkash }}</small> <br>
+                    <small class="text-muted">Card: {{ $card+($pay_card-$card)-$re_card }}</small>
                 </th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionFinalTotal + $duePayment }}</span>
-                    <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionFinalTotal + $duePayment }}</span>
+                        data-currency_symbol="true">{{ $transactionTotal+$duePayment+$data['total_sell_shipping_charge']-$total_discount-($partial_total - $partial_amount)-$total_sell_return_inc_tax  }}</span>
                 </td>
             </tr>
-
         </table>
     @endcomponent
 </div>
-
 <div class="col-xs-6">
     @component('components.widget')
         <table class="table table-striped">
@@ -194,7 +154,7 @@
                 <th>Special Dicount <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $total_discount }}</span>
-                    <span class="display_currency" data-currency_symbol="true">{{ $total_discount }}</span>
+                   
                 </td>
             </tr>
             <tr>
@@ -206,14 +166,7 @@
                         Card = {{ $re_card }} 
                     </small>
                 </th>
-                <th>
-                    Total Sale Return <br>
-                    <small class="text-muted">
-                        Cash = {{ $re_cash }} <br>
-                        Bkash = {{ $re_bkash }}<br>
-                        Card = {{ $re_card }} 
-                    </small>
-                </th>
+                
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $total_sell_return_inc_tax }}</span>
                 </td>

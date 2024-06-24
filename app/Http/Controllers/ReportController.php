@@ -4220,7 +4220,7 @@ class ReportController extends Controller
                 ->addSelect('TP.method as method')
                 ->addSelect('sale.id as saleId')
                 ->groupBy('C.id')->get();
-            $totalByMethod = $query->addSelect('TP.method as method')->groupBy('TP.method')->get();
+            $totalByMethod = $query->addSelect('TP.method as method')->groupBy('TP.id')->get();
             $totalbyTransaction = $query
                 ->addSelect('sale.id as saleId')
                 ->addSelect('sale.payment_status as payment_status')
