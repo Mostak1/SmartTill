@@ -27,10 +27,10 @@
             overflow: hidden;
         }
 
-        .content {
+        /* .content {
             width: 500px !important;
             margin: 0 auto;
-        }
+        } */
 
         .watermark {
             position: absolute;

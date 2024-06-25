@@ -169,7 +169,7 @@ class SellingPriceGroupController extends Controller
 
             return Datatables::of($variationProducts)
                 ->addColumn('product', function ($row) {
-                    return $row->variation->product->name . ' (' . $row->variation->name . ')';
+                    return $row->variation->product->name ;
                 })
                 ->addColumn('sku', function ($row) {
                     return $row->variation->sub_sku;

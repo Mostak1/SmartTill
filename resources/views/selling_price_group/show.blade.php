@@ -12,7 +12,7 @@
             'method' => 'post',
             'id' => 'stock_adjustment_form',
         ]) !!}
-        <div class="box box-solid">
+        {{-- <div class="box box-solid">
             <div class="box-header">
                 <h3 class="box-title">{{ __('stock_adjustment.search_products') }}</h3>
             </div>
@@ -73,12 +73,12 @@
                     </div>
                 </div>
             </div>
-        </div> <!--box end-->
+        </div> <!--box end--> --}}
         {!! Form::close() !!}
         <div class="box box-solid">
             <div class="box-header">
                 <h3 class="box-title">@lang('lang_v1.selling_price_group') Product List</h3>
-                 <a href="{{action('App\Http\Controllers\SellingPriceGroupController@updatePriceGroup',$sellingPriceGroup->id)}}" class="btn btn-xs btn-primary "><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</a>
+                 <a href="{{action('App\Http\Controllers\SellingPriceGroupController@updatePriceGroup',$sellingPriceGroup->id)}}" class="btn btn-xs btn-primary pull-right"><i class="glyphicon glyphicon-edit"></i> @lang("messages.edit")</a>
             </div>
             <div class="box-body">
                 <div class="table-responsive">

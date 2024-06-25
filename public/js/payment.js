@@ -166,77 +166,55 @@ $(document).on('change', '.payment_types_dropdown', function (e) {
     }
 });
 
-// $(document).on('submit', 'form#transaction_payment_add_form', function(e){
-//     var is_valid = true;
-//     var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
-//     var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
-//     if (denomination_for_payment_types.includes(payment_type) && $('#transaction_payment_add_form .is_strict').length && $('#transaction_payment_add_form .is_strict').val() === '1' ) {
-//         var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
-//         var total_denomination = $('#transaction_payment_add_form').find('input.denomination_total_amount').val();
-//         if (payment_amount != total_denomination ) {
-//             is_valid = false;
-//         }
-//     }
-
-//     $('#transaction_payment_add_form').find('button[type="submit"]')
-//             .attr('disabled', false);
-
-//     if (!is_valid) {
-//         $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
-//         e.preventDefault();
-//         return false;
-//     } else {
-//         $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
-//     }
-
-// })
 $(document).on('submit', 'form#transaction_payment_add_form', function (e) {
-    e.preventDefault(); // Prevent the default form submission
+    var transaction_type = $('#transaction_type').val();
+    if (transaction_type == 'sell_return') {
+        e.preventDefault(); // Prevent the default form submission
 
-    var is_valid = true;
-    var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
-    // var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
+        var is_valid = true;
+        var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
+    
+        var form = $(this);
+        var form_data = form.serialize(); // Serialize the form data
 
-    // if (
-    //     denomination_for_payment_types.includes(payment_type) &&
-    //     $('#transaction_payment_add_form .is_strict').length &&
-    //     $('#transaction_payment_add_form .is_strict').val() === '1'
-    // ) {
-    //     var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
-    //     var total_denomination = $('#transaction_payment_add_form')
-    //         .find('input.denomination_total_amount')
-    //         .val();
-    //     if (payment_amount != total_denomination) {
-    //         is_valid = false;
-    //     }
-    // }
-
-    // if (!is_valid) {
-    //     $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
-    //     return false; // Stop form submission if not valid
-    // } else {
-    //     $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
-    // }
-
-    var form = $(this);
-    var form_data = form.serialize(); // Serialize the form data
-
-    $.ajax({
-        method: 'POST',
-        url: form.attr('action'), // Use the form's action URL
-        data: form_data,
-        dataType: 'json',
-        success: function (result) {
-            if (result.success == 1) {
-                pos_print(result.receipt);
-            } else {
-                toastr.error(result.msg);
+        $.ajax({
+            method: 'POST',
+            url: form.attr('action'), // Use the form's action URL
+            data: form_data,
+            dataType: 'json',
+            success: function (result) {
+                if (result.success == 1) {
+                    pos_print(result.receipt);
+                } else {
+                    toastr.error(result.msg);
+                }
+            },
+            error: function (xhr, status, error) {
+                toastr.error('An error occurred while processing your request.');
+            },
+        });
+    } else {
+        var is_valid = true;
+        var payment_type = $('#transaction_payment_add_form .payment_types_dropdown').val();
+        var denomination_for_payment_types = JSON.parse($('#transaction_payment_add_form .enable_cash_denomination_for_payment_methods').val());
+        if (denomination_for_payment_types.includes(payment_type) && $('#transaction_payment_add_form .is_strict').length && $('#transaction_payment_add_form .is_strict').val() === '1' ) {
+            var payment_amount = __read_number($('#transaction_payment_add_form .payment_amount'));
+            var total_denomination = $('#transaction_payment_add_form').find('input.denomination_total_amount').val();
+            if (payment_amount != total_denomination ) {
+                is_valid = false;
             }
-        },
-        error: function (xhr, status, error) {
-            toastr.error('An error occurred while processing your request.');
-        },
-    });
+        }
+        $('#transaction_payment_add_form').find('button[type="submit"]')
+                .attr('disabled', false);
+    
+        if (!is_valid) {
+            $('#transaction_payment_add_form').find('.cash_denomination_error').removeClass('hide');
+            e.preventDefault();
+            return false;
+        } else {
+            $('#transaction_payment_add_form').find('.cash_denomination_error').addClass('hide');
+        }
+    }
 });
 function pos_print(receipt) {
     // If printer type then connect with websocket

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Log;
 use App\BusinessLocation;
 use App\Contact;
@@ -61,7 +62,7 @@ class TransactionPaymentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    
+
 
     private function receiptContent(
         $business_id,
@@ -70,7 +71,7 @@ class TransactionPaymentController extends Controller
         $printer_type = null
     ) {
         Log::info("Entering receiptContent function.");
-    
+
         $output = [
             'is_enabled' => false,
             'print_type' => 'browser',
@@ -78,33 +79,33 @@ class TransactionPaymentController extends Controller
             'printer_config' => [],
             'data' => [],
         ];
-    
+
         Log::info("Initializing output array.");
-    
+
         try {
             $business_details = $this->businessUtil->getDetails($business_id);
             Log::info("Business details retrieved for business_id: $business_id");
-    
+
             $location_details = BusinessLocation::find($location_id);
             Log::info("Location details retrieved for location_id: $location_id");
-    
+
             // Check if printing of invoice is enabled or not.
             if ($location_details->print_receipt_on_invoice == 1) {
                 Log::info("Printing of invoice is enabled.");
-    
+
                 // If enabled, get print type.
                 $output['is_enabled'] = true;
-    
+
                 $invoice_layout = $this->businessUtil->invoiceLayout($business_id, $location_details->invoice_layout_id);
                 Log::info("Invoice layout retrieved.");
-    
+
                 // Check if printer setting is provided.
                 $receipt_printer_type = is_null($printer_type) ? $location_details->receipt_printer_type : $printer_type;
                 Log::info("Receipt printer type determined: $receipt_printer_type");
-    
+
                 $receipt_details = $this->transactionUtil->getReceiptDetails($transaction_id, $location_id, $invoice_layout, $business_details, $location_details, $receipt_printer_type);
                 Log::info("Receipt details retrieved for transaction_id: $transaction_id");
-    
+
                 // If print type is browser - return the content, printer - return printer config data, and invoice format config
                 $output['print_title'] = 'Printer';
                 if ($receipt_printer_type == 'printer') {
@@ -125,14 +126,15 @@ class TransactionPaymentController extends Controller
             // Optionally, you can rethrow the exception if needed
             // throw $e;
         }
-    
+
         Log::info("Exiting receiptContent function.");
         return $output;
     }
-    
+
 
     public function store(Request $request)
     {
+        $transaction_type = $request->transaction_type;
         \Log::info('Store method initiated.', ['request' => $request->all()]);
         try {
             $business_id = $request->session()->get('user.business_id');
@@ -207,19 +209,26 @@ class TransactionPaymentController extends Controller
                 $transaction->payment_status = $payment_status;
 
                 $this->transactionUtil->activityLog($transaction, 'payment_edited', $transaction_before);
-                $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
+                
                 DB::commit();
             }
-
-            $output = [
-                'success' => 1,
-                'msg' => __('purchase.payment_added_success'),
-                'receipt' => $receipt,
-                'transaction_id' => $transaction_id,
-            ];
+            if ($transaction_type == 'sell_return') {
+                $receipt = $this->receiptContent($business_id, $transaction->location_id, $transaction_id);
+                $output = [
+                    'success' => 1,
+                    'msg' => __('purchase.payment_added_success'),
+                    'receipt' => $receipt,
+                    'transaction_id' => $transaction_id,
+                ];
+            } else {
+                $output = [
+                    'success' => true,
+                    'msg' => __('purchase.payment_added_success'),
+                ];
+            }
         } catch (\Exception $e) {
             DB::rollBack();
-            $msg = __('messages.something_went_wrong Find to solve');
+            $msg = __('messages.something_went_wrong') . ' Find to solve';
 
             if (get_class($e) == \App\Exceptions\AdvanceBalanceNotAvailable::class) {
                 $msg = $e->getMessage();
@@ -232,8 +241,11 @@ class TransactionPaymentController extends Controller
                 'msg' => $msg,
             ];
         }
-
-        return $output;
+        if ($transaction_type == 'sell_return') {
+            return $output;
+        } else {
+            return redirect()->back()->with(['status' => $output]);
+        }
     }
 
     /**

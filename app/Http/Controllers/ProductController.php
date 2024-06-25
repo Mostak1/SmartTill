@@ -2057,7 +2057,7 @@ class ProductController extends Controller
             $output = ['success' => 0, 'msg' => __('messages.something_went_wrong')];
         }
         // return redirect('/selling-price-group')->with('status', $output);
-        return redirect()->back()->with('status', $output);
+        return redirect($request->input('redirect_url'))->with('status', $output);
     }
 
     public function viewGroupPrice($id)
