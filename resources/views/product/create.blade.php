@@ -77,7 +77,7 @@
             <div class="form-group">
                 {!! Form::label('brand_id', __('product.brand') . ':') !!}
                 <div class="input-group">
-                    {!! Form::select('brand_id', $brands, !empty($duplicate_product->brand_id) ? $duplicate_product->brand_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2']); !!}
+                    {!! Form::select('brand_id', $brands, !empty($duplicate_product->brand_id) ? $duplicate_product->brand_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required']); !!}
                     <span class="input-group-btn">
                         <button type="button" @if(!auth()->user()->can('brand.create')) disabled @endif class="btn btn-default bg-white btn-flat btn-modal" data-href="{{action([\App\Http\Controllers\BrandController::class, 'create'], ['quick_add' => true])}}" title="@lang('brand.add_brand')" data-container=".view_modal"><i class="fa fa-plus-circle text-primary fa-lg"></i></button>
                     </span>
@@ -87,7 +87,7 @@
         <div class="col-sm-4 @if(!session('business.enable_category')) hide @endif">
             <div class="form-group">
                 {!! Form::label('category_id', __('product.category') . ':') !!}
-                {!! Form::select('category_id', $categories, !empty($duplicate_product->category_id) ? $duplicate_product->category_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'id' => 'category_id']); !!}
+                {!! Form::select('category_id', $categories, !empty($duplicate_product->category_id) ? $duplicate_product->category_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required', 'id' => 'category_id']); !!}
             </div>
         </div>
 
