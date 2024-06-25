@@ -1019,12 +1019,12 @@ class ProductUtil extends Util
                 $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
                     ->latest('created_at')
                     ->first();
-                if ($latest_price_history->old_price != $variation_details->dpp_inc_tax) {
+                    if ($latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
                    // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $variation_data['product_id'],
-                        'old_price' => $variation_details->dpp_inc_tax,
-                        'new_price' => $variation_details->sell_price_inc_tax,
+                        'old_price' => '$ '.number_format($variation_details->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($variation_details->dpp_inc_tax,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
+                        'new_price' => '$ '.number_format($variation_details->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($variation_details->sell_price_inc_tax,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
                         'updated_by' => auth()->id(),
                         'type' => 'product',
                         'h_type' => 'Purchase',
@@ -1057,7 +1057,7 @@ class ProductUtil extends Util
                 $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
                     ->latest('created_at')
                     ->first();
-                if ($latest_price_history->old_price != $variation_details->dpp_inc_tax) {
+                    if ($latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
                    // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $variation_data['product_id'],

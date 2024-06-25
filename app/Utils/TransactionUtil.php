@@ -700,7 +700,7 @@ class TransactionUtil extends Util
      * @param  array  $payments
      * @return bool
      */
-    public function createOrUpdatePaymentLines($transaction, $payments, $business_id = null, $user_id = null, $uf_data = true)
+    public function createOrUpdatePaymentLines($transaction, $payments, $business_id = null, $user_id = null, $uf_data = true, $cat_desck = null)
     {
         $payments_formatted = [];
         $edit_ids = [0];
@@ -727,7 +727,12 @@ class TransactionUtil extends Util
                 $edit_ids[] = $payment['payment_id'];
                 $this->editPaymentLine($payment, $transaction, $uf_data);
             } else {
-                $payment_amount = $uf_data ? $payment['amount'] : $payment['amount'];
+                if (isset($cat_desck)) {
+                    $amount = $uf_data ? $payment['amount'] : $payment['amount'];
+                    $payment_amount = $amount * $cat_desck;
+                } else {
+                    $payment_amount = $uf_data ? $payment['amount'] : $payment['amount'];
+                }
                 if ($payment['method'] == 'advance' && $payment_amount > $contact_balance) {
                     throw new AdvanceBalanceNotAvailable(__('lang_v1.required_advance_balance_not_available'));
                 }

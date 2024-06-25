@@ -294,7 +294,7 @@ class PurchaseController extends Controller
         if (! auth()->user()->can('purchase.create')) {
             abort(403, 'Unauthorized action.');
         }
-
+        $cat_desck = $request->input('cat_desck', null);
         try {
             $business_id = $request->session()->get('user.business_id');
 
@@ -319,6 +319,7 @@ class PurchaseController extends Controller
                 'total_before_tax' => 'required',
                 'location_id' => 'required',
                 'final_total' => 'required',
+                'cat_desck' => 'nullable',
                 'document' => 'file|max:'.(config('constants.document_size_limit') / 1000),
             ]);
 
@@ -344,8 +345,11 @@ class PurchaseController extends Controller
 
             $transaction_data['tax_amount'] = $this->productUtil->num_uf($transaction_data['tax_amount'], $currency_details) * $exchange_rate;
             $transaction_data['shipping_charges'] = $this->productUtil->num_uf($transaction_data['shipping_charges'], $currency_details) * $exchange_rate;
-            $transaction_data['final_total'] = $this->productUtil->num_uf($transaction_data['final_total'], $currency_details) * $exchange_rate;
-
+            if ($request->has('cat_desck')) {
+                $transaction_data['final_total'] = ($transaction_data['final_total'] * $exchange_rate) * $cat_desck;
+            } else {
+                $transaction_data['final_total'] = $this->productUtil->num_uf($transaction_data['final_total'], $currency_details) * $exchange_rate;
+            }
             $transaction_data['business_id'] = $business_id;
             $transaction_data['created_by'] = $user_id;
             $transaction_data['type'] = 'purchase';
@@ -401,10 +405,9 @@ class PurchaseController extends Controller
             $purchases = $request->input('purchases');
 
             $this->productUtil->createOrUpdatePurchaseLines($transaction, $purchases, $currency_details, $enable_product_editing);
-
+            $uf_data = true;
             //Add Purchase payments
-            $this->transactionUtil->createOrUpdatePaymentLines($transaction, $request->input('payment'));
-
+            $this->transactionUtil->createOrUpdatePaymentLines($transaction, $request->input('payment'), $business_id, $user_id, $uf_data, $cat_desck);
             //update payment status
             $this->transactionUtil->updatePaymentStatus($transaction->id, $transaction->final_total);
 

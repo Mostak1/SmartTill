@@ -948,6 +948,24 @@ function update_inline_profit_percentage(row) {
     var purchase_after_tax = __read_number(row.find('input.purchase_unit_cost_after_tax'), true);
     var profit_percent = __get_rate(purchase_after_tax, default_sell_price_in_base_currency);
     __write_number(row.find('input.profit_percent'), profit_percent, true);
+
+    
+    // Update BDT value if product belongs to category 66
+    if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+        var cat_desck = __read_number(row.find('input.cat_desck'), true);
+        var default_purchase_price = __read_number(row.find('input.purchase_unit_cost_without_discount'), true);
+        var purchase_unit_cost_after_tax = __read_number(row.find('input.purchase_unit_cost_after_tax'), true);
+        var purchase_unit_cost = __read_number(row.find('input.purchase_unit_cost'), true);
+        var bdt_value = default_purchase_price * cat_desck;
+        var bdt_value_tax = purchase_unit_cost_after_tax * cat_desck;
+        var bdt_value_without_tax = purchase_unit_cost * cat_desck;
+
+        // Update the BDT display
+        row.find('.bdt-purchase').text('BDT: ' + bdt_value.toFixed(2));
+        row.find('.bdt-tax').text('BDT: ' + bdt_value_tax.toFixed(2));
+        row.find('.bdt-without-tax').text('BDT: ' + bdt_value_without_tax.toFixed(2));
+    }
+
 }
 
 function update_table_total() {
@@ -1001,7 +1019,7 @@ function update_grand_total() {
 
     //Calculate Final total
     grand_total = total_subtotal - discount + tax + shipping_charges + 
-    additional_expense_1 + additional_expense_2 + additional_expense_3 + additional_expense_4;
+        additional_expense_1 + additional_expense_2 + additional_expense_3 + additional_expense_4;
 
     __write_number($('input#grand_total_hidden'), grand_total, true);
 

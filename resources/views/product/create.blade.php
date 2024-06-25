@@ -75,7 +75,7 @@
 
         <div class="col-sm-4 @if(!session('business.enable_brand')) hide @endif">
             <div class="form-group">
-                {!! Form::label('brand_id', __('product.brand') . ':') !!}
+                {!! Form::label('brand_id', __('product.brand') . ':*') !!}
                 <div class="input-group">
                     {!! Form::select('brand_id', $brands, !empty($duplicate_product->brand_id) ? $duplicate_product->brand_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required']); !!}
                     <span class="input-group-btn">
@@ -86,7 +86,7 @@
         </div>
         <div class="col-sm-4 @if(!session('business.enable_category')) hide @endif">
             <div class="form-group">
-                {!! Form::label('category_id', __('product.category') . ':') !!}
+                {!! Form::label('category_id', __('product.category') . ':*') !!}
                 {!! Form::select('category_id', $categories, !empty($duplicate_product->category_id) ? $duplicate_product->category_id : null, ['placeholder' => __('messages.please_select'), 'class' => 'form-control select2', 'required', 'id' => 'category_id']); !!}
             </div>
         </div>

@@ -128,16 +128,11 @@
             number_format($pp_without_discount, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm purchase_unit_cost_without_discount input_number', 'required']); !!}
 
             @if ($product->category_id == 66)
-                <small>Input <span style="color: red">USD</span></small>
+                <small class="bdt-purchase">BDT: {{ number_format($variation->default_purchase_price, 2) }}</small> <br>
             @endif 
 
             @if(!empty($last_purchase_line))
-                <br>
-                <small class="text-muted">@lang('lang_v1.prev_unit_price'):@if ($product->category_id == 66)
-                   $ {{number_format($last_purchase_line->pp_without_discount)}}
-                @else
-                  @format_currency($last_purchase_line->pp_without_discount)
-                @endif </small>
+                <small class="text-muted">@lang('lang_v1.prev_unit_price'):@format_currency($last_purchase_line->pp_without_discount) </small>
             @endif
         </td>
         <td>
@@ -154,7 +149,7 @@
             {!! Form::text('purchases[' . $row_count . '][purchase_price]',
             number_format($purchase_price, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm purchase_unit_cost input_number', 'required']); !!}
             @if ($product->category_id == 66)
-            <small>Input <span style="color: red">USD</span></small>
+            <small class="bdt-without-tax">BDT: {{ number_format($purchase_price, 2) }}</small>
             @endif 
         </td>
         <td class="{{$hide_tax}}">
@@ -196,7 +191,7 @@
             {!! Form::text('purchases[' . $row_count . '][purchase_price_inc_tax]', $dpp_inc_tax, ['class' => 'form-control input-sm purchase_unit_cost_after_tax input_number', 'required']); !!}
 
             @if ($product->category_id == 66)
-                <small>Input <span style="color: red">USD</span></small>
+            <small class="bdt-tax">BDT: {{ number_format($dpp_inc_tax, 2) }}</small>
             @endif
 
         </td>
@@ -213,20 +208,18 @@
                 @if(session('business.enable_editing_product_from_purchase'))
                     {!! Form::text('purchases[' . $row_count . '][default_sell_price]', number_format($variation->foreign_s_price_inc_tex, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm input_number default_sell_price', 'required']); !!}
                 @else
-                    {{ number_format($variation->foreign_s_price_inc_tex, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator)}}
+                    {{ number_format($variation->foreign_s_price_inc_tex, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
                 @endif
+                {!! Form::hidden('cat_desck', $cat_desck , ['class' => 'cat_desck']); !!}
+                <small class="bdt-display">BDT: {{ number_format($variation->sell_price_inc_tax, 2) }}</small> <br>
+                <small style="color: red">$⇄৳ {{$cat_desck}}</small>
             @else
                 @if(session('business.enable_editing_product_from_purchase'))
                     {!! Form::text('purchases[' . $row_count . '][default_sell_price]', number_format($variation->sell_price_inc_tax, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm input_number default_sell_price', 'required']); !!}
                 @else
-                    {{ number_format($variation->sell_price_inc_tax, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator)}}
+                    {{ number_format($variation->sell_price_inc_tax, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
                 @endif
             @endif
-            @if ($product->category_id == 66)
-            <input class="cat_desck" hidden type="number" value="{{ $cat_desck }}">
-            <small class="bdt-display">BDT: {{ number_format($variation->sell_price_inc_tax, 2) }}
-            </small>
-            @endif 
         </td>
         @if(session('business.enable_lot_number'))
             @php
