@@ -3,7 +3,7 @@
 @section('content')
     <!-- Content Header (Page header) -->
     <section class="content-header">
-        <a href="{{action([\App\Http\Controllers\SellingPriceGroupController::class, 'index'])}}"><h3>Selling Price Group: {{ $sellingPriceGroup->name }}</h3></a>
+        <a href="{{action([\App\Http\Controllers\SellingPriceGroupController::class, 'index'])}}"><h3><b style="font-size: 30px;">&#8592;  </b>Selling Price Group: {{ $sellingPriceGroup->name }}</h3></a>
     </section>
     <!-- Main content -->
     <section class="content">

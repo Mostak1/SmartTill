@@ -4,7 +4,7 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
         <a href="{{action('App\Http\Controllers\SellingPriceGroupController@show',$sellingPriceGroup->id)}}">
-        <h3>Selling Price Group Edit: {{ $sellingPriceGroup->name }}</h3></a>
+        <h3><b style="font-size: 30px;">&#8592;  </b> Selling Price Group Edit: {{ $sellingPriceGroup->name }}</h3></a>
     </section>
     <!-- Main content -->
     <section class="content">
