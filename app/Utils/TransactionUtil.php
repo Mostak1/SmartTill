@@ -728,10 +728,10 @@ class TransactionUtil extends Util
                 $this->editPaymentLine($payment, $transaction, $uf_data);
             } else {
                 if (isset($cat_desck)) {
-                    $amount = $uf_data ? $payment['amount'] : $payment['amount'];
+                    $amount = $uf_data ? $this->num_uf($payment['amount']) : $payment['amount'];
                     $payment_amount = $amount * $cat_desck;
                 } else {
-                    $payment_amount = $uf_data ? $payment['amount'] : $payment['amount'];
+                    $payment_amount = $uf_data ? $this->num_uf($payment['amount']) : $payment['amount'];
                 }
                 if ($payment['method'] == 'advance' && $payment_amount > $contact_balance) {
                     throw new AdvanceBalanceNotAvailable(__('lang_v1.required_advance_balance_not_available'));
@@ -5003,7 +5003,7 @@ class TransactionUtil extends Util
         $is_credit_sale = isset($input['is_credit_sale']) && $input['is_credit_sale'] == 1 ? true : false;
         if (!empty($input['payment']) && !$is_credit_sale) {
             foreach ($input['payment'] as $payment) {
-                $curr_total_payment += $payment['amount'];
+                $curr_total_payment += $this->num_uf($payment['amount']);
             }
         }
 
