@@ -13,6 +13,7 @@
             'method' => 'post',
             'id' => 'stock_adjustment_form',
         ]) !!}
+        {!! Form::hidden('redirect_url', action([\App\Http\Controllers\SellingPriceGroupController::class, 'show'], $sellingPriceGroup->id)) !!}
         <div class="box box-solid">
             <div class="box-header">
                 <h3 class="box-title">{{ __('stock_adjustment.search_products') }}</h3>
@@ -143,63 +144,11 @@
             </div>
         </div> <!--box end-->
         {!! Form::close() !!}
-        {{-- <div class="box box-solid">
-            <div class="box-header">
-                <h3 class="box-title">@lang('lang_v1.selling_price_group') Product List</h3>
-            </div>
-            <div class="box-body">
-                <div class="table-responsive">
-                    <table id="selling_price_group_products_table"
-                        class="table table-condensed table-bordered table-th-green text-center table-striped">
-                        <thead>
-                            <tr>
-                                <th>@lang('sale.product')</th>
-                                <th>@lang('product.sku')</th>
-                                <th>Default Price</th>
-                                <th>Discount</th>
-                                <th>{{ $sellingPriceGroup->name }} Price</th>
-                                <th>Profit Percentage</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-            </div>
-        </div> --}}
     </section>
 @stop
 @section('javascript')
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#selling_price_group_products_table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: '{{ action('App\Http\Controllers\SellingPriceGroupController@show', [$sellingPriceGroup->id]) }}',
-                columns: [{
-                        data: 'product',
-                        name: 'product'
-                    },
-                    {
-                        data: 'sku',
-                        name: 'sku'
-                    },
-                    {
-                        data: 'selling_price',
-                        name: 'selling_price'
-                    },
-                    {
-                        data: 'price_group',
-                        name: 'price_group'
-                    },
-                    {
-                        data: 'price_group_price',
-                        name: 'price_group_price'
-                    },
-                    {
-                        data: 'profit_per',
-                        name: 'profit_per'
-                    }
-                ]
-            });
 
             // Enable product search when location is selected
             $('select#location_id').change(function() {
@@ -248,9 +197,20 @@
                     }
                 };
             }
+            
 
             // Adding product row
             function stock_adjustment_product_row(variation_id) {
+                // Check if the product is already exist in the table
+                if ($('#stock_adjustment_product_table').find('input[name="variation_id"][value="' + variation_id + '"]').length > 0) {
+                    swal({
+                        title: "Product Exists",
+                        text: "This product is already in the list.",
+                        icon: "warning",
+                        button: "OK",
+                    });
+                    return;
+                }
                 var row_index = parseInt($('#product_row_index').val());
                 var location_id = $('select#location_id').val();
                 var price_group_id = $('#selling_price_group_id').val();
