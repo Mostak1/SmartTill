@@ -88,7 +88,7 @@
         }
         $saleLinePayment = $cash + $card + $bkash;
         $transactionPayment = $pay_cash + $pay_card + $pay_bkash;
-        $duePayment = $transactionPayment - $saleLinePayment;
+        $duePayment = $transactionPayment;
        
     @endphp
    
@@ -131,9 +131,9 @@
             </tr>
             <tr>
                 <th>Final Total:<br>
-                    <small class="text-muted">Cash: {{ $cash+($pay_cash-$cash)-$re_cash }}</small> <br>
-                    <small class="text-muted">Bkash: {{ $bkash+($pay_bkash-$bkash)-$re_bkash }}</small> <br>
-                    <small class="text-muted">Card: {{ $card+($pay_card-$card)-$re_card }}</small>
+                    <small class="text-muted">Cash: {{ $cash+$pay_cash-$re_cash }}</small> <br>
+                    <small class="text-muted">Bkash: {{ $bkash+$pay_bkash-$re_bkash }}</small> <br>
+                    <small class="text-muted">Card: {{ $card+$pay_card-$re_card }}</small>
                 </th>
                 <td>
                     <span class="display_currency"

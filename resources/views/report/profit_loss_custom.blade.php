@@ -70,17 +70,13 @@
                 var location_id = $('#profit_loss_location_filter').val();
                 updateProfitLossCustom(start, end, location_id, selector = null);
             });
-
             function updateProfitLossCustom(start = null, end = null, location_id = null, selector = null) {
                 if (start == null) {
-                    var start = $('#profit_loss_date_filter')
-                        .data('daterangepicker')
-                        .startDate.format('YYYY-MM-DD');
+                    var start = moment().startOf('day').format('YYYY-MM-DD');
                 }
                 if (end == null) {
-                    var end = $('#profit_loss_date_filter')
-                        .data('daterangepicker')
-                        .endDate.format('YYYY-MM-DD');
+                    var end = moment().endOf('day').format('YYYY-MM-DD');
+                        console.log(end);
                 }
                 if (location_id == null) {
                     var location_id = $('#profit_loss_location_filter').val();

@@ -4129,6 +4129,7 @@ class ReportController extends Controller
                 ->leftjoin('contacts as c', 't.contact_id', '=', 'c.id')
                 ->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
                 ->where('transaction_payments.business_id', $business_id)
+                ->where('transaction_payments.payment_type', 'partial')
                 ->whereIn('t.type', ['sell'])
                 ->select(
                     DB::raw("IF(transaction_payments.transaction_id IS NULL, 

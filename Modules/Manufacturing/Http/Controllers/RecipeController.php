@@ -116,7 +116,7 @@ class RecipeController extends Controller
 
                     $unit_cost = $row->total_quantity > 0 ? $price / $row->total_quantity : 0;
 
-                    if ($unit_cost > $dpp) {
+                    if ($this->moduleUtil->num_uf($unit_cost) > $this->moduleUtil->num_uf($dpp)) {
                         $html = '<span class="display_currency text-danger" data-unit_cost="' . $dpp . '" data-currency_symbol="true">' . $dpp . '</span>';
                     } else {
                         $html = '<span class="display_currency" data-unit_cost="' . $dpp . '" data-currency_symbol="true">' . $dpp . '</span>';

@@ -28,6 +28,7 @@
         </div>
         @endif
         {!! Form::hidden('transaction_type', $transaction->type, ['id' => 'transaction_type']); !!}
+        {!! Form::hidden('payment_type', $transaction->payment_status, ['id' => 'payment_type']); !!}
         <div class="col-md-4">
           <div class="well">
           @if(in_array($transaction->type, ['sell', 'sell_return']))

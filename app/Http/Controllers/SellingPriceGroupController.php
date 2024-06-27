@@ -182,7 +182,7 @@ class SellingPriceGroupController extends Controller
                         $price = 100 - $row->price_inc_tax . ' %';
                         $html = $price . '%';
                     } elseif ($row->price_type == 'fixed') {
-                        $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
+                        $price = number_format($row->variation->sell_price_inc_tax-$row->price_inc_tax, 0) . ' (Fixed)';
                         $html = $price . 'Fixed';
                     }
                     return $price;
@@ -193,7 +193,7 @@ class SellingPriceGroupController extends Controller
                         $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
                         $html = $price . '%';
                     } elseif ($row->price_type == 'fixed') {
-                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $price = number_format($row->price_inc_tax,2);
                         $html = $price . 'Fixed';
                     }
                     return $price;
@@ -204,7 +204,7 @@ class SellingPriceGroupController extends Controller
                         $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
                         $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
                     } elseif ($row->price_type == 'fixed') {
-                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+                        $price = $row->price_inc_tax;
                         $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
                     }
                     return number_format($profit, 2) . ' %';
