@@ -139,6 +139,7 @@
                         @endif
                     </td>
                     <td>
+                        @if ($purchase_line->product->category_id == 66)
                         {!! Form::text(
                             'purchases[' . $loop->index . '][pp_without_discount]',
                             number_format(
@@ -149,6 +150,24 @@
                             ),
                             ['class' => 'form-control input-sm purchase_unit_cost_without_discount input_number', 'required'],
                         ) !!}
+                        <small class="bdt-purchase">BDT: {{ number_format(
+                                    $purchase_line->variations->default_purchase_price / $purchase->exchange_rate,
+                                    $currency_precision,
+                                    $currency_details->decimal_separator,
+                                    $currency_details->thousand_separator,
+                                ) }}</small>
+                        @else
+                            {!! Form::text(
+                                'purchases[' . $loop->index . '][pp_without_discount]',
+                                number_format(
+                                    $purchase_line->pp_without_discount / $purchase->exchange_rate,
+                                    $currency_precision,
+                                    $currency_details->decimal_separator,
+                                    $currency_details->thousand_separator,
+                                ),
+                                ['class' => 'form-control input-sm purchase_unit_cost_without_discount input_number', 'required'],
+                            ) !!}
+                        @endif
                     </td>
                     <td>
                         {!! Form::text(
@@ -163,6 +182,7 @@
                         ) !!} <b>%</b>
                     </td>
                     <td>
+                        @if ($purchase_line->product->category_id == 66)
                         {!! Form::text(
                             'purchases[' . $loop->index . '][purchase_price]',
                             number_format(
@@ -173,6 +193,24 @@
                             ),
                             ['class' => 'form-control input-sm purchase_unit_cost input_number', 'required'],
                         ) !!}
+                        <small class="bdt-without-tax">BDT: {{ number_format(
+                                ($purchase_line->purchase_price / $purchase->exchange_rate) * $cat_desck,
+                                $currency_precision,
+                                $currency_details->decimal_separator,
+                                $currency_details->thousand_separator,
+                            ) }}</small>
+                        @else
+                        {!! Form::text(
+                            'purchases[' . $loop->index . '][purchase_price]',
+                            number_format(
+                                $purchase_line->purchase_price / $purchase->exchange_rate,
+                                $currency_precision,
+                                $currency_details->decimal_separator,
+                                $currency_details->thousand_separator,
+                            ),
+                            ['class' => 'form-control input-sm purchase_unit_cost input_number', 'required'],
+                        ) !!}
+                        @endif
                     </td>
                     <td class="{{ $hide_tax }}">
                         <span class="row_subtotal_before_tax">
@@ -221,15 +259,35 @@
                         ) !!}
                     </td>
                     <td>
+                        @if ($purchase_line->product->category_id == 66)
+                        <span class="row_subtotal_after_tax">
+                            {{ number_format(($purchase_line->variations->foreign_p_price_inc_tex * $purchase_line->quantity) / $purchase->exchange_rate, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
+                        </span>
+                        <input type="hidden" class="row_subtotal_after_tax_hidden"
+                            value="{{ number_format(($purchase_line->variations->foreign_p_price_inc_tex * $purchase_line->quantity) / $purchase->exchange_rate, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}">
+                        @else
                         <span class="row_subtotal_after_tax">
                             {{ number_format(($purchase_line->purchase_price_inc_tax * $purchase_line->quantity) / $purchase->exchange_rate, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
                         </span>
                         <input type="hidden" class="row_subtotal_after_tax_hidden"
                             value="{{ number_format(($purchase_line->purchase_price_inc_tax * $purchase_line->quantity) / $purchase->exchange_rate, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}">
+                        @endif
                     </td>
 
                     <td class="@if (!session('business.enable_editing_product_from_purchase') || !empty($is_purchase_order)) hide @endif">
                         @php
+                        if ($purchase_line->product->category_id == 66) {
+                            $fsp = $purchase_line->variations->foreign_s_price_inc_tex;
+                            $fpp = $purchase_line->variations->foreign_p_price_inc_tex;
+                            if (!empty($purchase_line->sub_unit->base_unit_multiplier)) {
+                                $fsp = $fsp * $purchase_line->sub_unit->base_unit_multiplier;
+                            }
+                            if ($fpp == 0) {
+                                $profit_percent = 100;
+                            } else {
+                                $profit_percent = (($fsp - $fpp) * 100) / $fpp;
+                            }
+                        } else {
                             $pp = $purchase_line->purchase_price_inc_tax;
                             $sp = $purchase_line->variations->sell_price_inc_tax;
                             if (!empty($purchase_line->sub_unit->base_unit_multiplier)) {
@@ -240,6 +298,7 @@
                             } else {
                                 $profit_percent = (($sp - $pp) * 100) / $pp;
                             }
+                        }
                         @endphp
 
                         {!! Form::text(
@@ -254,8 +313,27 @@
                         ) !!}
                     </td>
                     @if (empty($is_purchase_order))
-                        <td>
-                            @if (session('business.enable_editing_product_from_purchase'))
+                    <td>
+                        @if ($purchase_line->product->category_id == 66)
+                                @if (session('business.enable_editing_product_from_purchase'))
+                                    {!! Form::text(
+                                        'purchases[' . $loop->index . '][default_sell_price]',
+                                        number_format(
+                                            $fsp,
+                                            $currency_precision,
+                                            $currency_details->decimal_separator,
+                                            $currency_details->thousand_separator,
+                                        ),
+                                        ['class' => 'form-control input-sm input_number default_sell_price', 'required'],
+                                    ) !!}
+                                @else
+                                    {{ number_format($fsp, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
+                                @endif
+                                {!! Form::hidden('cat_desck', $cat_desck , ['class' => 'cat_desck']); !!}
+                                <small class="bdt-display">BDT: {{ number_format($fsp, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}</small> <br>
+                                <small style="color: red">$⇄৳ {{$cat_desck}}</small>
+                        @else
+                                @if (session('business.enable_editing_product_from_purchase'))
                                 {!! Form::text(
                                     'purchases[' . $loop->index . '][default_sell_price]',
                                     number_format(
@@ -265,12 +343,13 @@
                                         $currency_details->thousand_separator,
                                     ),
                                     ['class' => 'form-control input-sm input_number default_sell_price', 'required'],
-                                ) !!}
-                            @else
-                                {{ number_format($sp, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
-                            @endif
+                                    ) !!}
+                                @else
+                                    {{ number_format($sp, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
+                                @endif
+                        @endif
 
-                        </td>
+                    </td>
                         @if (session('business.enable_lot_number'))
                             <td>
                                 {!! Form::text('purchases[' . $loop->index . '][lot_number]', $purchase_line->lot_number, [

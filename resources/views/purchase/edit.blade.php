@@ -56,7 +56,7 @@
             <div class="@if(!empty($default_purchase_status)) col-sm-4 @else col-sm-3 @endif">
               <div class="form-group">
                 {!! Form::label('ref_no', __('purchase.ref_no') . '*') !!}
-                @show_tooltip(__('lang_v1.leave_empty_to_autogenerate'))
+                @show_tooltip(('lang_v1.leave_empty_to_autogenerate'))
                 {!! Form::text('ref_no', $purchase->ref_no, ['class' => 'form-control', 'required']); !!}
               </div>
             </div>
@@ -76,14 +76,14 @@
             <div class="col-sm-3 @if(!empty($default_purchase_status)) hide @endif">
               <div class="form-group">
                 {!! Form::label('status', __('purchase.purchase_status') . ':*') !!}
-                @show_tooltip(__('tooltip.order_status'))
+                @show_tooltip(('tooltip.order_status'))
                 {!! Form::select('status', $orderStatuses, $purchase->status, ['class' => 'form-control select2', 'placeholder' => __('messages.please_select') , 'required']); !!}
               </div>
             </div>
             <div class="col-sm-3">
               <div class="form-group">
                 {!! Form::label('location_id', __('purchase.business_location').':*') !!}
-                @show_tooltip(__('tooltip.purchase_location'))
+                @show_tooltip(('tooltip.purchase_location'))
                 {!! Form::select('location_id', $business_locations, $purchase->location_id, ['class' => 'form-control select2', 'placeholder' => __('messages.please_select'), 'disabled']); !!}
               </div>
             </div>
@@ -92,7 +92,7 @@
             <div class="col-sm-3 @if(!$currency_details->purchase_in_diff_currency) hide @endif">
               <div class="form-group">
                 {!! Form::label('exchange_rate', __('purchase.p_exchange_rate') . ':*') !!}
-                @show_tooltip(__('tooltip.currency_exchange_factor'))
+                @show_tooltip(('tooltip.currency_exchange_factor'))
                 <div class="input-group">
                   <span class="input-group-addon">
                     <i class="fa fa-info"></i>
@@ -267,7 +267,8 @@
                   <tr>
                     <th class="col-md-7 text-right">@lang( 'purchase.net_total_amount' ):</th>
                     <td class="col-md-5 text-left">
-                      <span id="total_subtotal" class="display_currency">{{$purchase->total_before_tax/$purchase->exchange_rate}}</span>
+                      <span id="total_subtotal" class="display_currency">{{$purchase->total_before_tax/$purchase->exchange_rate}}</span> <br>
+                      <small class="bdt-subtotal"></small>
                       <!-- This is total before purchase tax-->
                       <input type="hidden" id="total_subtotal_input" value="{{$purchase->total_before_tax/$purchase->exchange_rate}}" name="total_before_tax">
                     </td>
@@ -337,7 +338,7 @@
                   <tr>
                     <td colspan="4">
                       <div class="form-group">
-                        {!! Form::label('additional_notes',__('purchase.additional_notes')) !!}
+                        {!! Form::label('additional_notes',('purchase.additional_notes')) !!}
                         {!! Form::textarea('additional_notes', $purchase->additional_notes, ['class' => 'form-control', 'rows' => 3]); !!}
                       </div>
                     </td>
@@ -514,7 +515,8 @@
     <div class="row">
     <div class="col-md-12 text-right">
       {!! Form::hidden('final_total', $purchase->final_total , ['id' => 'grand_total_hidden']); !!}
-      <b>@lang('purchase.purchase_total'): </b><span id="grand_total" class="display_currency" data-currency_symbol='true'>{{$purchase->final_total}}</span>
+      <b>@lang('purchase.purchase_total'): </b><span id="grand_total" class="display_currency" data-currency_symbol='true'>{{$purchase->final_total}}</span> <br>
+      <small class="bdt-grand-total"></small>
     </div>
     </div>
     @endcomponent
@@ -540,6 +542,11 @@
   <script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>
   <script type="text/javascript">
     $(document).ready( function(){
+      $(document).on('change', '.purchase_unit_cost_without_discount', function() {
+    update_table_total();
+    update_grand_total();
+});
+
       update_table_total();
       update_grand_total();
       __page_leave_confirmation('#add_purchase_form');

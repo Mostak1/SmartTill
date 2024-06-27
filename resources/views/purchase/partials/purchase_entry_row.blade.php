@@ -94,7 +94,7 @@
         <td>
             @php
             if ($product->category_id == 66) {
-                $pp_without_discount = $variation->foreign_p_price;
+                $pp_without_discount = !empty($purchase_order_line) ? $purchase_order_line->pp_without_discount/$purchase_order->exchange_rate : $variation->foreign_p_price;
 
                 $discount_percent = !empty($purchase_order_line) ? $purchase_order_line->discount_percent : 0;
 
