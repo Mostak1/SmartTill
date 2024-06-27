@@ -4172,7 +4172,7 @@ class ReportController extends Controller
                     '=',
                     'PL.id'
                 )->leftJoin('transaction_payments as TP', 'sale.id', '=', 'TP.transaction_id')
-                ->where('sale.type', 'sell')
+                ->whereIn('sale.type', ['sell','sell_return'])
                 ->where('sale.status', 'final')
                 ->join('products as P', 'transaction_sell_lines.product_id', '=', 'P.id')
                 ->where('sale.business_id', $business_id)
@@ -4181,6 +4181,7 @@ class ReportController extends Controller
             $query->select(
                 'TP.method as method',
                 'TP.amount as tp_amount',
+                'TP.id as tp_id',
                 DB::raw('SUM(IF (TSPL.id IS NULL AND P.type="combo", ( 
             SELECT Sum((tspl2.quantity - tspl2.qty_returned) * (tsl.unit_price_inc_tax - pl2.purchase_price_inc_tax)) AS total
                 FROM transaction_sell_lines AS tsl
