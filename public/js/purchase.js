@@ -175,9 +175,8 @@ $(document).ready(function() {
                     if (ui.content.length == 1) {
                         ui.item = ui.content[0];
                         $(this)
-                            .data('ui-autocomplete')
-                            ._trigger('select', 'autocompleteselect', ui);
-                        $(this).autocomplete('close');
+                            .data('ui-autocomplete');
+                        // $(this).autocomplete('close');
                     } else if (ui.content.length == 0) {
                         var term = $(this).data('ui-autocomplete').term;
                         swal({
@@ -990,6 +989,15 @@ function update_table_total() {
 
     $('#total_subtotal').text(__currency_trans_from_en(total_subtotal, true, true));
     __write_number($('input#total_subtotal_input'), total_subtotal, true);
+    
+    // Update BDT value if product belongs to category 66
+    if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+        var cat_desck = __read_number(row.find('input.cat_desck'), true);
+        var bdt_value = total_subtotal * cat_desck;
+        
+        // Update the BDT display
+        $('.bdt-subtotal').text('BDT: ' + bdt_value.toFixed(2));
+    }
 }
 
 function update_grand_total() {
@@ -1033,6 +1041,15 @@ function update_grand_total() {
     $('#payment_due').text(__currency_trans_from_en(due, true, true));
 
     //__currency_convert_recursively($(document));
+
+    // Update BDT value if product belongs to category 66
+    if (row.find('input.default_sell_price').closest('td').find('.bdt-display').length) {
+        var cat_desck = __read_number(row.find('input.cat_desck'), true);
+        var bdt_value = grand_total * cat_desck;
+        
+        // Update the BDT display
+        $('.bdt-grand-total').text('BDT: ' + bdt_value.toFixed(2));
+    }
 }
 $(document).on('change', 'input.payment-amount', function() {
     var payment = __read_number($(this), true);

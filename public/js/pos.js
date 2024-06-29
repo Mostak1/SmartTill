@@ -259,9 +259,9 @@ $(document).ready(function() {
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
                 }
-                var selling_price = item.selling_price;
+                var selling_price = parseFloat(item.selling_price).toFixed(2);
                 if (item.variation_group_price) {
-                    selling_price = item.variation_group_price;
+                    selling_price = parseFloat(item.variation_group_price).toFixed(2);
                 }
                 string +=
                     ' (' +
@@ -277,9 +277,9 @@ $(document).ready(function() {
                     string += '-' + item.variation;
                 }
 
-                var selling_price = item.selling_price;
+                var selling_price = parseFloat(item.selling_price).toFixed(2);
                 if (item.variation_group_price) {
-                    selling_price = item.variation_group_price;
+                    selling_price = parseFloat(item.variation_group_price).toFixed(2);
                 }
 
                 string += ' (' + item.sub_sku + ')' + '<br> Price: ' + selling_price;

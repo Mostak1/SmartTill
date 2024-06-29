@@ -5,7 +5,7 @@
         <h1>
             <a
                 href="{{ action([\Modules\Project\Http\Controllers\ProjectController::class, 'index']) . '?project_view=list_view' }}">
-                <i class="fas fa-check-circle"></i>
+                <b style="font-size: 30px;">&#8592;  </b>
                 {{ ucFirst($project->name) }}
             </a>
         </h1>

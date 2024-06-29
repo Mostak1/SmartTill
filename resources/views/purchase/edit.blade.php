@@ -267,7 +267,8 @@
                   <tr>
                     <th class="col-md-7 text-right">@lang( 'purchase.net_total_amount' ):</th>
                     <td class="col-md-5 text-left">
-                      <span id="total_subtotal" class="display_currency">{{$purchase->total_before_tax/$purchase->exchange_rate}}</span>
+                      <span id="total_subtotal" class="display_currency">{{$purchase->total_before_tax/$purchase->exchange_rate}}</span> <br>
+                      <small class="bdt-subtotal"></small>
                       <!-- This is total before purchase tax-->
                       <input type="hidden" id="total_subtotal_input" value="{{$purchase->total_before_tax/$purchase->exchange_rate}}" name="total_before_tax">
                     </td>
@@ -514,7 +515,8 @@
     <div class="row">
     <div class="col-md-12 text-right">
       {!! Form::hidden('final_total', $purchase->final_total , ['id' => 'grand_total_hidden']); !!}
-      <b>@lang('purchase.purchase_total'): </b><span id="grand_total" class="display_currency" data-currency_symbol='true'>{{$purchase->final_total}}</span>
+      <b>@lang('purchase.purchase_total'): </b><span id="grand_total" class="display_currency" data-currency_symbol='true'>{{$purchase->final_total}}</span> <br>
+      <small class="bdt-grand-total"></small>
     </div>
     </div>
     @endcomponent

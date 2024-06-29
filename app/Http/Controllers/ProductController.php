@@ -2023,30 +2023,25 @@ class ProductController extends Controller
             DB::beginTransaction();
                     foreach ($request->input('group_prices') as $key => $value) {
                         if (isset($value['price'])) {
-                            if ($value['price_type']=='percentage') {
-                                $variation_group_price = VariationGroupPrice::updateOrCreate(
-                                    [
-                                        'variation_id' => $key,
-                                        'price_group_id' => $request->selling_price_group_id,
-                                    ],
-                                    [
-                                        'price_inc_tax' => 100 -$value['price'],
-                                        'price_type' => $value['price_type'],
-                                    ]
-                                );
+                            $variation = Variation::find($key);
+                            $base_price = $variation->sell_price_inc_tax;
+            
+                            if ($value['price_type'] == 'percentage') {
+                                $price_inc_tax = 100 - $value['price'];
                             } else {
-                                $variation_group_price = VariationGroupPrice::updateOrCreate(
-                                    [
-                                        'variation_id' => $key,
-                                        'price_group_id' => $request->selling_price_group_id,
-                                    ],
-                                    [
-                                        'price_inc_tax' => $this->productUtil->num_uf($value['price']),
-                                        'price_type' => $value['price_type'],
-                                    ]
-                                );
+                                $price_inc_tax = number_format($base_price - $value['price']);
                             }
-                            
+            
+                            $variation_group_price = VariationGroupPrice::updateOrCreate(
+                                [
+                                    'variation_id' => $key,
+                                    'price_group_id' => $request->selling_price_group_id,
+                                ],
+                                [
+                                    'price_inc_tax' => $price_inc_tax,
+                                    'price_type' => $value['price_type'],
+                                ]
+                            );
                         }
             }
             DB::commit();

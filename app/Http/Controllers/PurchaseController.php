@@ -331,12 +331,13 @@ class PurchaseController extends Controller
 
             $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
 
-            //unformat input values
-            $transaction_data['total_before_tax'] = $this->productUtil->num_uf($transaction_data['total_before_tax'], $currency_details) * $exchange_rate;
-
             // If discount type is fixed them multiply by exchange rate, else don't
             if ($transaction_data['discount_type'] == 'fixed') {
-                $transaction_data['discount_amount'] = $this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details) * $exchange_rate;
+                if ($request->has('cat_desck')) {
+                    $transaction_data['discount_amount'] = ($this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details) * $exchange_rate) * $cat_desck;
+                } else {
+                    $transaction_data['discount_amount'] = $this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details) * $exchange_rate;
+                }
             } elseif ($transaction_data['discount_type'] == 'percentage') {
                 $transaction_data['discount_amount'] = $this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details);
             } else {
@@ -346,8 +347,12 @@ class PurchaseController extends Controller
             $transaction_data['tax_amount'] = $this->productUtil->num_uf($transaction_data['tax_amount'], $currency_details) * $exchange_rate;
             $transaction_data['shipping_charges'] = $this->productUtil->num_uf($transaction_data['shipping_charges'], $currency_details) * $exchange_rate;
             if ($request->has('cat_desck')) {
+                //unformat input values
+                $transaction_data['total_before_tax'] = ($this->productUtil->num_uf($transaction_data['total_before_tax'], $currency_details) * $exchange_rate) * $cat_desck;
                 $transaction_data['final_total'] = ($transaction_data['final_total'] * $exchange_rate) * $cat_desck;
             } else {
+                //unformat input values
+                $transaction_data['total_before_tax'] = $this->productUtil->num_uf($transaction_data['total_before_tax'], $currency_details) * $exchange_rate;
                 $transaction_data['final_total'] = $this->productUtil->num_uf($transaction_data['final_total'], $currency_details) * $exchange_rate;
             }
             $transaction_data['business_id'] = $business_id;
@@ -618,6 +623,8 @@ class PurchaseController extends Controller
                                         })
                                         ->pluck('ref_no', 'id');
         }
+        $category = Category::where('id', 66)->first();
+        $cat_desck = $category->description;
 
         return view('purchase.edit')
             ->with(compact(
@@ -632,7 +639,8 @@ class PurchaseController extends Controller
                 'types',
                 'shortcuts',
                 'purchase_orders',
-                'common_settings'
+                'common_settings',
+                'cat_desck'
             ));
     }
 
@@ -648,6 +656,7 @@ class PurchaseController extends Controller
         if (! auth()->user()->can('purchase.update')) {
             abort(403, 'Unauthorized action.');
         }
+        $cat_desck = $request->input('cat_desck', null);
 
         try {
             $transaction = Transaction::findOrFail($id);
@@ -680,12 +689,13 @@ class PurchaseController extends Controller
 
             $update_data['transaction_date'] = $this->productUtil->uf_date($update_data['transaction_date'], true);
 
-            //unformat input values
-            $update_data['total_before_tax'] = $this->productUtil->num_uf($update_data['total_before_tax'], $currency_details) * $exchange_rate;
-
             // If discount type is fixed them multiply by exchange rate, else don't
             if ($update_data['discount_type'] == 'fixed') {
-                $update_data['discount_amount'] = $this->productUtil->num_uf($update_data['discount_amount'], $currency_details) * $exchange_rate;
+                if ($request->has('cat_desck')) {
+                    $update_data['discount_amount'] = ($this->productUtil->num_uf($update_data['discount_amount'], $currency_details) * $exchange_rate) * $cat_desck;
+                } else {
+                    $update_data['discount_amount'] = $this->productUtil->num_uf($update_data['discount_amount'], $currency_details) * $exchange_rate;
+                }
             } elseif ($update_data['discount_type'] == 'percentage') {
                 $update_data['discount_amount'] = $this->productUtil->num_uf($update_data['discount_amount'], $currency_details);
             } else {
@@ -694,7 +704,15 @@ class PurchaseController extends Controller
 
             $update_data['tax_amount'] = $this->productUtil->num_uf($update_data['tax_amount'], $currency_details) * $exchange_rate;
             $update_data['shipping_charges'] = $this->productUtil->num_uf($update_data['shipping_charges'], $currency_details) * $exchange_rate;
-            $update_data['final_total'] = $this->productUtil->num_uf($update_data['final_total'], $currency_details) * $exchange_rate;
+            if ($request->has('cat_desck')) {
+                //unformat input values
+                $update_data['total_before_tax'] = ($this->productUtil->num_uf($update_data['total_before_tax'], $currency_details) * $exchange_rate) * $cat_desck;
+                $update_data['final_total'] = ($this->productUtil->num_uf($update_data['final_total'], $currency_details) * $exchange_rate) * $cat_desck;
+            } else {
+                //unformat input values
+                $update_data['total_before_tax'] = $this->productUtil->num_uf($update_data['total_before_tax'], $currency_details) * $exchange_rate;
+                $update_data['final_total'] = $this->productUtil->num_uf($update_data['final_total'], $currency_details) * $exchange_rate;
+            }
             //unformat input values ends
 
             $update_data['custom_field_1'] = $request->input('custom_field_1', null);

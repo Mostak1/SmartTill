@@ -17,7 +17,7 @@ $(document).ready(function () {
     });
 
     pos_form_validator = pos_form_obj.validate({
-        submitHandler: function (form) {
+        submitHandler: function(form) {
             var cnf = true;
 
             if (cnf) {
@@ -28,15 +28,13 @@ $(document).ready(function () {
                     url: url,
                     data: data,
                     dataType: 'json',
-                    success: function (result) {
+                    success: function(result) {
                         if (result.success == 1) {
-                            // toastr.success(result.msg);
-                            let transactionId = result.transaction_id;
-                            let paymentUrl = base_path + '/payments/add_payment/' + transactionId;
-                            paymentUrl = paymentUrl.replace(':id', transactionId);
-                            $('#add_payment_link').attr('href', paymentUrl);
-                            // Programmatically click the payment link
-                            $('#add_payment_link')[0].click();
+                            toastr.success(result.msg);
+                            //Check if enabled or not
+                            if (result.receipt.is_enabled) {
+                                pos_print(result.receipt);
+                            }
                         } else {
                             toastr.error(result.msg);
                         }
@@ -83,17 +81,15 @@ function initialize_printer() {
 }
 
 function pos_print(receipt) {
-    // If printer type then connect with websocket
-    // If printer type then connect with websocket
+    //If printer type then connect with websocket
     if (receipt.print_type == 'printer') {
         var content = receipt;
         content.type = 'print-receipt';
 
-        // Check if ready or not, then print.
-        // Check if ready or not, then print.
+        //Check if ready or not, then print.
         if (socket.readyState != 1) {
             initializeSocket();
-            setTimeout(function () {
+            setTimeout(function() {
                 socket.send(JSON.stringify(content));
             }, 700);
         } else {
@@ -105,18 +101,12 @@ function pos_print(receipt) {
             document.title = receipt.print_title;
         }
 
-        // If printer type browser then print content
-        // If printer type browser then print content
+        //If printer type browser then print content
         $('#receipt_section').html(receipt.html_content);
         __currency_convert_recursively($('#receipt_section'));
-        var url = base_path + '/sell-return';
-        setTimeout(function () {
+        setTimeout(function() {
             window.print();
             document.title = title;
-            // Redirect after printing
-            setTimeout(function () {
-                window.location.href = url;
-            }, 500);
         }, 1000);
     }
 }

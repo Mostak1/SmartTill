@@ -126,8 +126,8 @@
                                                 <span class="final-price" data-currency_symbol="true">{{$price}}</span>
                                             </td>
                                             <td class="text-center">
-                                                <i class="fa fa-trash remove_product_row cursor-pointer"
-                                                    aria-hidden="true"></i>
+                                                {{-- <i class="fa fa-trash remove_product_row cursor-pointer"
+                                                    aria-hidden="true"></i> --}}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -144,12 +144,12 @@
             </div>
         </div> <!--box end-->
         {!! Form::close() !!}
+        
     </section>
 @stop
 @section('javascript')
     <script type="text/javascript">
         $(document).ready(function() {
-
             // Enable product search when location is selected
             $('select#location_id').change(function() {
                 if ($(this).val()) {
