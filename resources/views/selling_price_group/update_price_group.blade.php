@@ -83,7 +83,7 @@
                                                         $price = 100 - $product->price_inc_tax;
                                                         $html = $price . '%';
                                                     } elseif ($product->price_type == 'fixed') {
-                                                        $price = number_format($product->price_inc_tax, 0);
+                                                        $price = number_format($product->variation->sell_price_inc_tax - $product->price_inc_tax);
                                                         $html = $price . 'Fixed';
                                                     }
                                                     $name = 'group_prices[' . $product->variation_id . '][price_type]';
@@ -101,12 +101,12 @@
                                                 <select name={{$name}} class="form-control group-price-type"
                                                     data-variation-id="{{ $product->variation_id }}"
                                                     data-price-group-id="{{ $product->price_group_id }}">
-                                                    <option value="fixed"
-                                                        @if ($product->price_type == 'fixed') selected @endif>
-                                                        @lang('lang_v1.fixed')</option>
                                                     <option value="percentage"
                                                         @if ($product->price_type == 'percentage') selected @endif>
                                                         @lang('lang_v1.percentage')</option>
+                                                    <option value="fixed"
+                                                        @if ($product->price_type == 'fixed') selected @endif>
+                                                        @lang('lang_v1.fixed')</option>
                                                 </select>
                                             </td>
                                             <td>
@@ -118,8 +118,7 @@
                                                             100;
                                                         $html = $price . '%';
                                                     } elseif ($product->price_type == 'fixed') {
-                                                        $price =
-                                                            $product->variation->sell_price_inc_tax - $product->price_inc_tax;
+                                                        $price =number_format($product->price_inc_tax, 2);
                                                         $html = $price . 'Fixed';
                                                     }
                                                 @endphp

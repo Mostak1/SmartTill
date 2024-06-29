@@ -149,7 +149,7 @@ class TransactionPaymentController extends Controller
             if ($transaction->payment_status != 'paid') {
                 $inputs = $request->only([
                     'amount', 'method', 'note', 'card_number', 'card_holder_name',
-                    'card_transaction_number', 'card_type', 'card_month', 'card_year', 'card_security',
+                    'card_transaction_number', 'card_type', 'card_month', 'card_year', 'card_security','payment_type',
                     'cheque_number', 'bank_account_number',
                 ]);
                 $inputs['paid_on'] = $this->transactionUtil->uf_date($request->input('paid_on'), true);

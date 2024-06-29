@@ -985,9 +985,10 @@ class TransactionUtil extends Util
             'table_unit_price_label' => $il->table_unit_price_label,
             'table_subtotal_label' => $il->table_subtotal_label,
         ];
-
-        $sell_method = TransactionPayment::where('transaction_id', $transaction_id)->orderBy('created_at', 'desc')->first();  // sell method 
-        $output['sell_method'] = $sell_method->method;
+        if($transaction_type=='sell_return'){
+            $sell_method = TransactionPayment::where('transaction_id', $transaction_id)->orderBy('created_at', 'desc')->first();  // sell method 
+            $output['sell_method'] = $sell_method->method;
+        }
         $output['transaction_type'] = $transaction_type;
         
         //Display name
@@ -1409,7 +1410,7 @@ class TransactionUtil extends Util
         $discount_amount = $transaction->discount_amount;
         $output['line_discount_label'] = $invoice_layout->discount_label;
         $output['discount_label'] = $invoice_layout->discount_label;
-        $output['discount_label'] .= ($transaction->discount_type == 'percentage') ? ' <small>('.$transaction->discount_amount.'%)</small> :' : '';
+        $output['discount_label'] .= ($transaction->discount_type == 'percentage') ? ' <small>('.$this->num_uf($transaction->discount_amount).'%)</small> :' : '';
 
         if ($transaction->discount_type == 'percentage') {
             $discount = ($transaction->discount_amount / 100) * $transaction->total_before_tax;

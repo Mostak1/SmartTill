@@ -4,7 +4,7 @@
     $end_date = Carbon::parse($end_date);
     $currentDateTime = date('Y-m-d 00:00:00');
 @endphp
-<h3 class="text-center">Report Show From {{$start_date->format('d-F-Y')}} TO {{$end_date->format('d-F-Y')}}</h3>
+<h3 class="text-center">Report Show From {{ $start_date->format('d-F-Y') }} TO {{ $end_date->format('d-F-Y') }}</h3>
 {{-- <h3 class="text-center">Report Show From {{$start_date}} TO {{$end_date}}</h3> --}}
 
 <div class="col-xs-6">
@@ -31,16 +31,27 @@
             $line_discount += $item->selling_price - $item->selling_price_after_discount;
             $total_amount_with_discount += $item->selling_price;
         }
+        $payMethod = [];
         foreach ($totalByMethod as $item) {
-            if ($item->method == 'cash') {
-                $cash += $item->tp_amount;
-            }
-            if ($item->method == 'card') {
-                $card += $item->tp_amount;
-            } elseif ($item->method == 'custom_pay_1') {
-                $bkash += $item->tp_amount;
+            if (!isset($payMethod[$item->tp_id])) {
+                $payMethod[$item->tp_id] = [
+                    'id' => $item->tp_id,
+                    'method' => $item->method,
+                    'tp_amount' => $item->tp_amount,
+                ];
             }
         }
+
+        foreach ($payMethod as $item) {
+            if ($item['method'] == 'cash') {
+                $cash += $item['tp_amount'];
+            } elseif ($item['method'] == 'card') {
+                $card += $item['tp_amount'];
+            } elseif ($item['method'] == 'custom_pay_1') {
+                $bkash += $item['tp_amount'];
+            }
+        }
+
         foreach ($totalbyTransaction as $item) {
             if (isset($transactions[$item->saleId])) {
                 $transactions[$item->saleId]['sale_line_total'] += $item->selling_price_after_discount;
@@ -88,11 +99,23 @@
         }
         $saleLinePayment = $cash + $card + $bkash;
         $transactionPayment = $pay_cash + $pay_card + $pay_bkash;
-        $duePayment = $transactionPayment - $saleLinePayment;
-       
+        $duePayment = $transactionPayment;
+
     @endphp
-   
+
     @component('components.widget')
+        {{-- @foreach ($totalByMethod as $item)
+            <ul>
+                <li>Id:{{ $item->tp_id . ' Amount:' . $item->tp_amount . ' M:-' . $item->method . ' SP- ' . $item->selling_price }}
+                </li>
+            </ul>
+        @endforeach
+        New --------------
+        @foreach ($payMethod as $item)
+            <ul>
+                <li>Id:{{ $item['id'] . ' Amount:' . $item['tp_amount'] . ' M:-' . $item['method'] }}</li>
+            </ul>
+        @endforeach --}}
         <table class="table">
             @foreach ($incomeByCategories as $item)
                 <tr>
@@ -104,7 +127,7 @@
                     </th>
                     <td>
                         <span class="display_currency" data-currency_symbol="true">{{ $item->selling_price }}</span>
-                       
+
                     </td>
                 </tr>
             @endforeach
@@ -126,18 +149,20 @@
                 <th>Total amount:
                 </th>
                 <td>
-                    <span class="display_currency" data-currency_symbol="true">{{ $transactionTotal+$duePayment+$data['total_sell_shipping_charge'] }}</span>
+                    <span class="display_currency"
+                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] }}</span>
                 </td>
             </tr>
             <tr>
                 <th>Final Total:<br>
-                    <small class="text-muted">Cash: {{ $cash+($pay_cash-$cash)-$re_cash }}</small> <br>
-                    <small class="text-muted">Bkash: {{ $bkash+($pay_bkash-$bkash)-$re_bkash }}</small> <br>
-                    <small class="text-muted">Card: {{ $card+($pay_card-$card)-$re_card }}</small>
+                    <small class="text-muted">Cash: {{ $cash + $pay_cash - $re_cash }}</small>
+                    <br>
+                    <small class="text-muted">Bkash: {{ $bkash + $pay_bkash - $re_bkash }}</small> <br>
+                    <small class="text-muted">Card: {{ $card + $pay_card - $re_card }}</small>
                 </th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionTotal+$duePayment+$data['total_sell_shipping_charge']-$total_discount-($partial_total - $partial_amount)-$total_sell_return_inc_tax  }}</span>
+                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] - $total_discount - ($partial_total - $partial_amount) - $total_sell_return_inc_tax }}</span>
                 </td>
             </tr>
         </table>
@@ -156,7 +181,7 @@
                 <th>Special Dicount <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $total_discount }}</span>
-                   
+
                 </td>
             </tr>
             <tr>
@@ -165,10 +190,10 @@
                     <small class="text-muted">
                         Cash = {{ $re_cash }} <br>
                         Bkash = {{ $re_bkash }}<br>
-                        Card = {{ $re_card }} 
+                        Card = {{ $re_card }}
                     </small>
                 </th>
-                
+
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $total_sell_return_inc_tax }}</span>
                 </td>
@@ -186,7 +211,6 @@
     @endcomponent
 </div>
 <br>
-{{-- <div class="col-md-12">
 {{-- <div class="col-md-12">
     @component('components.widget')
         <h3 class="text-muted mb-0"> Transection sell line transactionTotal: {{ $transactionTotal }}

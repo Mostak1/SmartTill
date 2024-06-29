@@ -77,7 +77,7 @@
 										$selected_price_group = !empty($default_price_group_id) && array_key_exists($default_price_group_id, $price_groups) ? $default_price_group_id : null;
 									@endphp
 									{!! Form::hidden('hidden_price_group', key($price_groups), ['id' => 'hidden_price_group']) !!}
-									{!! Form::select('price_group', $price_groups, $selected_price_group, ['class' => 'form-control select2', 'id' => 'price_group', 'disabled' => 'disabled']); !!}
+									{!! Form::select('price_group', $price_groups, $selected_price_group, ['class' => 'form-control select2', 'id' => 'price_group','disabled' => 'disabled']); !!}
 									<span class="input-group-addon">
 										@show_tooltip(__('lang_v1.price_group_help_text'))
 									</span> 

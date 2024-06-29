@@ -45,6 +45,7 @@
             z-index: 10;
             /* Prevent text from wrapping */
         }
+
         .watermark_due {
             position: absolute;
             bottom: 60%;
@@ -147,7 +148,7 @@
                 {{ $receipt_details->status }}
             </div>
         @endif
-		{{-- <div class="textbox-info">
+        {{-- <div class="textbox-info">
             <p style="vertical-align: top;"><strong>
                     {{ $receipt_details->customer_label ?? '' }}
                 </strong></p>
@@ -167,11 +168,12 @@
             </p>
         </div>
         <div class="textbox-info">
-            <p class="f-left"><strong>{!! $receipt_details->date_label !!} : {{ $receipt_details->invoice_date }}</strong> <br> <strong>Counter:</strong> {{ Auth::user()->username }}</p>
+            <p class="f-left"><strong>{!! $receipt_details->date_label !!} : {{ $receipt_details->invoice_date }}</strong> <br>
+                <strong>Counter:</strong> {{ Auth::user()->username }}</p>
 
             <p style="text-align: right" class="f-right">
                 @if (!empty($receipt_details->customer_info))
-                        {!! $receipt_details->customer_info !!}
+                    {!! $receipt_details->customer_info !!}
                 @endif
             </p>
         </div>
@@ -610,15 +612,16 @@
             </div>
         @endif
         @if (empty($receipt_details->hide_price))
-            <div class="flex-box">
-                <p class="width-70 left text-right sub-headings">
-                    {!! $receipt_details->subtotal_label !!}
-                </p>
-                <p class="width-30 text-right sub-headings">
-                    ৳ {{ number_format($receipt_details->subtotal) }}
-                </p>
-            </div>
-
+            @if (number_format($receipt_details->total)!== number_format($receipt_details->subtotal))
+                <div class="flex-box">
+                    <p class="width-70 left text-right sub-headings">
+                        {!! $receipt_details->subtotal_label !!}
+                    </p>
+                    <p class="width-30 text-right sub-headings">
+                        ৳ {{ number_format($receipt_details->subtotal) }}
+                    </p>
+                </div>
+            @endif
             <!-- Shipping Charges -->
             @if (!empty($receipt_details->shipping_charges))
                 <div class="flex-box">
@@ -734,7 +737,10 @@
             @if (!empty($receipt_details->payments))
                 @foreach ($receipt_details->payments as $payment)
                     <div class="flex-box">
-                        <p class="width-70 text-right">Method {{ $payment['method'] }} @if (!empty($receipt_details->total_due)) ({{ $payment['date'] }}) @endif</p>
+                        <p class="width-70 text-right">{{ $payment['method'] }} @if (!empty($receipt_details->total_due))
+                                ({{ $payment['date'] }})
+                            @endif
+                        </p>
                         <p class="width-30 text-right">৳ {{ number_format($payment['amount']) }}</p>
                     </div>
                 @endforeach

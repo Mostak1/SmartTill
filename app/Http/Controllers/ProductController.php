@@ -2029,7 +2029,7 @@ class ProductController extends Controller
                             if ($value['price_type'] == 'percentage') {
                                 $price_inc_tax = 100 - $value['price'];
                             } else {
-                                $price_inc_tax = number_format($base_price - $value['price']);
+                                $price_inc_tax = $base_price - $value['price'];
                             }
             
                             $variation_group_price = VariationGroupPrice::updateOrCreate(
