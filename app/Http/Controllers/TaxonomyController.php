@@ -54,26 +54,26 @@ class TaxonomyController extends Controller
 
             $category = Category::where('business_id', $business_id)
                 ->where('category_type', $category_type)
-                ->select(['name', 'short_code', 'description', 'id', 'parent_id']);
+                ->select(['name', 'short_code', 'description', 'id', 'parent_id','is_us_product']);
 
             return Datatables::of($category)
                 ->addColumn(
                     'action',
                     function ($row) use ($can_edit, $can_delete, $category_type) {
                         $html = '';
-                        if ($row->id != 66 && $can_edit) {
+                        if ($row->is_us_product == 0 && $can_edit) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
                         elseif (auth()->user()->can('category.usa')) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
-                        if ($row->id != 66 && $can_delete) {
+                        if ($row->is_us_product == 0 && $can_delete) {
                             $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
                         }
-                        elseif(auth()->user()->can('superadmin') && $row->id != 66){
-                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
-                        }
-                        if ($row->id == 66 && auth()->user()->can('category.history')) {
+                        // elseif(auth()->user()->can('superadmin') && $row->is_us_product == 1){
+                        //     $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                        // }
+                        if ($row->is_us_product == 1 && auth()->user()->can('category.history')) {
                             $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'getRate']) . '" class="btn btn-xs btn-info rate_category_button"><i class="fas fa-history"></i> ' . __('History') . '</button>';  
                         }
                         return $html;
@@ -93,8 +93,8 @@ class TaxonomyController extends Controller
         }
 
         $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
-
-        $PriceHistory = VariationPriceHistory::where('variation_id', 66)
+        $foreign_cat = Category::where('is_us_product', 1)->first();
+        $PriceHistory = VariationPriceHistory::where('variation_id', $foreign_cat->id)
             ->where('type', 'category')
             ->orderBy('created_at', 'desc') // You can change the order as per your requirement
             ->get();
@@ -253,7 +253,8 @@ class TaxonomyController extends Controller
                     $category->parent_id = 0;
                 }
                 
-                if ($category->id == 66) {  
+                $foreign_cat = Category::where('is_us_product', 1)->first();
+                if (isset($foreign_cat)) { 
 
                     if($category->description != $input['description'])
                     {
@@ -390,7 +391,8 @@ class TaxonomyController extends Controller
 
     public function getRate()
     {
-        $PriceHistory = VariationPriceHistory::where('variation_id', 66)
+        $foreign_cat = Category::where('is_us_product', 1)->first();
+        $PriceHistory = VariationPriceHistory::where('variation_id', $foreign_cat->id)
             ->where('type', 'category')
             ->orderBy('created_at', 'desc')
             ->get();

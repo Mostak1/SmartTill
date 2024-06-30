@@ -634,8 +634,8 @@ class PurchaseController extends Controller
                 })
                 ->pluck('ref_no', 'id');
         }
-        $category = Category::where('id', 66)->first();
-        $cat_desck = $category->description;
+        $foreign_cat = Category::where('is_us_product', 1)->first();
+        $cat_desck = $foreign_cat->description;
         return view('purchase.edit')
             ->with(compact(
                 'taxes',
@@ -650,7 +650,8 @@ class PurchaseController extends Controller
                 'types',
                 'shortcuts',
                 'purchase_orders',
-                'common_settings'
+                'common_settings',
+                'foreign_cat'
             ));
     }
 
@@ -1109,8 +1110,8 @@ class PurchaseController extends Controller
                     ->get();
 
                 $last_purchase_line = $this->getLastPurchaseLine($variation_id, $location_id, $supplier_id);
-                $category = Category::where('id', 66)->first();
-                $cat_desck = $category->description;
+                $foreign_cat = Category::where('is_us_product', 1)->first();
+                $cat_desck = $foreign_cat->description;
 
                 return view('purchase.partials.purchase_entry_row')
                     ->with(compact(
@@ -1124,7 +1125,8 @@ class PurchaseController extends Controller
                         'sub_units',
                         'is_purchase_order',
                         'last_purchase_line',
-                        'cat_desck'
+                        'cat_desck',
+                        'foreign_cat'
                     ));
             }
         }

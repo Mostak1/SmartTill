@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Business;
+use App\Category;
 use App\Currency;
 use App\Notifications\TestEmailNotification;
 use App\System;
@@ -333,7 +334,9 @@ class BusinessController extends Controller
 
         $payment_types = $this->moduleUtil->payment_types(null, false, $business_id);
 
-        return view('business.settings', compact('business', 'currencies', 'tax_rates', 'timezone_list', 'months', 'accounting_methods', 'commission_agent_dropdown', 'units_dropdown', 'date_formats', 'shortcuts', 'pos_settings', 'modules', 'theme_colors', 'email_settings', 'sms_settings', 'mail_drivers', 'allow_superadmin_email_settings', 'custom_labels', 'common_settings', 'weighing_scale_setting', 'payment_types'));
+        $categories = Category::where('category_type', 'product')->get();
+
+        return view('business.settings', compact('categories','business', 'currencies', 'tax_rates', 'timezone_list', 'months', 'accounting_methods', 'commission_agent_dropdown', 'units_dropdown', 'date_formats', 'shortcuts', 'pos_settings', 'modules', 'theme_colors', 'email_settings', 'sms_settings', 'mail_drivers', 'allow_superadmin_email_settings', 'custom_labels', 'common_settings', 'weighing_scale_setting', 'payment_types'));
     }
 
     /**
@@ -472,6 +475,40 @@ class BusinessController extends Controller
             $financial_year = $this->businessUtil->getCurrentFinancialYear($business->id);
             $request->session()->put('financial_year', $financial_year);
 
+            // Handle updates to existing categories' is_us_product status from the table
+            if ($request->has('categories')) {
+                foreach ($request->input('categories') as $categoryId => $categoryAttributes) {
+                    $category = Category::find($categoryId);
+                    if ($category) {
+                        $category->is_us_product = !empty($categoryAttributes['is_us_product']) ? 1 : 0;
+                        $category->save(); // Ensure you save the updated category
+                    }
+                }
+            }
+
+            // Handle new category data
+            $category_data = $request->only(['category_id', 'short_code', 'description', 'is_us_product']);
+            if (!empty($category_data['category_id'])) {
+                // Check if any existing category has is_us_product set to 1
+                $existingCategoryWithIsUsProduct = Category::where('is_us_product', 1)->first();
+
+                // If any category with is_us_product = 1 exists, prevent new category creation
+                if ($existingCategoryWithIsUsProduct) {
+                    // Handle error or notify user
+                    return redirect()->back()->withErrors(['is_us_product' => 'Cannot create new category if any existing category has Is Foreign checked.']);
+                }
+
+                // Proceed to create new category
+                $category = Category::find($category_data['category_id']);
+                if ($category) {
+                    $category->short_code = $category_data['short_code'];
+                    $category->description = $category_data['description'];
+                    $category->is_us_product = !empty($category_data['is_us_product']) ? 1 : 0;
+                    if (!empty($category_data['is_us_product'])) {
+                        $category->save();
+                    }
+                }
+            }
             $output = ['success' => 1,
                 'msg' => __('business.settings_updated_success'),
             ];

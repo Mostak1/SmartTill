@@ -30,7 +30,7 @@
           <p class="help-block">{!! $category_code_help_text !!}</p>
       </div>
       @endif
-      @if ($category->id == 66)
+      @if ($category->is_us_product==1)
       <div class="form-group">
         {!! Form::label('description', __( 'lang_v1.description' ) . ':') !!}
         {!! Form::number('description', $category->description, ['class' => 'form-control', 'placeholder' => __( 'lang_v1.description'), 'rows' => 3]); !!}

@@ -51,9 +51,9 @@ class ProductUtil extends Util
         ];
         $product_variation = $product->product_variations()->create($product_variation_data);
 
-        $foreign_cat = Category::where('id', 66)->first();
+        $foreign_cat = Category::where('is_us_product', 1)->first();
 
-        if($product->category_id == 66)
+        if($product->category_id == $foreign_cat->id)
         {
             //create variations
             $variation_data = [
@@ -969,7 +969,7 @@ class ProductUtil extends Util
                                         ->first();
         
         $product = Product::where('id', $variation_data['product_id'])->first();
-        $foreign_cat = Category::where('id', 66)->first();
+        $foreign_cat = Category::where('is_us_product', 1)->first();
 
         $tax_rate = 0;
         if (! empty($variation_details->product->product_tax->amount)) {
@@ -980,7 +980,7 @@ class ProductUtil extends Util
             $variation_data['sell_price_inc_tax'] = $variation_details->sell_price_inc_tax;
         }
 
-        if ($product->category_id == 66) {
+        if ($product->category_id == $foreign_cat->id) {
             if (($variation_details->default_purchase_price != $variation_data['pp_without_discount']) ||
                 ($variation_details->sell_price_inc_tax != $variation_data['sell_price_inc_tax'])
                 ) {              

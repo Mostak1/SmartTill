@@ -24,10 +24,10 @@
 				<tr>
 					@can('view_purchase_price')
 					<td>
-						<span class="display_currency" data-currency_symbol="true">{{$product->category_id == 47 ? $variation->default_purchase_price * $product->category->description : $variation->default_purchase_price}} </span>
+						<span class="display_currency" data-currency_symbol="true">{{$variation->default_purchase_price}} </span>
 					</td>
 					<td>
-						<span class="display_currency" data-currency_symbol="true">{{$product->category_id == 47 ? $variation->dpp_inc_tax * $product->category->description : $variation->dpp_inc_tax}}</span>
+						<span class="display_currency" data-currency_symbol="true">{{ $variation->dpp_inc_tax}}</span>
 					</td>
 					@endcan
 					@can('access_default_selling_price')
@@ -37,10 +37,10 @@
 						</td>
 						@endcan
 						<td>
-							<span class="display_currency" data-currency_symbol="true">{{$product->category_id == 47 ? $variation->default_sell_price * $product->category->description : $variation->default_sell_price}}</span>
+							<span class="display_currency" data-currency_symbol="true">{{$variation->default_sell_price}}</span>
 						</td>
 						<td>
-							<span class="display_currency" data-currency_symbol="true">{{$product->category_id == 47 ? $variation->sell_price_inc_tax * $product->category->description : $variation->sell_price_inc_tax}}</span>
+							<span class="display_currency" data-currency_symbol="true">{{$variation->sell_price_inc_tax}}</span>
 						</td>
 					@endcan
 					@if(!empty($allowed_group_prices))

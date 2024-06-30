@@ -338,6 +338,7 @@
 
         <input type="hidden" id="variation_counter" value="1">
         <input type="hidden" id="default_profit_percent" value="{{ $default_profit_percent }}">
+        <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
 
     </div>
     @endcomponent
@@ -396,7 +397,7 @@
     $(document).ready(function() {
     $('#category_id').change(function() {
         var selectedCategory = $(this).val();
-        var usCategoryId = 66; // Replace with the actual category ID for 'US Product'
+        var usCategoryId = $('#foreign_cat_id').val();// category ID for 'US Product'
 
         if (selectedCategory == usCategoryId) {
             $('#single_dpp_label').html('{{ trans("product.exc_of_tax") }} <span style="color: red">USD</span>:*');

@@ -89,6 +89,7 @@
                             'class' => 'form-control select2',
                             'id' => 'category_select',
                         ]) !!}
+                        <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
                     </div>
                 </div>
 
@@ -404,9 +405,10 @@
         $('#category_select').on('change', function() {
             // Get the selected category ID
             var selectedCategoryId = $(this).val();
+            var usCategoryId = $('#foreign_cat_id').val();
 
             // Update the label and span based on the selected category ID
-            if (selectedCategoryId == 66) {
+            if (selectedCategoryId == usCategoryId) {
                 $('#single_dpp_label').html(
                     "{{ trans('product.exc_of_tax') }}<span style='color: red;'> USD</span>:*");
                 // $('#single_dpp_inc_tax_label').html("{{ trans('product.inc_of_tax') }}<span style='color: red;'> USD</span>:*");

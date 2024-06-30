@@ -115,6 +115,7 @@ class ProductController extends Controller
                 'products.type',
                 'c1.name as category',
                 'c1.id as category_id',
+                'c1.is_us_product as is_us_product',
                 'c1.description as category_description',
                 'c2.name as sub_category',
                 'units.actual_name as unit',
@@ -314,7 +315,7 @@ class ProductController extends Controller
                 })
                 ->addColumn(
                     'purchase_price',
-                    '<div style="white-space: nowrap;">@if($category_id == 66) 
+                    '<div style="white-space: nowrap;">@if($is_us_product == 1) 
                     $ {{number_format($max_foreign_p_price, 2)}} </br>
                     ৳ {{number_format($max_purchase_price, 2)}} <br>
                     $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
@@ -325,7 +326,7 @@ class ProductController extends Controller
                 )
                 ->addColumn(
                     'selling_price',
-                    '<div style="white-space: nowrap;">@if($category_id == 66)
+                    '<div style="white-space: nowrap;">@if($is_us_product == 1)
                     $ {{number_format($max_foreign_s_price, 2)}} </br>
                     ৳ {{number_format($min_price, 2)}} <br>
                     $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
@@ -460,11 +461,10 @@ class ProductController extends Controller
 
         //product screen view from module
         $pos_module_data = $this->moduleUtil->getModuleData('get_product_screen_top_view');
-
         $variation = Variation::get();
-
+        $foreign_cat = Category::where('is_us_product', 1)->first();
         return view('product.create')
-            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data', 'variation'));
+            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data', 'variation','foreign_cat'));
     }
 
     private function product_types()
@@ -847,10 +847,10 @@ class ProductController extends Controller
             }
 
             $product->product_locations()->sync($product_locations);
-            $foreign_cat = Category::where('id', 66)->first();
+            $foreign_cat = Category::where('is_us_product', 1)->first();
 
 
-            if ($product->type == 'single' && $product->category_id == 66) {
+            if ($product->type == 'single' && $product->category_id == $foreign_cat->id) {
 
                 $single_data = $request->only(['single_variation_id', 'single_dpp', 'single_dpp_inc_tax', 'single_dsp_inc_tax', 'profit_percent', 'single_dsp']);
                 $variation = Variation::find($single_data['single_variation_id']);
@@ -1565,9 +1565,10 @@ class ProductController extends Controller
 
         $common_settings = session()->get('business.common_settings');
         $warranties = Warranty::forDropdown($business_id);
-
+        $foreign_cat = Category::where('is_us_product', 1)->first();
+        
         return view('product.partials.quick_add_product')
-            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'product_name', 'locations', 'product_for', 'enable_expiry', 'enable_lot', 'module_form_parts', 'business_locations', 'common_settings', 'warranties'));
+            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'product_name', 'locations', 'product_for', 'enable_expiry', 'enable_lot', 'module_form_parts', 'business_locations', 'common_settings', 'warranties','foreign_cat'));
     }
 
     /**

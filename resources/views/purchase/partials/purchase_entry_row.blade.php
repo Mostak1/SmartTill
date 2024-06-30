@@ -55,7 +55,7 @@
                     data-msg-max-value="{{__('lang_v1.max_quantity_quantity_allowed', ['quantity' => $max_quantity])}}" 
                 @endif
             >
-            @if ($product->category_id == 66)
+            @if ($product->category_id ==$foreign_cat->id)
                 <input type="hidden" class="base_unit_cost" value="{{$variation->foreign_p_price}}">
                 <input type="hidden" class="base_unit_selling_price" value="{{$variation->foreign_s_price_inc_tex}}">
             @else
@@ -93,8 +93,8 @@
         </td>
         <td>
             @php
-            if ($product->category_id == 66) {
-                $pp_without_discount = !empty($purchase_order_line) ? $purchase_order_line->pp_without_discount/$purchase_order->exchange_rate : $variation->foreign_p_price;
+            if ($product->category_id ==$foreign_cat->id) {
+               $pp_without_discount = !empty($purchase_order_line) ? $purchase_order_line->pp_without_discount/$purchase_order->exchange_rate : $variation->foreign_p_price;
 
                 $discount_percent = !empty($purchase_order_line) ? $purchase_order_line->discount_percent : 0;
 
@@ -127,7 +127,7 @@
             {!! Form::text('purchases[' . $row_count . '][pp_without_discount]',
             number_format($pp_without_discount, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm purchase_unit_cost_without_discount input_number', 'required']); !!}
 
-            @if ($product->category_id == 66)
+            @if ($product->category_id ==$foreign_cat->id)
                 <small class="bdt-purchase">BDT: {{ number_format($variation->default_purchase_price, 2) }}</small> <br>
             @endif 
 
@@ -148,7 +148,7 @@
         <td>
             {!! Form::text('purchases[' . $row_count . '][purchase_price]',
             number_format($purchase_price, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm purchase_unit_cost input_number', 'required']); !!}
-            @if ($product->category_id == 66)
+            @if ($product->category_id ==$foreign_cat->id)
             <small class="bdt-without-tax">BDT: {{ number_format($purchase_price, 2) }}</small>
             @endif 
         </td>
@@ -172,7 +172,7 @@
         </td>
         <td class="{{$hide_tax}}">
             @php
-            if ($product->category_id == 66) {
+            if ($product->category_id ==$foreign_cat->id) {
                 $dpp_inc_tax = number_format($variation->foreign_p_price_inc_tex, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator);
                 if($hide_tax == 'hide'){
                     $dpp_inc_tax = number_format($variation->foreign_p_price, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator);
@@ -190,7 +190,7 @@
             @endphp
             {!! Form::text('purchases[' . $row_count . '][purchase_price_inc_tax]', $dpp_inc_tax, ['class' => 'form-control input-sm purchase_unit_cost_after_tax input_number', 'required']); !!}
 
-            @if ($product->category_id == 66)
+            @if ($product->category_id ==$foreign_cat->id)
             <small class="bdt-tax">BDT: {{ number_format($dpp_inc_tax, 2) }}</small>
             @endif
 
@@ -204,7 +204,7 @@
         </td>
         @if(empty($is_purchase_order))
         <td>
-            @if ($product->category_id == 66)
+            @if ($product->category_id ==$foreign_cat->id)
                 @if(session('business.enable_editing_product_from_purchase'))
                     {!! Form::text('purchases[' . $row_count . '][default_sell_price]', number_format($variation->foreign_s_price_inc_tex, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator), ['class' => 'form-control input-sm input_number default_sell_price', 'required']); !!}
                 @else
