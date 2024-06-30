@@ -162,7 +162,7 @@
                 </th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] - $total_discount - ($partial_total - $partial_amount) - $total_sell_return_inc_tax }}</span>
+                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] - $total_discount - ($partial_total - $partial_amount) - $total_sell_return_inc_tax-$line_discount }}</span>
                 </td>
             </tr>
         </table>
