@@ -752,7 +752,8 @@ class SellReturnController extends Controller
                     'T1.id as parent_sale_id',
                     DB::raw('SUM(TP.amount) as amount_paid'),
                     DB::raw('SUM(TSL.quantity_returned) as total_return_qty'),
-                    DB::raw('SUM(vld.qty_available) as current_stock')
+                    DB::raw('SUM(vld.qty_available) as current_stock'),
+                    DB::raw('SUM((TSL.quantity_returned) * TSL.unit_price_inc_tax) as subtotal')
                 );
 
             if (!empty($today)) {
@@ -795,6 +796,19 @@ class SellReturnController extends Controller
                     ->whereDate('transactions.transaction_date', '<=', $end);
             }
 
+            if ($request->has('category_id')) {
+                $category_ids = $request->get('category_id');
+                if (!empty($category_ids)) {
+                    $sells->whereIn('p.category_id', $category_ids);
+                }
+            }
+    
+            if ($request->has('brand_id')) {
+                $brand_ids = $request->get('brand_id');
+                if (!empty($brand_ids)) {
+                    $sells->whereIn('p.brand_id', $brand_ids);
+                }
+            }
             $sells->groupBy('TSL.id');
 
             return Datatables::of($sells)
@@ -824,7 +838,7 @@ class SellReturnController extends Controller
                 ->removeColumn('id')
                 ->editColumn(
                     'final_total',
-                    '<span class="display_currency final_total" data-currency_symbol="true" data-orig-value="{{$final_total}}">{{$final_total}}</span>'
+                    '<span class="display_currency final_total" data-currency_symbol="true" data-orig-value="{{$subtotal}}">{{$subtotal}}</span>'
                 )
                 ->editColumn('parent_sale', function ($row) {
                     return '<button type="button" class="btn btn-link btn-modal" data-container=".view_modal" data-href="' . action([\App\Http\Controllers\SellController::class, 'show'], [$row->parent_sale_id]) . '">' . $row->parent_sale . '</button>';

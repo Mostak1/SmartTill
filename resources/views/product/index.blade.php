@@ -262,7 +262,7 @@
                     },
             });
 
-    $(document).ready(function() {
+$(document).ready(function() {
     var product_sell_table = $('#product_sell_table').DataTable({
         processing: true,
         serverSide: true,
@@ -310,7 +310,6 @@
                 return parseFloat(a) + numericValueB;
             }, 0);
             
-
             // Calculate the total sold subtotal
             let totalSubtotal = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
                 // Filter out non-numeric characters and then parse the numeric value
@@ -319,82 +318,92 @@
             }, 0);
 
             // Update the footer with the totals
-            // $('#footer_total_today_sold').html(totalQtySold);
             $('#footer_today_subtotal').text(totalSubtotal.toFixed(2));
 
             __currency_convert_recursively($('#product_sell_table'));
         },
     });
+
+    // Trigger DataTable reload on filter change
+    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status').change(function() {
+        product_sell_table.draw();
+    });
+
+    $('#not_for_selling').change(function() {
+        product_sell_table.draw();
+    });
 });
 
 
-$(document).ready(function(){
+$(document).ready(function() {
+    var sell_return_table = $('#sell_return_table').DataTable({
+        processing: true,
+        serverSide: true,
+        aaSorting: [[0, 'desc']],
+        "ajax": {
+            "url": "/today-sell-return",
+            data: function(d) {
+                var today = new Date();
+                var day = String(today.getDate()).padStart(2, '0');
+                var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+                var year = today.getFullYear();
+                var todayDate = year + '-' + month + '-' + day;
 
-    sell_return_table = $('#sell_return_table').DataTable({
-            processing: true,
-            serverSide: true,
-            aaSorting: [[0, 'desc']],
-            "ajax": {
-                "url": "/today-sell-return",
-                "data": function ( d ) {
-
-                    d.customer_id = $('#sell_list_filter_customer_id').val();
-
-                    if($('#created_by').length) {
-                        d.created_by = $('#created_by').val();
-                    }
-                    var today = new Date();
-                    var day = String(today.getDate()).padStart(2, '0');
-                    var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
-                    var year = today.getFullYear();
-                    var todayDate = year + '-' + month + '-' + day;
-                    d.type = $('#product_list_filter_type').val();
-                    d.category_id = $('#product_list_filter_category_id').val();
-                    d.brand_id = $('#product_list_filter_brand_id').val();
-                    d.unit_id = $('#product_list_filter_unit_id').val();
-                    d.tax_id = $('#product_list_filter_tax_id').val();
-                    d.active_state = $('#active_state').val();
-                    d.not_for_selling = $('#not_for_selling').is(':checked');
-                    d.location_id = $('#location_id').val();
-                    d.transaction_date = todayDate;
-                    d.stock_status = $('#product_list_filter_stock_status').val();
-                }
+                d.variation_id = $('#variation_id').val();
+                d.customer_id = $('select#customer_id').val();
+                d.customer_group_id = $('#psr_customer_group_id').val();
+                d.type = $('#product_list_filter_type').val();
+                d.category_id = $('#product_list_filter_category_id').val();
+                d.brand_id = $('#product_list_filter_brand_id').val();
+                d.unit_id = $('#product_list_filter_unit_id').val();
+                d.tax_id = $('#product_list_filter_tax_id').val();
+                d.active_state = $('#active_state').val();
+                d.not_for_selling = $('#not_for_selling').is(':checked');
+                d.location_id = $('#location_id').val();
+                d.transaction_date = todayDate; // Add transaction_date filter
+                d.stock_status = $('#product_list_filter_stock_status').val();
             },
-            columnDefs: [ {
-                "targets": [6, 7],
-                "orderable": false,
-                "searchable": false
-            } ],
-            columns: [
-                { data: 'product', name: 'product'},
-                { data: 'sku', name: 'sku'},
-                { data: 'category', name: 'category'},
-                { data: 'brand', name: 'brand'},
-                { data: 'parent_sale', name: 'T1.invoice_no'},
-                { data: 'payment_status', name: 'payment_status'},
-                { data: 'current_stock', name: 'current_stock'},
-                { data: 'total_return_qty', name: 'total_return_qty'},
-                { data: 'final_total', name: 'final_total'},
-            ],
-            "fnDrawCallback": function (oSettings) {
-                var total_sell = sum_table_col($('#sell_return_table'), 'final_total');
-                $('#footer_sell_return_total').text(total_sell);
-                
-                $('#footer_payment_status_count_sr').html(__sum_status_html($('#sell_return_table'), 'payment-status-label'));
+        },
+        columnDefs: [{
+            "targets": [6, 7],
+            "orderable": false,
+            "searchable": false
+        }],
+        columns: [
+            { data: 'product', name: 'product' },
+            { data: 'sku', name: 'sku' },
+            { data: 'category', name: 'category' },
+            { data: 'brand', name: 'brand' },
+            { data: 'parent_sale', name: 'T1.invoice_no' },
+            { data: 'payment_status', name: 'payment_status' },
+            { data: 'current_stock', name: 'current_stock' },
+            { data: 'total_return_qty', name: 'total_return_qty' },
+            { data: 'final_total', name: 'final_total' }
+        ],
+        "fnDrawCallback": function(oSettings) {
+            var total_sell = sum_table_col($('#sell_return_table'), 'final_total');
+            $('#footer_sell_return_total').text(total_sell);
 
-                var total_due = sum_table_col($('#sell_return_table'), 'payment_due');
-                $('#footer_total_due_sr').text(total_due);
+            $('#footer_payment_status_count_sr').html(__sum_status_html($('#sell_return_table'), 'payment-status-label'));
 
-                __currency_convert_recursively($('#sell_return_table'));
-            },
-            createdRow: function( row, data, dataIndex ) {
-                $( row ).find('td:eq(2)').attr('class', 'clickable_td');
-            }
-        });
-        $(document).on('change', '#sell_list_filter_location_id, #sell_list_filter_customer_id, #created_by',  function() {
-            sell_return_table.ajax.reload();
-        });
-    })
+            var total_due = sum_table_col($('#sell_return_table'), 'payment_due');
+            $('#footer_total_due_sr').text(total_due);
+
+            __currency_convert_recursively($('#sell_return_table'));
+        },
+        createdRow: function(row, data, dataIndex) {
+            $(row).find('td:eq(2)').attr('class', 'clickable_td');
+        }
+    });
+    // Trigger DataTable reload on filter change
+    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status').change(function() {
+        sell_return_table.draw();
+    });
+
+    $('#not_for_selling').change(function() {
+        sell_return_table.draw();
+    });
+});
 
     $(document).on('click', 'a.delete_sell_return', function(e) {
         e.preventDefault();
