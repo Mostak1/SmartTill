@@ -886,7 +886,7 @@ class SellController extends Controller
      */
     public function edit($id)
     {
-        if (! auth()->user()->can('direct_sell.update') && ! auth()->user()->can('so.update')) {
+        if (! auth()->user()->can('direct_sell.update') && ! auth()->user()->can('sell.update')) {
             abort(403, 'Unauthorized action.');
         }
 

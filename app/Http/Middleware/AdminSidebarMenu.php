@@ -67,7 +67,7 @@ class AdminSidebarMenu
                 $menu->dropdown(
                     __('contact.contacts'),
                     function ($sub) {
-                        if (auth()->user()->can('supplier.view') || auth()->user()->can('supplier.view_own')) {
+                        if (auth()->user()->can('supplier.create')) {
                             $sub->url(
                                 action([\App\Http\Controllers\ContactController::class, 'index'], ['type' => 'supplier']),
                                 __('report.supplier'),

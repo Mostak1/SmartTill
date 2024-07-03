@@ -859,8 +859,8 @@ class ProductController extends Controller
                 $variation->default_purchase_price = $this->productUtil->num_uf($single_data['single_dpp']) * $foreign_cat->description;
                 $variation->dpp_inc_tax = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
                 $variation->profit_percent = $this->productUtil->num_uf($single_data['profit_percent']);
-                $variation->default_sell_price = ceil(($this->productUtil->num_uf($single_data['single_dsp']) * $foreign_cat->description) / 10) * 10;
-                $variation->sell_price_inc_tax = ceil(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description) / 10) * 10;
+                $variation->default_sell_price = round(($this->productUtil->num_uf($single_data['single_dsp']) * $foreign_cat->description) / 10) * 10;
+                $variation->sell_price_inc_tax = round(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description) / 10) * 10;
 
                 $variation->foreign_p_price = $this->productUtil->num_uf($single_data['single_dpp']);
                 $variation->foreign_p_price_inc_tex = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']);
@@ -874,7 +874,7 @@ class ProductController extends Controller
 
                 $variation_history = Variation::find($single_data['single_variation_id']);
                 $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
-                $newPrice = ceil(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description)/10)*10;
+                $newPrice = round(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description)/10)*10;
                 $userId = auth()->id();
 
                 // Update the variation's price

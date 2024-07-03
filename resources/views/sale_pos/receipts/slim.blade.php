@@ -14,6 +14,10 @@
                 margin: 2px;
             }
 
+            * {
+                font-weight: 900;
+            }
+
             body {
                 margin: 2px;
                 /* Adjust or remove as needed */
@@ -37,7 +41,7 @@
             bottom: 60%;
             left: 20%;
             font-size: 50px;
-            color: rgba(80, 74, 74, 0.245) !important;
+            color: rgba(80, 74, 74, 0.65) !important;
             /* Adjust the opacity as needed */
             transform: rotate(-45deg);
             transform-origin: bottom right;
@@ -169,7 +173,8 @@
         </div>
         <div class="textbox-info">
             <p class="f-left"><strong>{!! $receipt_details->date_label !!} : {{ $receipt_details->invoice_date }}</strong> <br>
-                <strong>Counter:</strong> {{ Auth::user()->username }}</p>
+                <strong>Counter:</strong> {{ Auth::user()->username }}
+            </p>
 
             <p style="text-align: right" class="f-right">
                 @if (!empty($receipt_details->customer_info))
@@ -466,7 +471,7 @@
             </thead>
             <tbody>
                 @forelse($receipt_details->lines as $line)
-                    <tr>
+                    <tr class="border-bottom-dotted">
                         <td class="serial_number" style="vertical-align: top;">
                             {{ $loop->iteration }}
                         </td>
@@ -612,7 +617,7 @@
             </div>
         @endif
         @if (empty($receipt_details->hide_price))
-            @if (number_format($receipt_details->total)!== number_format($receipt_details->subtotal))
+            @if (number_format($receipt_details->total) !== number_format($receipt_details->subtotal))
                 <div class="flex-box">
                     <p class="width-70 left text-right sub-headings">
                         {!! $receipt_details->subtotal_label !!}

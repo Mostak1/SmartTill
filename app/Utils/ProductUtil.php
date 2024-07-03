@@ -63,8 +63,8 @@ class ProductUtil extends Util
                 'default_purchase_price' => $this->num_uf($purchase_price) * $foreign_cat->description,
                 'dpp_inc_tax' => $this->num_uf($dpp_inc_tax) * $foreign_cat->description,
                 'profit_percent' => $this->num_uf($profit_percent),
-                'default_sell_price' => ceil(($this->num_uf($selling_price) * $foreign_cat->description)/10)*10,
-                'sell_price_inc_tax' => ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
+                'default_sell_price' => round(($this->num_uf($selling_price) * $foreign_cat->description)/10)*10,
+                'sell_price_inc_tax' => round(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10,
                 'combo_variations' => $combo_variations,
                 'foreign_p_price' => $this->num_uf($purchase_price),
                 'foreign_p_price_inc_tex' => $this->num_uf($dpp_inc_tax),
@@ -75,7 +75,7 @@ class ProductUtil extends Util
                 'is_foreign' => 1,
             ];
             $oldPrice = $this->num_uf($dpp_inc_tax) * $foreign_cat->description;
-            $newPrice = ceil(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10;
+            $newPrice = round(($this->num_uf($selling_price_inc_tax) * $foreign_cat->description)/10)*10;
             // Create a new price history entry
             VariationPriceHistory::create([
                 'variation_id' => $product->id,
@@ -1006,10 +1006,10 @@ class ProductUtil extends Util
                 $variation_details->dpp_inc_tax = $variation_details->foreign_p_price_inc_tex * $foreign_cat->description;
 
                 //Set default sell price inc. tax
-                $variation_details->sell_price_inc_tax = ceil(($variation_details->foreign_s_price_inc_tex * $foreign_cat->description) /10 ) * 10;
+                $variation_details->sell_price_inc_tax = round(($variation_details->foreign_s_price_inc_tex * $foreign_cat->description) /10 ) * 10;
 
                 //set sell price inc. tax
-                $variation_details->default_sell_price = ceil(($variation_details->foreign_s_price * $foreign_cat->description) / 10) * 10;
+                $variation_details->default_sell_price = round(($variation_details->foreign_s_price * $foreign_cat->description) / 10) * 10;
 
                 //set profit margin
                 $variation_details->profit_percent = $this->get_percent($variation_details->default_purchase_price, $variation_details->default_sell_price);
@@ -1057,7 +1057,7 @@ class ProductUtil extends Util
                 $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
                     ->latest('created_at')
                     ->first();
-                    if ($latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
+                    // if ($latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
                    // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $variation_data['product_id'],
@@ -1068,7 +1068,7 @@ class ProductUtil extends Util
                         'h_type' => 'Purchase',
                         'ref_no' => '<a href="#" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], $variation_data['sele_id']) . '" class="btn-modal" data-container=".view_modal">' . $variation_data['ref_no'] . '</a>'
                     ]);
-                }
+                // }
             }
         }
     }

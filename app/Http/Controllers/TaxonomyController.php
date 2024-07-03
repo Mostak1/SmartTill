@@ -276,11 +276,11 @@ class TaxonomyController extends Controller
                         $foreign_variation->currency_rate = $category->description;
                         $foreign_variation->default_purchase_price = $foreign_variation->foreign_p_price * $category->description;
                         $foreign_variation->dpp_inc_tax = $foreign_variation->foreign_p_price_inc_tex * $category->description;
-                        $foreign_variation->default_sell_price = $foreign_variation->foreign_s_price * $category->description;
+                        $foreign_variation->default_sell_price = round(($foreign_variation->foreign_s_price * $category->description)/10) * 10;
 
                         // Update the variation's price
                         $old_price = $foreign_variation->dpp_inc_tax;
-                        $newPrice = ceil(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
+                        $newPrice = round(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
                         if ($foreign_variation->sell_price_inc_tax != $newPrice) {
                             // Create a new price history entry
                             VariationPriceHistory::create([
@@ -292,7 +292,7 @@ class TaxonomyController extends Controller
                                 'h_type' => 'Dollar Rate Change'
                             ]);
                         }
-                        $foreign_variation->sell_price_inc_tax = ceil(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
+                        $foreign_variation->sell_price_inc_tax = round(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
 
                         $foreign_variation->save();
                     }
