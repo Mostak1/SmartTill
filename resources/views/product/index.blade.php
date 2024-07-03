@@ -141,16 +141,17 @@
                         @endcan
                         @include('product.partials.product_list')
                     </div>
-                    @can('stock_report.view')
-                    <div class="tab-pane" id="product_stock_report">
-                        @include('report.partials.stock_report_table')
-                    </div>
                     <div class="tab-pane" id="product_sell_tab">
                         @include('product.partials.product_sell_report')
                     </div>
                     <div class="tab-pane" id="product_return_tab">
                         @include('product.partials.sell_return')
                     </div>
+                    @can('stock_report.view')
+                    <div class="tab-pane" id="product_stock_report">
+                        @include('report.partials.stock_report_table')
+                    </div>
+                  
                     @endcan
                 </div>
             </div>
