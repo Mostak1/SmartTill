@@ -120,7 +120,8 @@ return [
              * The disk names on which the backups will be stored.
              */
             'disks' => [
-                env('BACKUP_DISK', 'local'),
+                // env('BACKUP_DISK', 'local'),
+                'google'
             ],
         ],
 
