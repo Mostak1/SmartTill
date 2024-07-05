@@ -505,6 +505,37 @@ class ProductUtil extends Util
 
         return true;
     }
+    public function increaseProductQuantity($product_id, $variation_id, $location_id, $new_quantity, $old_quantity = 0)
+    {
+        $qty_difference = $new_quantity - $old_quantity;
+    
+        $product = Product::find($product_id);
+    
+        // Check if stock is enabled or not.
+        if ($product->enable_stock == 1) {
+            // Get details from variations location table
+            $details = VariationLocationDetails::where('variation_id', $variation_id)
+                ->where('product_id', $product_id)
+                ->where('location_id', $location_id)
+                ->first();
+    
+            // If location details do not exist, create a new one
+            if (empty($details)) {
+                $variation = Variation::find($variation_id);
+                $details = VariationLocationDetails::create([
+                    'product_id' => $product_id,
+                    'location_id' => $location_id,
+                    'variation_id' => $variation_id,
+                    'product_variation_id' => $variation->product_variation_id,
+                    'qty_available' => 0,
+                ]);
+            }
+    
+            $details->increment('qty_available', $qty_difference);
+        }
+    
+        return true;
+    }    
 
     /**
      * Decrease the product quantity of combo sub-products

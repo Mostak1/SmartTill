@@ -28,6 +28,7 @@
                         <th>@lang('purchase.ref_no')</th>
                         <th>@lang('business.location')</th>
                         <th>@lang('stock_adjustment.adjustment_type')</th>
+                        <th>Stock Adjustments</th>
                         <th>@lang('stock_adjustment.total_amount')</th>
                         <th>@lang('stock_adjustment.total_amount_recovered')</th>
                         <th>@lang('stock_adjustment.reason_for_stock_adjustment')</th>

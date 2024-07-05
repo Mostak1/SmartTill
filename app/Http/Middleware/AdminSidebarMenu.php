@@ -491,7 +491,7 @@ class AdminSidebarMenu
                 auth()->user()->can('purchase_n_sell_report.view') || auth()->user()->can('contacts_report.view')
                 || auth()->user()->can('stock_report.view') || auth()->user()->can('tax_report.view')
                 || auth()->user()->can('trending_product_report.view') || auth()->user()->can('sales_representative.view') || auth()->user()->can('register_report.view')
-                || auth()->user()->can('expense_report.view')
+                || auth()->user()->can('expense_report.view')|| auth()->user()->can('expense_report.view') || auth()->user()->can('sell_return_details.view') // Added permission check for sell return details
             ) {
                 $menu->dropdown(
                     __('report.reports'),
@@ -501,6 +501,14 @@ class AdminSidebarMenu
                                 action([\App\Http\Controllers\ReportController::class, 'getProfitLoss']),
                                 __('report.profit_loss'),
                                 ['icon' => 'fa fas fa-file-invoice-dollar', 'active' => request()->segment(2) == 'profit-loss']
+                            );
+                        }
+                        // Adding Sell Return Details Report submenu item
+                        if (auth()->user()->can('sell_return_details.view')) {
+                            $sub->url(
+                                action([\App\Http\Controllers\ReportController::class, 'getSellReturnDetails']),
+                                __('Sell & Return Details'),
+                                ['icon' => 'fa fas fa-undo', 'active' => request()->segment(2) == 'sell-return-details']
                             );
                         }
                         if (config('constants.show_report_606') == true) {

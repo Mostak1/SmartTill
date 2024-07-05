@@ -2621,7 +2621,20 @@ class ReportController extends Controller
             if (!empty($brand_id)) {
                 $query->whereIn('p.brand_id', $brand_id);
             }
+            $unit_ids = request()->get('unit_id', null);
+            if (!empty($unit_ids)) {
+                $query->whereIn('p.unit_id', $unit_ids);
+            }
 
+            $tax_ids = request()->get('tax_id', null);
+            if (!empty($tax_ids)) {
+                $query->whereIn('p.tax', $tax_ids);
+            }
+
+            $types = request()->get('type', null);
+            if (!empty($types)) {
+                $query->whereIn('p.type', $types);
+            }
             return Datatables::of($query)
                 ->editColumn('product_name', function ($row) {
                     $product_name = $row->product_name;
@@ -4244,5 +4257,343 @@ class ReportController extends Controller
         }
         $business_locations = BusinessLocation::forDropdown($business_id, true);
         return view('report.profit_loss_custom', compact('business_locations'));
+    }
+    public function getSellReturnDetails()
+    {
+        if (!auth()->user()->can('product.view') && !auth()->user()->can('product.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $business_id = request()->session()->get('user.business_id');
+        $selling_price_group_count = SellingPriceGroup::countSellingPriceGroups($business_id);
+        $is_woocommerce = $this->moduleUtil->isModuleInstalled('Woocommerce');
+
+        if (request()->ajax()) {
+            //Filter by location
+            $location_id = request()->get('location_id', null);
+            $permitted_locations = auth()->user()->permitted_locations();
+
+            $query = Product::with(['media'])
+                ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
+                ->join('units', 'products.unit_id', '=', 'units.id')
+                ->leftJoin('categories as c1', 'products.category_id', '=', 'c1.id')
+                ->leftJoin('categories as c2', 'products.sub_category_id', '=', 'c2.id')
+                ->leftJoin('tax_rates', 'products.tax', '=', 'tax_rates.id')
+                ->join('variations as v', 'v.product_id', '=', 'products.id')
+                ->leftJoin('variation_location_details as vld', function ($join) use ($permitted_locations) {
+                    $join->on('vld.variation_id', '=', 'v.id');
+                    if ($permitted_locations != 'all') {
+                        $join->whereIn('vld.location_id', $permitted_locations);
+                    }
+                })
+                ->whereNull('v.deleted_at')
+                ->where('products.business_id', $business_id)
+                ->where('products.type', '!=', 'modifier');
+
+            if (!empty($location_id) && $location_id != 'none') {
+                if ($permitted_locations == 'all' || in_array($location_id, $permitted_locations)) {
+                    $query->whereHas('product_locations', function ($query) use ($location_id) {
+                        $query->where('product_locations.location_id', '=', $location_id);
+                    });
+                }
+            } elseif ($location_id == 'none') {
+                $query->doesntHave('product_locations');
+            } else {
+                if ($permitted_locations != 'all') {
+                    $query->whereHas('product_locations', function ($query) use ($permitted_locations) {
+                        $query->whereIn('product_locations.location_id', $permitted_locations);
+                    });
+                } else {
+                    $query->with('product_locations');
+                }
+            }
+
+            $products = $query->select(
+                'products.id',
+                'products.name as product',
+                'products.type',
+                'c1.name as category',
+                'c1.id as category_id',
+                'c1.is_us_product as is_us_product',
+                'c1.description as category_description',
+                'c2.name as sub_category',
+                'units.actual_name as unit',
+                'brands.name as brand',
+                'tax_rates.name as tax',
+                'products.sku',
+                'products.image',
+                'products.enable_stock',
+                'products.is_inactive',
+                'products.not_for_selling',
+                'products.product_custom_field1',
+                'products.product_custom_field2',
+                'products.product_custom_field3',
+                'products.product_custom_field4',
+                'products.product_custom_field5',
+                'products.product_custom_field6',
+                'products.product_custom_field7',
+                'products.product_custom_field8',
+                'products.product_custom_field9',
+                'products.product_custom_field10',
+                'products.product_custom_field11',
+                'products.product_custom_field12',
+                'products.product_custom_field13',
+                'products.product_custom_field14',
+                'products.product_custom_field15',
+                'products.product_custom_field16',
+                'products.product_custom_field17',
+                'products.product_custom_field18',
+                'products.product_custom_field19',
+                'products.product_custom_field20',
+                'products.alert_quantity',
+                DB::raw('SUM(vld.qty_available) as current_stock'),
+                DB::raw('MAX(v.sell_price_inc_tax) as max_price'),
+                DB::raw('MAX(v.foreign_s_price_inc_tex) as max_foreign_s_price'),
+                DB::raw('MIN(v.sell_price_inc_tax) as min_price'),
+                DB::raw('MAX(v.dpp_inc_tax) as max_purchase_price'),
+                DB::raw('MAX(v.foreign_p_price_inc_tex) as max_foreign_p_price'),
+                DB::raw('MAX(v.currency_rate) as foreign_currency_rate'),
+                DB::raw('MIN(v.dpp_inc_tax) as min_purchase_price')
+            );
+
+            //if woocomerce enabled add field to query
+            if ($is_woocommerce) {
+                $products->addSelect('woocommerce_disable_sync');
+            }
+
+            $products->groupBy('products.id');
+
+            $types = request()->get('type', null);
+            if (!empty($types)) {
+                $products->whereIn('products.type', $types);
+            }
+
+            $category_ids = request()->get('category_id', null);
+            if (!empty($category_ids)) {
+                $products->whereIn('products.category_id', $category_ids);
+            }
+
+            $brand_ids = request()->get('brand_id', null);
+            if (!empty($brand_ids)) {
+                $products->whereIn('products.brand_id', $brand_ids);
+            }
+
+            $unit_ids = request()->get('unit_id', null);
+            if (!empty($unit_ids)) {
+                $products->whereIn('products.unit_id', $unit_ids);
+            }
+
+            $tax_ids = request()->get('tax_id', null);
+            if (!empty($tax_ids)) {
+                $products->whereIn('products.tax', $tax_ids);
+            }
+
+            $active_state = request()->get('active_state', null);
+            if ($active_state == 'active') {
+                $products->Active();
+            }
+            if ($active_state == 'inactive') {
+                $products->Inactive();
+            }
+            $not_for_selling = request()->get('not_for_selling', null);
+            if ($not_for_selling == 'true') {
+                $products->ProductNotForSales();
+            }
+
+            $woocommerce_enabled = request()->get('woocommerce_enabled', 0);
+            if ($woocommerce_enabled == 1) {
+                $products->where('products.woocommerce_disable_sync', 0);
+            }
+
+            if (!empty(request()->get('repair_model_id'))) {
+                $products->where('products.repair_model_id', request()->get('repair_model_id'));
+            }
+
+            $stock_status = request()->get('stock_status', null);
+            if (!empty($stock_status)) {
+                if ($stock_status == 'in_stock') {
+                    $products->having(DB::raw('SUM(vld.qty_available)'), '>', 0);
+                } elseif ($stock_status == 'out_of_stock') {
+                    $products->having(DB::raw('SUM(vld.qty_available)'), '<=', 0);
+                }
+            }
+
+            $start_date = request()->get('start_date');
+            $end_date = request()->get('end_date');
+            if (!empty($start_date) && !empty($end_date)) {
+                $products->where('t.transaction_date', '>=', $start_date)
+                    ->where('t.transaction_date', '<=', $end_date);
+            }
+
+            return Datatables::of($products)
+                ->addColumn(
+                    'product_locations',
+                    function ($row) {
+                        return $row->product_locations->implode('name', ', ');
+                    }
+                )
+                ->editColumn('category', '{{$category}} @if(!empty($sub_category))<br/> -- {{$sub_category}}@endif')
+                ->addColumn(
+                    'action',
+                    function ($row) use ($selling_price_group_count) {
+                        $html =
+                            '<div class="btn-group"><button type="button" class="btn btn-info dropdown-toggle btn-xs" data-toggle="dropdown" aria-expanded="false">' . __('messages.actions') . '<span class="caret"></span><span class="sr-only">Toggle Dropdown</span></button><ul class="dropdown-menu dropdown-menu-left" role="menu"><li><a href="' . action([\App\Http\Controllers\LabelsController::class, 'show']) . '?product_id=' . $row->id . '" data-toggle="tooltip" title="' . __('lang_v1.label_help') . '"><i class="fa fa-barcode"></i> ' . __('barcode.labels') . '</a></li>';
+
+                        if (auth()->user()->can('product.view')) {
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'view'], [$row->id]) . '" class="view-product"><i class="fa fa-eye"></i> ' . __('messages.view') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('product.update')) {
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'edit'], [$row->id]) . '"><i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('product.delete')) {
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'destroy'], [$row->id]) . '" class="delete-product"><i class="fa fa-trash"></i> ' . __('messages.delete') . '</a></li>';
+                        }
+
+                        if ($row->is_inactive == 1) {
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'activate'], [$row->id]) . '" class="activate-product"><i class="fas fa-check-circle"></i> ' . __('lang_v1.reactivate') . '</a></li>';
+                        }
+
+                        $html .= '<li class="divider"></li>';
+
+                        if ($row->enable_stock == 1 && auth()->user()->can('product.opening_stock')) {
+                            $html .=
+                                '<li><a href="#" data-href="' . action([\App\Http\Controllers\OpeningStockController::class, 'add'], ['product_id' => $row->id]) . '" class="add-opening-stock"><i class="fa fa-database"></i> ' . __('lang_v1.add_edit_opening_stock') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('product.view')) {
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'productStockHistory'], [$row->id]) . '"><i class="fas fa-history"></i> ' . __('lang_v1.product_stock_history') . '</a></li>';
+                        }
+
+                        if (auth()->user()->can('product.create')) {
+                            if ($selling_price_group_count > 0) {
+                                $html .=
+                                    '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'addSellingPrices'], [$row->id]) . '"><i class="fas fa-money-bill-alt"></i> ' . __('lang_v1.add_selling_price_group_prices') . '</a></li>';
+                            }
+
+                            $html .=
+                                '<li><a href="' . action([\App\Http\Controllers\ProductController::class, 'create'], ['d' => $row->id]) . '"><i class="fa fa-copy"></i> ' . __('lang_v1.duplicate_product') . '</a></li>';
+                        }
+
+                        if (!empty($row->media->first())) {
+                            $html .=
+                                '<li><a href="' . $row->media->first()->display_url . '" download="' . $row->media->first()->display_name . '"><i class="fas fa-download"></i> ' . __('lang_v1.product_brochure') . '</a></li>';
+                        }
+
+                        $html .= '</ul></div>';
+
+                        return $html;
+                    }
+                )
+                ->editColumn('product', function ($row) use ($is_woocommerce) {
+                    $product = $row->is_inactive == 1 ? $row->product . ' <span class="label bg-gray">' . __('lang_v1.inactive') . '</span>' : $row->product;
+
+                    $product = $row->not_for_selling == 1 ? $product . ' <span class="label bg-gray">' . __('lang_v1.not_for_selling') .
+                        '</span>' : $product;
+
+                    if ($is_woocommerce && !$row->woocommerce_disable_sync) {
+                        $product = $product . '<br><i class="fab fa-wordpress"></i>';
+                    }
+
+                    return $product;
+                })
+                ->editColumn('image', function ($row) {
+                    return '<div style="display: flex;"><img src="' . $row->image_url . '" alt="Product image" class="product-thumbnail-small"></div>';
+                })
+                ->editColumn('type', '@lang("lang_v1." . $type)')
+                ->addColumn('mass_delete', function ($row) {
+                    return  '<input type="checkbox" class="row-select" value="' . $row->id . '">';
+                })
+                ->editColumn('current_stock', function ($row) {
+                    if ($row->enable_stock) {
+                        $stock = $this->productUtil->num_f($row->current_stock, false, null, true);
+
+                        return $stock . ' ' . $row->unit;
+                    } else {
+                        return '--';
+                    }
+                })
+                ->addColumn(
+                    'purchase_price',
+                    '<div style="white-space: nowrap;">@if($is_us_product == 1) 
+                    $ {{number_format($max_foreign_p_price, 2)}} </br>
+                    ৳ {{number_format($max_purchase_price, 2)}} <br>
+                    $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
+                     @else
+                      @format_currency($min_purchase_price) @if($max_purchase_price != $min_purchase_price && $type == "variable") -  @format_currency($max_purchase_price)@endif </div>  
+                      @endif <span></span>
+                    '
+                )
+                ->addColumn(
+                    'selling_price',
+                    '<div style="white-space: nowrap;">@if($is_us_product == 1)
+                    $ {{number_format($max_foreign_s_price, 2)}} </br>
+                    ৳ {{number_format($min_price, 2)}} <br>
+                    $&#8644;৳ {{number_format($foreign_currency_rate, 2)}}
+                    @else
+                     @format_currency($min_price) @if($max_price != $min_price && $type == "variable") -  @format_currency($max_price)@endif </div> @endif '
+                )
+                ->filterColumn('products.sku', function ($query, $keyword) {
+                    $query->whereHas('variations', function ($q) use ($keyword) {
+                        $q->where('sub_sku', 'like', "%{$keyword}%");
+                    })
+                        ->orWhere('products.sku', 'like', "%{$keyword}%");
+                })
+                ->setRowAttr([
+                    'data-href' => function ($row) {
+                        if (auth()->user()->can('product.view')) {
+                            return  action([\App\Http\Controllers\ProductController::class, 'view'], [$row->id]);
+                        } else {
+                            return '';
+                        }
+                    },
+                ])
+                ->rawColumns(['action', 'image', 'mass_delete', 'product', 'selling_price', 'purchase_price', 'category', 'current_stock'])
+                ->make(true);
+        }
+
+        $rack_enabled = (request()->session()->get('business.enable_racks') || request()->session()->get('business.enable_row') || request()->session()->get('business.enable_position'));
+
+        $categories = Category::forDropdown($business_id, 'product');
+
+        $brands = Brands::forDropdown($business_id);
+
+        $units = Unit::forDropdown($business_id);
+
+        $tax_dropdown = TaxRate::forBusinessDropdown($business_id, false);
+        $taxes = $tax_dropdown['tax_rates'];
+
+        $business_locations = BusinessLocation::forDropdown($business_id);
+        $business_locations->prepend(('lang_v1.none'), 'none');
+
+        if ($this->moduleUtil->isModuleInstalled('Manufacturing') && (auth()->user()->can('superadmin') || $this->moduleUtil->hasThePermissionInSubscription($business_id, 'manufacturing_module'))) {
+            $show_manufacturing_data = true;
+        } else {
+            $show_manufacturing_data = false;
+        }
+
+        //list product screen filter from module
+        $pos_module_data = $this->moduleUtil->getModuleData('get_filters_for_list_product_screen');
+
+        $is_admin = $this->productUtil->is_admin(auth()->user());
+
+        return view('report.sell_return_details')
+            ->with(compact(
+                'rack_enabled',
+                'categories',
+                'brands',
+                'units',
+                'taxes',
+                'business_locations',
+                'show_manufacturing_data',
+                'pos_module_data',
+                'is_woocommerce',
+                'is_admin'
+            ));
     }
 }

@@ -26,21 +26,27 @@ $(document).ready(function() {
                     }
                 },
                 focus: function(event, ui) {
-                    if (ui.item.qty_available <= 0) {
+                    if (ui.item.qty_available < 0) {
                         return false;
                     }
                 },
                 select: function(event, ui) {
+                    let sign = $('#adjustment_sign').val();
                     if (ui.item.qty_available > 0) {
                         $(this).val(null);
                         stock_adjustment_product_row(ui.item.variation_id);
                     } else {
-                        alert(LANG.out_of_stock);
+                        if (sign =='Minus') {
+                            alert(LANG.out_of_stock);
+                        }
+                        $(this).val(null);
+                        stock_adjustment_product_row(ui.item.variation_id);
                     }
                 },
             })
             .autocomplete('instance')._renderItem = function(ul, item) {
-            if (item.qty_available <= 0) {
+                let sign = $('#adjustment_sign').val();
+            if (item.qty_available <= 0 && sign =='Minus') {
                 var string = '<li class="ui-state-disabled">' + item.name;
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
@@ -65,8 +71,10 @@ $(document).ready(function() {
         };
     }
 
-    $('select#location_id').change(function() {
-        if ($(this).val()) {
+    $('select#location_id, select#adjustment_sign').change(function() {
+        let location = $('#location_id').val();
+        let sign = $('#adjustment_sign').val();
+        if (location && sign) {
             $('#search_product_for_srock_adjustment').removeAttr('disabled');
         } else {
             $('#search_product_for_srock_adjustment').attr('disabled', 'disabled');
@@ -74,7 +82,7 @@ $(document).ready(function() {
         $('table#stock_adjustment_product_table tbody').html('');
         $('#product_row_index').val(0);
         update_table_total();
-    });
+    });    
 
     $(document).on('change', 'input.product_quantity', function() {
         update_table_row($(this).closest('tr'));
@@ -125,6 +133,7 @@ $(document).ready(function() {
             { data: 'ref_no', name: 'ref_no' },
             { data: 'location_name', name: 'BL.name' },
             { data: 'adjustment_type', name: 'adjustment_type' },
+            { data: 'adjustment_sign', name: 'adjustment_sign' },
             { data: 'final_total', name: 'final_total' },
             { data: 'total_amount_recovered', name: 'total_amount_recovered' },
             { data: 'additional_notes', name: 'additional_notes' },
@@ -166,10 +175,11 @@ $(document).ready(function() {
 function stock_adjustment_product_row(variation_id) {
     var row_index = parseInt($('#product_row_index').val());
     var location_id = $('select#location_id').val();
+    var sign = $('#adjustment_sign').val();
     $.ajax({
         method: 'POST',
         url: '/stock-adjustments/get_product_row',
-        data: { row_index: row_index, variation_id: variation_id, location_id: location_id },
+        data: { row_index: row_index, variation_id: variation_id, location_id: location_id,sign:sign },
         dataType: 'html',
         success: function(result) {
             $('table#stock_adjustment_product_table tbody').append(result);

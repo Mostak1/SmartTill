@@ -806,6 +806,50 @@ class SellReturnController extends Controller
                     $sells->whereIn('p.brand_id', $brand_ids);
                 }
             }
+            if ($request->has('category_id')) {
+                $category_ids = $request->get('category_id');
+                if (!empty($category_ids)) {
+                    $sells->whereIn('p.category_id', $category_ids);
+                }
+            }
+    
+            if ($request->has('brand_id')) {
+                $brand_ids = $request->get('brand_id');
+                if (!empty($brand_ids)) {
+                    $sells->whereIn('p.brand_id', $brand_ids);
+                }
+            }
+
+            $start_date = $request->get('start_date');
+            $end_date = $request->get('end_date');
+            if (!empty($start_date) && !empty($end_date)) {
+                $sells->where('transactions.transaction_date', '>=', $start_date)
+                    ->where('transactions.transaction_date', '<=', $end_date);
+            }
+
+            $unit_ids = request()->get('unit_id', null);
+            if (!empty($unit_ids)) {
+                $sells->whereIn('p.unit_id', $unit_ids);
+            }
+
+            $tax_ids = request()->get('tax_id', null);
+            if (!empty($tax_ids)) {
+                $sells->whereIn('p.tax', $tax_ids);
+            }
+
+            $types = request()->get('type', null);
+            if (!empty($types)) {
+                $sells->whereIn('p.type', $types);
+            }
+
+            $stock_status = request()->get('stock_status', null);
+            if (!empty($stock_status)) {
+                if ($stock_status == 'in_stock') {
+                    $sells->having(DB::raw('SUM(vld.qty_available)'), '>', 0);
+                } elseif ($stock_status == 'out_of_stock') {
+                    $sells->having(DB::raw('SUM(vld.qty_available)'), '<=', 0);
+                }
+            }
             $sells->groupBy('TSL.id');
 
             return Datatables::of($sells)
