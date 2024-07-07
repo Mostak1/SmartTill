@@ -4172,6 +4172,46 @@ class ReportController extends Controller
                     'CG.name as customer_group'
                 )
                 ->groupBy('transaction_payments.id');
+            $query3 = TransactionSellLine::join(
+                'transactions as t',
+                'transaction_sell_lines.transaction_id',
+                '=',
+                't.id'
+            )
+                ->join(
+                    'variations as v',
+                    'transaction_sell_lines.variation_id',
+                    '=',
+                    'v.id'
+                )
+                ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
+                ->join('products as p', 'pv.product_id', '=', 'p.id')
+                ->leftjoin('units as u', 'p.unit_id', '=', 'u.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
+                ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
+                ->where('t.business_id', $business_id)
+                ->where('t.type', 'sell')
+                ->where('t.status', 'final')
+                ->select(
+                    'p.name as product_name',
+                    'p.enable_stock',
+                    'cat.name as category_name',
+                    'cat.id as catid',
+                    'b.name as brand_name',
+                    'p.type as product_type',
+                    'pv.name as product_variation',
+                    'v.name as variation_name',
+                    'v.sub_sku',
+                    't.id as transaction_id',
+                    't.transaction_date as transaction_date',
+                    'transaction_sell_lines.parent_sell_line_id',
+                    DB::raw('DATE_FORMAT(t.transaction_date, "%Y-%m-%d") as formated_date'),
+                    DB::raw('SUM(transaction_sell_lines.quantity) as total_qty_sold'),
+                    'u.short_name as unit',
+                    DB::raw('SUM((transaction_sell_lines.quantity) * transaction_sell_lines.unit_price_inc_tax) as subtotal'),
+                    DB::raw('SUM((transaction_sell_lines.quantity) * transaction_sell_lines.unit_price_before_discount) as with_discount_subtotal'),
+                    DB::raw('SUM((transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) * transaction_sell_lines.unit_price_inc_tax) as with_sellreturn_subtotal')
+                );
             // $data['closing_stock'] = $data['closing_stock'] - $data['total_sell_return'];
             // $payment_query = TransactionPayment::with('transation')->get();
             $query = TransactionSellLine::join('transactions as sale', 'transaction_sell_lines.transaction_id', '=', 'sale.id')
@@ -4182,7 +4222,7 @@ class ReportController extends Controller
                     '=',
                     'PL.id'
                 )->leftJoin('transaction_payments as TP', 'sale.id', '=', 'TP.transaction_id')
-                ->whereIn('sale.type', ['sell','sell_return'])
+                ->whereIn('sale.type', ['sell'])
                 ->where('sale.status', 'final')
                 ->join('products as P', 'transaction_sell_lines.product_id', '=', 'P.id')
                 ->where('sale.business_id', $business_id)
@@ -4214,16 +4254,41 @@ class ReportController extends Controller
             if (!empty(request()->location_id)) {
                 $query->where('sale.location_id', request()->location_id);
                 $query1->where('t.location_id', request()->location_id);
+                $$query3->where('t.location_id', request()->location_id);
                 $queryReturn->where('t.location_id', request()->location_id);
             }
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
-                
                 $start = request()->start_date;
                 $end = request()->end_date;
                 $query->whereDate('sale.transaction_date', '>=', $start)
                     ->whereDate('sale.transaction_date', '<=', $end);
+                $query3->whereDate('t.transaction_date', '>=', $start)
+                    ->whereDate('t.transaction_date', '<=', $end);
                 $query1->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
-                $queryReturn->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
+                $queryReturn->whereDate('t.transaction_date', '>=', $start)
+                ->whereDate('t.transaction_date', '<=', $end);
+            }
+            $sellProduct = $query3
+            ->groupBy('v.id')
+            ->groupBy('formated_date')->get();
+            $productByCategory = [];
+            foreach ($sellProduct as $value) {
+                if (isset($productByCategory[$value->catid])) {
+                    $productByCategory[$value->catid]['total_qty_sold'] += $value->total_qty_sold;
+                    $productByCategory[$value->catid]['with_discount_subtotal'] += $value->with_discount_subtotal;
+                    $productByCategory[$value->catid]['with_sellreturn_subtotal'] += $value->with_sellreturn_subtotal;
+                    $productByCategory[$value->catid]['subtotal'] += $value->subtotal;
+                } else {
+                    $productByCategory[$value->catid] = [
+                        'id' => $value->catid,
+                        'category_name' => $value->category_name,
+                        'total_qty_sold' => $value->total_qty_sold,
+                        'selling_price' => $value->selling_price,
+                        'with_discount_subtotal' => $value->with_discount_subtotal,
+                        'with_sellreturn_subtotal' => $value->with_sellreturn_subtotal,
+                        'subtotal' => $value->subtotal,
+                    ];
+                }
             }
             $payments = $query1->get();
             $payReturn = $queryReturn->get();
@@ -4239,6 +4304,7 @@ class ReportController extends Controller
                 ->addSelect('sale.payment_status as payment_status')
                 ->addSelect('sale.total_before_tax as saleTotalBeforeTax')
                 ->addSelect('sale.final_total as trans_final_amount')
+                ->addSelect('sale.shipping_charges as shipping_charges')
                 ->groupBy('sale.id')->get();
             $transaction_types = [
                 'purchase_return', 'sell_return',
@@ -4253,7 +4319,7 @@ class ReportController extends Controller
 
             $total_purchase_return_inc_tax = $transaction_totals['total_purchase_return_inc_tax'];
             $total_sell_return_inc_tax = $transaction_totals['total_sell_return_inc_tax'];
-            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments','payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id'))->render();
+            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments', 'payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id', 'sellProduct','productByCategory'))->render();
         }
         $business_locations = BusinessLocation::forDropdown($business_id, true);
         return view('report.profit_loss_custom', compact('business_locations'));

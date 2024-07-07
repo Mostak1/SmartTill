@@ -9,7 +9,6 @@
 
 <div class="col-xs-6">
     @php
-        $line_discount = 0;
         $total_amount = 0;
         $total_amount_with_discount = 0;
         $cash = 0;
@@ -27,9 +26,16 @@
         $partial_total = 0;
         $transactionFinalTotal = 0;
         $total_discount = 0;
-        foreach ($incomeByCategories as $item) {
-            $line_discount += $item->selling_price - $item->selling_price_after_discount;
-            $total_amount_with_discount += $item->selling_price;
+        
+        $totalWithDiscount = 0;
+        $totalWithoutdiscount=0;
+        $totalWithoutdiscountWithSellReturn = 0;
+        $line_discount = 0;
+        foreach ($productByCategory as $item) {
+            $line_discount += $item['with_discount_subtotal'] - $item['subtotal'];
+            $totalWithDiscount += $item['with_discount_subtotal'];
+            $totalWithoutdiscount += $item['subtotal'];
+            $totalWithoutdiscountWithSellReturn += $item['with_sellreturn_subtotal'];
         }
         $payMethod = [];
         foreach ($totalByMethod as $item) {
@@ -61,6 +67,7 @@
                     'id' => $item->saleId,
                     'total_amount' => $item->saleTotalBeforeTax,
                     'final_total' => $item->trans_final_amount,
+                    'shipping_charges' => $item->shipping_charges,
                     'payment_status' => $item->payment_status,
                     'selling_price' => $item->selling_price,
                     'sale_line_total' => $item->selling_price_after_discount,
@@ -75,7 +82,7 @@
         foreach ($transactions as $transaction) {
             $transactionTotal += $transaction['selling_price'];
             $transactionFinalTotal += $transaction['final_total'];
-            $total_discount += $transaction['total_amount'] - $transaction['final_total'];
+            $total_discount += $transaction['total_amount']+$transaction['shipping_charges'] - $transaction['final_total'];
         }
         foreach ($payments as $item) {
             if ($item->method == 'cash') {
@@ -117,16 +124,30 @@
             </ul>
         @endforeach --}}
         <table class="table">
-            @foreach ($incomeByCategories as $item)
+            {{-- <ul>
+                @foreach ($productByCategory as $item)
+                    <li>
+                        <span>{{ $item['category_name'] }}</span>
+                        <ol>
+                            <li>Total:- <span>{{ $item['subtotal'] }} </span></li>
+                            <li>With-sell-return:- <span>{{ $item['with_sellreturn_subtotal'] }}</span></li>
+                            <li> With discount:- <span>{{ $item['with_discount_subtotal'] }}</span> <br></li>
+                        </ol>
+                    </li>
+                @endforeach
+                <h4>{{$totalWithoutdiscountWithSellReturn}} --- {{$totalWithDiscount}}</h4>
+            </ul> --}}
+            @foreach ($productByCategory as $item)
                 <tr>
-                    <th>{{ $item->category ?? __('lang_v1.uncategorized') }} <br>
+                    <th>{{ $item['category_name'] ?? __('lang_v1.uncategorized') }} <br>
                         <small class="text-muted">Income With
                             discount:
-                            {{ number_format($item->selling_price_after_discount, 2) }}
+                            {{ $item['subtotal'] }}
                         </small> <br>
                     </th>
                     <td>
-                        <span class="display_currency" data-currency_symbol="true">{{ $item->selling_price }}</span>
+                        <span class="display_currency"
+                            data-currency_symbol="true">{{ $item['with_discount_subtotal'] }}</span>
 
                     </td>
                 </tr>
@@ -150,7 +171,7 @@
                 </th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] }}</span>
+                        data-currency_symbol="true">{{ $totalWithDiscount + $duePayment + $data['total_sell_shipping_charge'] }}</span>
                 </td>
             </tr>
             <tr>
@@ -162,7 +183,7 @@
                 </th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $transactionTotal + $duePayment + $data['total_sell_shipping_charge'] - $total_discount - ($partial_total - $partial_amount) - $total_sell_return_inc_tax-$line_discount }}</span>
+                        data-currency_symbol="true">{{ $totalWithDiscount + $duePayment + $data['total_sell_shipping_charge'] - $total_discount - ($partial_total - $partial_amount) - $total_sell_return_inc_tax - $line_discount }}</span>
                 </td>
             </tr>
         </table>
@@ -172,7 +193,7 @@
     @component('components.widget')
         <table class="table table-striped">
             <tr>
-                <th>Regular Discount <br><small class="text-muted"></small></th>
+                <th>Campaign Discount <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency" data-currency_symbol="true">{{ $line_discount }}</span>
                 </td>
@@ -186,7 +207,7 @@
             </tr>
             <tr>
                 <th>
-                    Total Sale Return <br>
+                    Sale Return <br>
                     <small class="text-muted">
                         Cash = {{ $re_cash }} <br>
                         Bkash = {{ $re_bkash }}<br>
@@ -200,10 +221,17 @@
             </tr>
 
             <tr>
-                <th>Total Due Remaining <br><small class="text-muted"></small></th>
+                <th>Due Remaining <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency"
                         data-currency_symbol="true">{{ $partial_total - $partial_amount }}</span>
+                </td>
+            </tr>
+            <tr>
+                <th>Total <br><small class="text-muted"></small></th>
+                <td>
+                    <span class="display_currency"
+                        data-currency_symbol="true">{{ $partial_total - $partial_amount+$total_sell_return_inc_tax+$total_discount+$line_discount }}</span>
                 </td>
             </tr>
 
@@ -213,28 +241,6 @@
 <br>
 {{-- <div class="col-md-12">
     @component('components.widget')
-        <h3 class="text-muted mb-0"> Transection sell line transactionTotal: {{ $transactionTotal }}
-            total_amount:{{ $total_amount }} partial_amount: {{ $partial_amount }} partial_total:{{ $partial_total }}
-        </h3>
-        <div class="">
-            <table class="table table-striped">
-                @foreach ($totalbyTransaction as $item)
-                    <tr>
-                        <th> {{ $item->saleId }} -
-                            <span class="display_currency" data-currency_symbol="true">
-
-                                {{ $item->selling_price_after_discount }}
-                            </span>
-                        </th>
-                        <td>
-                            <span class="display_currency" data-currency_symbol="true">{{ $item->total_amount }}</span>
-                        </td>
-                        <td> <span class="display_currency"
-                                data-currency_symbol="true">{{ $item->total_amount - $item->selling_price_after_discount }}</span>
-                        </td>
-                    </tr>
-                @endforeach
-        </div>
         <h3 class="text-muted mb-0">Transection </h3>
         <table class="table table-striped" border="1">
             <thead>
@@ -248,21 +254,21 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($transactions as $transaction)
+                @foreach ($sellProduct as $item)
                     <tr>
-                        <td>{{ $transaction['id'] }}</td>
-                        <td>{{ number_format($transaction['selling_price'], 2) }}</td>
-                        <td>{{ number_format($transaction['sale_line_total'], 2) }}</td>
-                        <td>{{ number_format($transaction['total_amount'], 2) }}</td>
-                        <td>{{ number_format($transaction['final_total'], 2) }}</td>
-                        <td>{{ $transaction['payment_status'] }}</td>
+                        <td>{{ $item->product_name }}</td>
+                        <td>{{ $item->catid }}</td>
+                        <td>{{ $item->category_name }}</td>
+                        <td>{{ $item->transaction_id }}</td>
+                        <td>{{ $item->subtotal }}</td>
+                        <td>{{ $item->total_qty_sold }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     @endcomponent
-</div>
-<div class="col-md-12">
+</div> --}}
+{{-- <div class="col-md-12">
     @component('components.widget')
         <h3 class="text-muted mb-0"> Payments
         </h3>
