@@ -308,6 +308,9 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/procurement-report', [ReportController::class, 'showProcurementReportForm'])->name('procurement.report.form');
     Route::get('/reports/procurement-report/data', [ReportController::class, 'getProcurementReportData'])->name('procurement.report.data');
 
+    Route::get('/sell-details', [ReportController::class, 'sellDetails'])->name('sell.details');
+    Route::get('/return-details', [ReportController::class, 'returnDetails'])->name('return.details');
+    
     Route::get('business-location/activate-deactivate/{location_id}', [BusinessLocationController::class, 'activateDeactivateLocation']);
     //Business Location Settings...
     Route::prefix('business-location/{location_id}')->name('location.')->group(function () {

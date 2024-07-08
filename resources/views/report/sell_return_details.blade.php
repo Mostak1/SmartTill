@@ -100,25 +100,6 @@
         </div>
     </div>
 @endcan
-<input type="hidden" id="is_rack_enabled" value="{{$rack_enabled}}">
-
-<div class="modal fade product_modal" tabindex="-1" role="dialog" 
-    aria-labelledby="gridSystemModalLabel">
-</div>
-
-<div class="modal fade" id="view_product_modal" tabindex="-1" role="dialog" 
-    aria-labelledby="gridSystemModalLabel">
-</div>
-
-<div class="modal fade" id="opening_stock_modal" tabindex="-1" role="dialog" 
-    aria-labelledby="gridSystemModalLabel">
-</div>
-
-@if($is_woocommerce)
-    @include('product.partials.toggle_woocommerce_sync_modal')
-@endif
-@include('product.partials.edit_product_location_modal')
-
 </section>
 <!-- /.content -->
 
@@ -132,17 +113,17 @@ $(document).ready(function() {
     // Initialize daterangepicker
     $('#product_sr_date_filter').daterangepicker(dateRangeSettings, function(start, end) {
         $('#product_sr_date_filter').val(
-            start.format(moment_date_format) + ' ~ ' + end.format(moment_date_format)
-        );
-        product_sell_table.ajax.reload();
-        sell_return_table.ajax.reload();
-    });
+                start.format('YYYY-MM-DD') + ' ~ ' + end.format('YYYY-MM-DD')
+            );
+            product_sell_table.ajax.reload();
+            sell_return_table.ajax.reload();
+        });
 
-    $('#product_sr_date_filter').on('cancel.daterangepicker', function(ev, picker) {
-        $('#product_sr_date_filter').val('');
-        product_sell_table.ajax.reload();
-        sell_return_table.ajax.reload();
-    });
+        $('#product_sr_date_filter').on('cancel.daterangepicker', function(ev, picker) {
+            $('#product_sr_date_filter').val('');
+            product_sell_table.ajax.reload();
+            sell_return_table.ajax.reload();
+        });
 
     // DataTable initialization for product sell
     var product_sell_table = $('#product_sell_table').DataTable({
@@ -188,6 +169,7 @@ $(document).ready(function() {
             { data: 'sub_sku', name: 'v.sub_sku' },
             { data: 'category_name', name: 'cat.name' },
             { data: 'brand_name', name: 'b.name' },
+            { data: 'transaction_date', name: 'transaction_date' },
             { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
             { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
             { data: 'subtotal', name: 'subtotal', searchable: false },
@@ -196,13 +178,13 @@ $(document).ready(function() {
             let api = this.api();
 
             // Calculate the total quantity sold
-            let totalQtySold = api.column(5, { page: 'current' }).data().reduce(function(a, b) {
+            let totalQtySold = api.column(6, { page: 'current' }).data().reduce(function(a, b) {
                 let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
                 return parseFloat(a) + numericValueB;
             }, 0);
 
             // Calculate the total sold subtotal
-            let totalSubtotal = api.column(6, { page: 'current' }).data().reduce(function(a, b) {
+            let totalSubtotal = api.column(7, { page: 'current' }).data().reduce(function(a, b) {
                 let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
                 return parseFloat(a) + numericValueB;
             }, 0);
@@ -217,6 +199,7 @@ $(document).ready(function() {
     // Trigger DataTable reload on filter change
     $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status').change(function() {
         product_sell_table.draw();
+        
     });
 
     // DataTable initialization for sell return
@@ -268,6 +251,7 @@ $(document).ready(function() {
             { data: 'sku', name: 'sku' },
             { data: 'category', name: 'category' },
             { data: 'brand', name: 'brand' },
+            { data: 'transaction_date', name: 'transaction_date' },
             { data: 'parent_sale', name: 'T1.invoice_no' },
             { data: 'payment_status', name: 'payment_status' },
             { data: 'current_stock', name: 'current_stock' },
@@ -295,114 +279,13 @@ $(document).ready(function() {
         sell_return_table.draw();
     });
 
-    // Additional event listeners and handlers
-
-    $('table#product_table tbody').on('click', 'a.activate-product', function(e) {
-        e.preventDefault();
-        var href = $(this).attr('href');
-        $.ajax({
-            method: "get",
-            url: href,
-            dataType: "json",
-            success: function(result) {
-                if (result.success == true) {
-                    toastr.success(result.msg);
-                    product_table.ajax.reload();
-                    product_sell_table.ajax.reload();
-                    sell_return_table.ajax.reload();
-                } else {
-                    toastr.error(result.msg);
-                }
-            }
-        });
-    });
-
     $(document).on('change', '#product_list_filter_type, #product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_unit_id, #product_list_filter_tax_id, #product_list_filter_stock_status, #location_id, #active_state, #repair_model_id',
         function() {
-            if ($("#product_list_tab").hasClass('active')) {
-                product_table.ajax.reload();
-            }
-            if ($("#product_stock_report").hasClass('active')) {
-                stock_report_table.ajax.reload();
-            }
-            if ($("#product_sell_tab").hasClass('active')) {
-                product_sell_table.ajax.reload();
-            }
-            if ($("#product_return_tab").hasClass('active')) {
-                sell_return_table.ajax.reload();
-            }
+            product_sell_table.ajax.reload();
+            sell_return_table.ajax.reload();
         });
 
-    $('#product_location').select2({ dropdownParent: $('#product_location').closest('.modal') });
-
-    @if($is_woocommerce)
-        $(document).on('click', '.toggle_woocomerce_sync', function(e) {
-            e.preventDefault();
-            var selected_rows = getSelectedRows();
-            if (selected_rows.length > 0) {
-                $('#woocommerce_sync_modal').modal('show');
-                $("input#woocommerce_products_sync").val(selected_rows);
-            } else {
-                $('input#selected_products').val('');
-                swal('@lang("lang_v1.no_row_selected")');
-            }
-        });
-
-        $(document).on('submit', 'form#toggle_woocommerce_sync_form', function(e) {
-            e.preventDefault();
-            var url = $('form#toggle_woocommerce_sync_form').attr('action');
-            var method = $('form#toggle_woocommerce_sync_form').attr('method');
-            var data = $('form#toggle_woocommerce_sync_form').serialize();
-            var ladda = Ladda.create(document.querySelector('.ladda-button'));
-            ladda.start();
-            $.ajax({
-                method: method,
-                dataType: "json",
-                url: url,
-                data: data,
-                success: function(result) {
-                    ladda.stop();
-                    if (result.success) {
-                        $("input#woocommerce_products_sync").val('');
-                        $('#woocommerce_sync_modal').modal('hide');
-                        toastr.success(result.msg);
-                        product_table.ajax.reload();
-                        product_sell_table.ajax.reload();
-                        sell_return_table.ajax.reload();
-                    } else {
-                        toastr.error(result.msg);
-                    }
-                }
-            });
-        });
-    @endif
 });
 
-$(document).on('click', '.update_product_location', function(e) {
-    e.preventDefault();
-    var selected_rows = getSelectedRows();
-
-    if (selected_rows.length > 0) {
-        $('input#selected_products').val(selected_rows);
-        var type = $(this).data('type');
-        var modal = $('#edit_product_location_modal');
-        if (type == 'add') {
-            modal.find('.remove_from_location_title').addClass('hide');
-            modal.find('.add_to_location_title').removeClass('hide');
-        } else if (type == 'remove') {
-            modal.find('.add_to_location_title').addClass('hide');
-            modal.find('.remove_from_location_title').removeClass('hide');
-        }
-
-        modal.modal('show');
-        modal.find('#product_location').select2({ dropdownParent: modal });
-        modal.find('#product_location').val('').change();
-        modal.find('#update_type').val(type);
-        modal.find('#products_to_update_location').val(selected_rows);
-    } else {
-        $('input#selected_products').val('');
-        swal('@lang("lang_v1.no_row_selected")');
-    }
-});
-    </script>
+</script>
 @endsection

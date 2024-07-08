@@ -69,22 +69,40 @@
                     .endDate.format('YYYY-MM-DD');
                 var location_id = $('#profit_loss_location_filter').val();
                 updateProfitLossCustom(start, end, location_id, selector = null);
+                updateSellDetailsLink();
             });
+
+            var dateRange = $('#profit_loss_date_filter').val();
+            console.log(dateRange);
+            function updateSellDetailsLink() {
+                var dateRange = $('#profit_loss_date_filter').val();
+                var locationId = $('#profit_loss_location_filter').val();
+                var categoryIds = $('.category_id').val();
+                var link = "/sell-details?date_range=" + dateRange + "&location_id=" + locationId +
+                    "&category_id=" + categoryIds;
+                $('.sell_details_link').attr('href', link);
+                var link = "/return-details?date_range=" + dateRange + "&location_id=" + locationId +
+                    "&category_id=" + categoryIds;
+                $('#return_details_link').attr('href', link);
+            }
+
             function updateProfitLossCustom(start = null, end = null, location_id = null, selector = null) {
                 if (start == null) {
                     var start = moment().startOf('day').format('YYYY-MM-DD');
                 }
                 if (end == null) {
                     var end = moment().endOf('day').format('YYYY-MM-DD');
-                        console.log(end);
+                    console.log(end);
                 }
                 if (location_id == null) {
                     var location_id = $('#profit_loss_location_filter').val();
                 }
+                var dateRange = $('#profit_loss_date_filter').val();
                 var data = {
                     start_date: start,
                     end_date: end,
-                    location_id: location_id
+                    location_id: location_id,
+                    dateRange:dateRange
                 };
                 selector = selector == null ? $('#pl_data_div1') : selector;
                 var loader = '<div class="text-center">' + __fa_awesome() + '</div>';

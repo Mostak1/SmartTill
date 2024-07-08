@@ -74,7 +74,7 @@
                 ];
             }
             $total_amount += $item->final_amount;
-            if ($item->payment_status == 'partial') {
+            if ($item->payment_status == 'partial' || $item->payment_status == 'due') {
                 $partial_amount += $item->tp_amount;
                 $partial_total += $item->final_amount;
             }
@@ -139,10 +139,14 @@
             </ul> --}}
             @foreach ($productByCategory as $item)
                 <tr>
-                    <th>{{ $item['category_name'] ?? __('lang_v1.uncategorized') }} <br>
+                    <th><a href="#" class="sell_details_link" >{{ $item['category_name'] ?? __('lang_v1.uncategorized') }}</a>
+                        <br>
                         <small class="text-muted">Income With
                             discount:
                             {{ $item['subtotal'] }}
+                            id: {{ $item['id'] }}
+                            <input type="text" class="category_id" value="{{$item['id']}}">
+                            
                         </small> <br>
                     </th>
                     <td>
@@ -239,71 +243,4 @@
     @endcomponent
 </div>
 <br>
-{{-- <div class="col-md-12">
-    @component('components.widget')
-        <h3 class="text-muted mb-0">Transection </h3>
-        <table class="table table-striped" border="1">
-            <thead>
-                <tr>
-                    <th>Transaction ID</th>
-                    <th>Selling Price</th>
-                    <th>Sale Line Total After Discount</th>
-                    <th>Total Amount</th>
-                    <th>Final Total</th>
-                    <th>payment_status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($sellProduct as $item)
-                    <tr>
-                        <td>{{ $item->product_name }}</td>
-                        <td>{{ $item->catid }}</td>
-                        <td>{{ $item->category_name }}</td>
-                        <td>{{ $item->transaction_id }}</td>
-                        <td>{{ $item->subtotal }}</td>
-                        <td>{{ $item->total_qty_sold }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endcomponent
-</div> --}}
-{{-- <div class="col-md-12">
-    @component('components.widget')
-        <h3 class="text-muted mb-0"> Payments
-        </h3>
 
-
-        <table class="table table-striped" border="1">
-            <thead>
-                <tr>
-                    <th>Transaction ID</th>
-                    <th>Amount</th>
-                    <th>Pay Date</th>
-                    <th>Pay Method</th>
-                    <th>Return Product</th>
-                    <th>Payment Referance</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($payments as $payment)
-                    <tr>
-                        <td>{{ $payment->transaction_id }}</td>
-                        <td>{{ $payment->amount }}</td>
-                        <td>{{ $payment->paid_on }}</td>
-                        <td>{{ $payment->method }}</td>
-                        <td>{{ $payment->is_return }}</td>
-                        <td>{{ $payment->payment_ref_no }}</td>
-                    <tr>
-                        <td>{{ $payment->transaction_id }}</td>
-                        <td>{{ $payment->amount }}</td>
-                        <td>{{ $payment->paid_on }}</td>
-                        <td>{{ $payment->method }}</td>
-                        <td>{{ $payment->is_return }}</td>
-                        <td>{{ $payment->payment_ref_no }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endcomponent
-</div> --}}

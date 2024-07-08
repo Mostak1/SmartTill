@@ -4257,6 +4257,7 @@ class ReportController extends Controller
                 $$query3->where('t.location_id', request()->location_id);
                 $queryReturn->where('t.location_id', request()->location_id);
             }
+            $dateRange = request()->dateRange;
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
                 $start = request()->start_date;
                 $end = request()->end_date;
@@ -4319,7 +4320,7 @@ class ReportController extends Controller
 
             $total_purchase_return_inc_tax = $transaction_totals['total_purchase_return_inc_tax'];
             $total_sell_return_inc_tax = $transaction_totals['total_sell_return_inc_tax'];
-            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments', 'payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id', 'sellProduct','productByCategory'))->render();
+            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments', 'payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id', 'sellProduct','productByCategory','dateRange'))->render();
         }
         $business_locations = BusinessLocation::forDropdown($business_id, true);
         return view('report.profit_loss_custom', compact('business_locations'));
@@ -4661,5 +4662,40 @@ class ReportController extends Controller
                 'is_woocommerce',
                 'is_admin'
             ));
+    }
+    public function sellDetails(Request $request)
+    {
+        // Extract date range and location_id from the request
+        $dateRange = $request->input('date_range');
+        $locationId = $request->input('location_id');
+        $categoryIds = explode(',', $request->input('category_id'));
+        // Ensure $categoryIds is an array
+        if (!is_array($categoryIds)) {
+            $categoryIds = [$categoryIds]; // Convert to array if it's not already
+        }
+        $categories = Category::whereIn('id', $categoryIds)->get();
+        $location = BusinessLocation::where('id', $locationId)->first();
+
+        // Pass these parameters to the view
+        return view('report.custom.sell_details', compact('dateRange', 'location', 'categories'));
+
+    }
+
+    public function returnDetails(Request $request)
+    {
+        // Extract date range and location_id from the request
+        $dateRange = $request->input('date_range');
+        $locationId = $request->input('location_id');
+        $categoryIds = explode(',', $request->input('category_id'));
+        // Ensure $categoryIds is an array
+        if (!is_array($categoryIds)) {
+            $categoryIds = [$categoryIds]; // Convert to array if it's not already
+        }
+        $categories = Category::whereIn('id', $categoryIds)->get();
+        $location = BusinessLocation::where('id', $locationId)->first();
+
+        // Pass these parameters to the view
+        return view('report.custom.return_details', compact('dateRange', 'location', 'categories'));
+
     }
 }
