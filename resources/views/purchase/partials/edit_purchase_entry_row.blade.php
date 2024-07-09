@@ -139,7 +139,7 @@
                         @endif
                     </td>
                     <td>
-                        @if ($purchase_line->product->category_id == $foreign_cat->id)
+                        @if ($purchase_line->product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null))
                         {!! Form::text(
                             'purchases[' . $loop->index . '][pp_without_discount]',
                             number_format(

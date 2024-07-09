@@ -53,7 +53,7 @@ class ProductUtil extends Util
 
         $foreign_cat = Category::where('is_us_product', 1)->first();
 
-        if($product->category_id == $foreign_cat->id)
+        if($product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null))
         {
             //create variations
             $variation_data = [
@@ -1011,7 +1011,7 @@ class ProductUtil extends Util
             $variation_data['sell_price_inc_tax'] = $variation_details->sell_price_inc_tax;
         }
 
-        if ($product->category_id == $foreign_cat->id) {
+        if ($product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null)) {
             if (($variation_details->default_purchase_price != $variation_data['pp_without_discount']) ||
                 ($variation_details->sell_price_inc_tax != $variation_data['sell_price_inc_tax'])
                 ) {              

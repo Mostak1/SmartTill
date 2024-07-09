@@ -89,7 +89,9 @@
                             'class' => 'form-control select2',
                             'id' => 'category_select',
                         ]) !!}
-                        <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
+                       @if ($foreign_cat)
+                       <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
+                       @endif
                     </div>
                 </div>
 

@@ -853,7 +853,7 @@ class ProductController extends Controller
             $foreign_cat = Category::where('is_us_product', 1)->first();
 
 
-            if ($product->type == 'single' && $product->category_id == $foreign_cat->id) {
+            if ($product->type == 'single' && $product->category_id ==  (isset($foreign_cat) ? $foreign_cat->id : null)) {
 
                 $single_data = $request->only(['single_variation_id', 'single_dpp', 'single_dpp_inc_tax', 'single_dsp_inc_tax', 'profit_percent', 'single_dsp']);
                 $variation = Variation::find($single_data['single_variation_id']);

@@ -338,7 +338,9 @@
 
         <input type="hidden" id="variation_counter" value="1">
         <input type="hidden" id="default_profit_percent" value="{{ $default_profit_percent }}">
+        @if ($foreign_cat)
         <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
+        @endif
 
     </div>
     @endcomponent
