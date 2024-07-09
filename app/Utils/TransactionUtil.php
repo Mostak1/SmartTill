@@ -1076,11 +1076,11 @@ class TransactionUtil extends Util
         //Shop Contact Info
         $output['contact'] = '';
         if ($il->show_mobile_number == 1 && ! empty($location_details->mobile)) {
-            $output['contact'] .= '<b>'.('contact.mobile').':</b> '.$location_details->mobile;
+            $output['contact'] .= '<b> Mobile:</b> '.$location_details->mobile;
         }
         if ($il->show_alternate_number == 1 && ! empty($location_details->alternate_number)) {
             if (empty($output['contact'])) {
-                $output['contact'] .= __('contact.mobile').': '.$location_details->alternate_number;
+                $output['contact'] .= 'Mobile: '.$location_details->alternate_number;
             } else {
                 $output['contact'] .= ', '.$location_details->alternate_number;
             }
@@ -1109,7 +1109,7 @@ class TransactionUtil extends Util
                 if (! empty($customer->contact_address)) {
                     $output['customer_info'] .= '<br>';
                 }
-                $output['customer_info'] .= '<b>'.('CID').'</b>: '.$customer->contact_id .'<br>: ';
+                $output['customer_info'] .= '<b>'.('CID').'</b>: '.$customer->contact_id .'<br>';
                 if (! empty($customer->landline)) {
                     $output['customer_info'] .= ', '.$customer->landline;
                 }
@@ -2004,11 +2004,11 @@ class TransactionUtil extends Util
         //Shop Contact Info
         $output['contact'] = '';
         if ($il->show_mobile_number == 1 && !empty($location_details->mobile)) {
-            $output['contact'] .=  __('contact.mobile') . ':' . $location_details->mobile;
+            $output['contact'] .= 'Mobile: ' . $location_details->mobile;
         }
         if ($il->show_alternate_number == 1 && !empty($location_details->alternate_number)) {
             if (empty($output['contact'])) {
-                $output['contact'] .= __('contact.mobile') . ': ' . $location_details->alternate_number;
+                $output['contact'] .= 'Mobile: ' . $location_details->alternate_number;
             } else {
                 $output['contact'] .= ', ' . $location_details->alternate_number;
             }
@@ -3930,6 +3930,9 @@ class TransactionUtil extends Util
 
         $transaction = Transaction::find($transaction_id);
         $transaction->payment_status = $status;
+        if($status =='due' || $status =='partial'){
+            $transaction->additional_expense_key_1 =$status;
+        }
         $transaction->save();
 
         $moduleUtil = new ModuleUtil();
@@ -6173,6 +6176,8 @@ class TransactionUtil extends Util
                 'transactions.payment_status',
                 'transactions.final_total',
                 'transactions.tax_amount',
+                'tsl.line_discount_type',
+                'tsl.line_discount_amount',
                 'transactions.discount_amount',
                 'transactions.discount_type',
                 'transactions.total_before_tax',
@@ -6213,7 +6218,8 @@ class TransactionUtil extends Util
                 'tables.name as table_name',
                 DB::raw('SUM(tsl.quantity - tsl.so_quantity_invoiced) as so_qty_remaining'),
                 'transactions.is_export',
-                DB::raw("CONCAT(COALESCE(dp.surname, ''),' ',COALESCE(dp.first_name, ''),' ',COALESCE(dp.last_name,'')) as delivery_person")
+                DB::raw("CONCAT(COALESCE(dp.surname, ''),' ',COALESCE(dp.first_name, ''),' ',COALESCE(dp.last_name,'')) as delivery_person"),
+                DB::raw('SUM(CASE WHEN tsl.line_discount_type = "percentage" THEN tsl.line_discount_amount * tsl.quantity * tsl.unit_price / 100 ELSE tsl.line_discount_amount END) as total_line_discount')
             );
 
         if ($sale_type == 'sell') {

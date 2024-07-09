@@ -94,10 +94,16 @@ class TaxonomyController extends Controller
 
         $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
         $foreign_cat = Category::where('is_us_product', 1)->first();
-        $PriceHistory = VariationPriceHistory::where('variation_id', $foreign_cat->id)
+        if ($foreign_cat) {
+            $PriceHistory = VariationPriceHistory::where('variation_id', $foreign_cat->id)
             ->where('type', 'category')
             ->orderBy('created_at', 'desc') // You can change the order as per your requirement
             ->get();
+        }else{
+            $PriceHistory = VariationPriceHistory::where('type', 'category')
+            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->get();
+        }
 
         return view('taxonomy.index')->with(compact('module_category_data', 'module_category_data', 'PriceHistory'));
     }

@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', __('Sell Details'))
+@section('title', __('Return Products'))
 
 @section('content')
 
     <!-- Content Header (Page header) -->
     <section class="content-header">
-        <h1>@lang('Sell Details')
+        <h1>@lang('Return Products')
             <small>@lang('Reports')</small>
         </h1>
     </section>
@@ -18,7 +18,7 @@
                     <div class="alert alert-info">
                         <div class="row">
                             <div class="col-md-8 text-left">
-                                <p><strong>Location:</strong> {{ $location->name ?? '' }}</p>
+                                {{-- <p><strong>Location:</strong> {{ $location->name }}</p> --}}
                                 <p><strong>Category:</strong>
                                     @foreach ($categories as $category)
                                         {{ $category->name }}{{ !$loop->last ? ',' : '' }}
@@ -30,13 +30,12 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Custom Tabs -->
                     <div class="nav-tabs-custom">
                         <div class="tab-content">
-                            <div class="tab-pane active" id="product_sell_tab">
-                                <table style="width: 100%" class="table table-bordered table-striped ajax_view hide-footer"
-                                    id="product_sell_table">
+                            <div class="tab-pane active" id="product_return_tab">
+                                <table style="width: 100%" class="table table-bordered table-striped ajax_view"
+                                    id="sell_return_table">
                                     <thead>
                                         <tr>
                                             <th>@lang('sale.product')</th>
@@ -44,17 +43,20 @@
                                             <th>Category</th>
                                             <th>Brand</th>
                                             <th>Date</th>
-                                            <th>@lang('report.current_stock')</th>
-                                            <th>@lang('report.total_unit_sold')</th>
-                                            <th>@lang('sale.total')</th>
+                                            <th>@lang('lang_v1.parent_sale')</th>
+                                            <th>@lang('purchase.payment_status')</th>
+                                            <th>Current stock</th>
+                                            <th>Return Qty</th>
+                                            <th>Total</th>
                                         </tr>
                                     </thead>
                                     <tfoot>
-                                        <tr class="bg-gray font-17 footer-total text-center">
+                                        <tr class="bg-gray font-17 text-center footer-total">
                                             <td colspan="6"><strong>@lang('sale.total'):</strong></td>
-                                            <td id="footer_total_today_sold"></td>
-                                            <td><span class="display_currency" id="footer_today_subtotal"
-                                                    data-currency_symbol="true"></span></td>
+                                            <td id="footer_payment_status_count_sr"></td>
+                                            <td colspan="2"></td>
+                                            <td><span class="display_currency" id="footer_sell_return_total"
+                                                    data-currency_symbol ="true"></span></td>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -66,6 +68,7 @@
         @endcan
     </section>
     <!-- /.content -->
+
 @endsection
 
 @section('javascript')
@@ -78,86 +81,85 @@
             var start_date = urlParams.get('start_date');
             var end_date = urlParams.get('end_date');
             var locationId = urlParams.get('location_id');
-            var categoryIds = urlParams.get('category_id').split(',');
 
-            // Initialize DataTable for product sell
-            var product_sell_table = $('#product_sell_table').DataTable({
+            // DataTable initialization for sell return
+            var sell_return_table = $('#sell_return_table').DataTable({
                 processing: true,
                 serverSide: true,
                 aaSorting: [
                     [0, 'asc']
                 ],
                 ajax: {
-                    url: '/reports/product-sell-report-with-sellreturn',
+                    url: "/today-sell-return",
                     data: function(d) {
-                        d.start_date = start_date;
-                        d.end_date = end_date;
+                            d.start_date = start_date;
+                            d.end_date = end_date;
                         d.location_id = locationId;
-                        d.category_id = categoryIds;
                     },
                 },
+                columnDefs: [{
+                    targets: [6, 7],
+                    orderable: false,
+                    searchable: false
+                }],
                 columns: [{
-                        data: 'product_name',
-                        name: 'p.name'
+                        data: 'product',
+                        name: 'product'
                     },
                     {
-                        data: 'sub_sku',
-                        name: 'v.sub_sku'
+                        data: 'sku',
+                        name: 'sku'
                     },
                     {
-                        data: 'category_name',
-                        name: 'cat.name'
+                        data: 'category',
+                        name: 'category'
                     },
                     {
-                        data: 'brand_name',
-                        name: 'b.name'
+                        data: 'brand',
+                        name: 'brand'
                     },
                     {
                         data: 'transaction_date',
                         name: 'transaction_date'
                     },
                     {
+                        data: 'parent_sale',
+                        name: 'T1.invoice_no'
+                    },
+                    {
+                        data: 'payment_status',
+                        name: 'payment_status'
+                    },
+                    {
                         data: 'current_stock',
-                        name: 'current_stock',
-                        searchable: false,
-                        orderable: false
+                        name: 'current_stock'
                     },
                     {
-                        data: 'total_qty_sold',
-                        name: 'total_qty_sold',
-                        searchable: false
+                        data: 'total_return_qty',
+                        name: 'total_return_qty'
                     },
                     {
-                        data: 'subtotal',
-                        name: 'subtotal',
-                        searchable: false
-                    },
+                        data: 'final_total',
+                        name: 'final_total'
+                    }
                 ],
                 fnDrawCallback: function(oSettings) {
-                    let api = this.api();
+                    var total_sell = sum_table_col($('#sell_return_table'), 'final_total');
+                    $('#footer_sell_return_total').text(total_sell);
 
-                    // Calculate the total quantity sold
-                    let totalQtySold = api.column(6, {
-                        page: 'current'
-                    }).data().reduce(function(a, b) {
-                        let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
-                        return parseFloat(a) + numericValueB;
-                    }, 0);
+                    $('#footer_payment_status_count_sr').html(__sum_status_html($('#sell_return_table'),
+                        'payment-status-label'));
 
-                    // Calculate the total sold subtotal
-                    let totalSubtotal = api.column(7, {
-                        page: 'current'
-                    }).data().reduce(function(a, b) {
-                        let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
-                        return parseFloat(a) + numericValueB;
-                    }, 0);
+                    var total_due = sum_table_col($('#sell_return_table'), 'payment_due');
+                    $('#footer_total_due_sr').text(total_due);
 
-                    // Update the footer with the totals
-                    $('#footer_today_subtotal').text(totalSubtotal.toFixed(2));
-
-                    __currency_convert_recursively($('#product_sell_table'));
+                    __currency_convert_recursively($('#sell_return_table'));
                 },
+                createdRow: function(row, data, dataIndex) {
+                    $(row).find('td:eq(2)').attr('class', 'clickable_td');
+                }
             });
+
         });
     </script>
 @endsection

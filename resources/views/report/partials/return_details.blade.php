@@ -5,6 +5,7 @@
             <th>@lang('product.sku')</th>
             <th>Category</th>
             <th>Brand</th>
+            <th>Date</th>
             <th>@lang('lang_v1.parent_sale')</th>
             <th>@lang('purchase.payment_status')</th>
             <th>Current stock</th>
@@ -14,7 +15,7 @@
     </thead>
     <tfoot>
         <tr class="bg-gray font-17 text-center footer-total">
-            <td colspan="5"><strong>@lang('sale.total'):</strong></td>
+            <td colspan="6"><strong>@lang('sale.total'):</strong></td>
             <td id="footer_payment_status_count_sr"></td>
             <td colspan="2"></td>
             <td><span class="display_currency" id="footer_sell_return_total" data-currency_symbol ="true"></span></td>

@@ -78,7 +78,7 @@
           <div class="form-group">
             {!! Form::label('spg', __('lang_v1.selling_price_group') . ':') !!}
             <select name="spg" class="form-control">
-              <option value="" >@lang('lang_v1.all')</option>
+              {{-- <option value="" >@lang('lang_v1.all')</option> --}}
               @foreach($price_groups as $k => $v)
                 <option value="{{$k}}">{{$v}}</option>
               @endforeach

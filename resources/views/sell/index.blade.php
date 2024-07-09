@@ -50,7 +50,10 @@
                         <th>@lang('sale.total_amount')</th>
                         <th>@lang('sale.total_paid')</th>
                         <th>@lang('lang_v1.sell_due')</th>
-                        <th>@lang('lang_v1.sell_return_due')</th>
+                        <th>@lang('Campaign Discount')</th>
+                        <th>@lang('Special Discount')</th>
+                        {{-- <th>@lang('Sell Return (total amount)')</th> --}}
+                        <th><small>Sell Return (total amount)</small></th>
                         <th>@lang('lang_v1.shipping_status')</th>
                         <th>@lang('lang_v1.total_items')</th>
                         <th>@lang('lang_v1.types_of_service')</th>
@@ -76,6 +79,8 @@
                         <td class="footer_sale_total"></td>
                         <td class="footer_total_paid"></td>
                         <td class="footer_total_remaining"></td>
+                        <td class="footer_total_campaign_discount"></td>
+                        <td class="footer_total_special_discount"></td>
                         <td class="footer_total_sell_return_due"></td>
                         <td colspan="14"></td>
                     </tr>
@@ -167,6 +172,8 @@ $(document).ready( function(){
             { data: 'final_total', name: 'final_total'},
             { data: 'total_paid', name: 'total_paid', "searchable": false},
             { data: 'total_remaining', name: 'total_remaining'},
+            { data: 'line_discount_amount', name: 'line_discount_amount'},
+            { data: 'discount_amount', name: 'discount_amount'},
             { data: 'return_due', orderable: false, "searchable": false},
             { data: 'shipping_status', name: 'shipping_status'},
             { data: 'total_items', name: 'total_items', "searchable": false},
@@ -191,6 +198,8 @@ $(document).ready( function(){
             var footer_total_paid = 0;
             var footer_total_remaining = 0;
             var footer_total_sell_return_due = 0;
+            var footer_total_special_discount = 0;
+            var footer_total_campaign_discount = 0;
 
             // Initialize an object to store payment method counts and subtotals
             var paymentMethodTotals = {};
@@ -202,6 +211,10 @@ $(document).ready( function(){
                 footer_total_paid += $(data[r].total_paid).data('orig-value') ? parseFloat($(data[r].total_paid).data('orig-value')) : 0;
                 footer_total_remaining += $(data[r].total_remaining).data('orig-value') ? parseFloat($(data[r].total_remaining).data('orig-value')) : 0;
                 footer_total_sell_return_due += $(data[r].return_due).find('.sell_return_due').data('orig-value') ? parseFloat($(data[r].return_due).find('.sell_return_due').data('orig-value')) : 0;
+                
+                // Special Discount: Ensure proper parsing and data retrieval
+                footer_total_special_discount += $(data[r].discount_amount).data('orig-value') ? parseFloat($(data[r].discount_amount).data('orig-value')) : 0;
+                footer_total_campaign_discount += $(data[r].line_discount_amount).data('orig-value') ? parseFloat($(data[r].line_discount_amount).data('orig-value')) : 0;
 
                 // Count payment methods and calculate subtotal based on payment methods
                 var paymentMethods = $(data[r].payment_methods).text().split(',');
@@ -222,6 +235,8 @@ $(document).ready( function(){
             }
 
             // Update footer elements with totals and payment method information
+            $('.footer_total_campaign_discount').html(__currency_trans_from_en(footer_total_campaign_discount));
+            $('.footer_total_special_discount').html(__currency_trans_from_en(footer_total_special_discount));
             $('.footer_total_sell_return_due').html(__currency_trans_from_en(footer_total_sell_return_due));
             $('.footer_total_remaining').html(__currency_trans_from_en(footer_total_remaining));
             $('.footer_total_paid').html(__currency_trans_from_en(footer_total_paid));

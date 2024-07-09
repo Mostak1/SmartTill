@@ -196,11 +196,14 @@ class ProductController extends Controller
             if ($active_state == 'inactive') {
                 $products->Inactive();
             }
-            $not_for_selling = request()->get('not_for_selling', null);
-            if ($not_for_selling == 'true') {
-                $products->ProductNotForSales();
+            // $not_for_selling = request()->get('not_for_selling', null);
+            // if ($not_for_selling == 'true') {
+            //     $products->ProductNotForSales();
+            // }
+            $selling_state = request()->get('selling_state', 'all');
+            if ($selling_state !== 'all') {
+                $products->where('not_for_selling', $selling_state);
             }
-
             $woocommerce_enabled = request()->get('woocommerce_enabled', 0);
             if ($woocommerce_enabled == 1) {
                 $products->where('products.woocommerce_disable_sync', 0);

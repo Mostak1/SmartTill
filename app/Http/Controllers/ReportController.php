@@ -30,6 +30,7 @@ use Datatables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -2524,7 +2525,9 @@ class ReportController extends Controller
      */
     public function getproductSellGroupedReport(Request $request)
     {
-
+        if (!auth()->user()->can('purchase_n_sell_report.view')) {
+            abort(403, 'Unauthorized action.');
+        }
         $business_id = $request->session()->get('user.business_id');
         $location_id = $request->get('location_id', null);
 
@@ -2555,7 +2558,7 @@ class ReportController extends Controller
                 ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
                 ->where('t.business_id', $business_id)
                 ->where('t.type', 'sell')
-                ->where('t.status', 'final')
+                ->where('t.status', 'draft')
                 ->select(
                     'p.name as product_name',
                     'p.enable_stock',
@@ -2587,8 +2590,8 @@ class ReportController extends Controller
             $start_date = $request->get('start_date');
             $end_date = $request->get('end_date');
             if (!empty($start_date) && !empty($end_date)) {
-                $query->where('t.transaction_date', '>=', $start_date)
-                    ->where('t.transaction_date', '<=', $end_date);
+                $query->whereDate('t.transaction_date', '>=', $start_date)
+                    ->whereDate('t.transaction_date', '<=', $end_date);
             }
 
             $permitted_locations = auth()->user()->permitted_locations();
@@ -2641,14 +2644,14 @@ class ReportController extends Controller
                     if ($row->product_type == 'variable') {
                         $product_name .= ' - ' . $row->product_variation . ' - ' . $row->variation_name;
                     }
-
-                    return $product_name;
+                    $html = '<a href="#" data-href="' . action([\App\Http\Controllers\SellController::class, 'show'], [$row->transaction_id]) . '" class="btn-modal" data-container=".view_modal">'.$product_name . '</a>';
+                    return $html;
                 })
                 ->editColumn('transaction_date', '{{@format_date($formated_date)}}')
                 ->editColumn('total_qty_sold', function ($row) {
                     return '<span data-is_quantity="true" class="display_currency sell_qty" data-currency_symbol=false data-orig-value="' . (float) $row->total_qty_sold . '" data-unit="' . $row->unit . '" >' . (float) $row->total_qty_sold . '</span> ' . $row->unit;
                 })
-                ->editColumn('current_stock', function ($row) {
+                ->editColumn('current_stock', function ($row) use ($start_date) {
                     if ($row->enable_stock) {
                         return '<span data-is_quantity="true" class="display_currency current_stock" data-currency_symbol=false data-orig-value="' . (float) $row->current_stock . '" data-unit="' . $row->unit . '" >' . (float) $row->current_stock . '</span> ' . $row->unit;
                     } else {
@@ -2663,7 +2666,7 @@ class ReportController extends Controller
                 })
                 ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
 
-                ->rawColumns(['current_stock', 'subtotal', 'total_qty_sold'])
+                ->rawColumns(['product_name','current_stock', 'subtotal', 'total_qty_sold'])
                 ->make(true);
         }
     }
@@ -4075,9 +4078,9 @@ class ReportController extends Controller
         //Return the details in ajax call
         // dd($request->ajax()); //
         if ($request->ajax()) {
-            $start_date = $request->get('start_date');
-            $end_date = $request->get('end_date');
-            $location_id = $request->get('location_id');
+            // $start_date = $request->get('start_date');
+            // $end_date = $request->get('end_date');
+            // $location_id = $request->get('location_id');
 
             $fy = $this->businessUtil->getCurrentFinancialYear($business_id);
             $currentDate = now();
@@ -4257,7 +4260,7 @@ class ReportController extends Controller
                 $$query3->where('t.location_id', request()->location_id);
                 $queryReturn->where('t.location_id', request()->location_id);
             }
-            $dateRange = request()->dateRange;
+            $dateRange = request()->start_date . '~' . request()->end_date;
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
                 $start = request()->start_date;
                 $end = request()->end_date;
@@ -4267,11 +4270,11 @@ class ReportController extends Controller
                     ->whereDate('t.transaction_date', '<=', $end);
                 $query1->whereBetween(DB::raw('date(paid_on)'), [$start, $end]);
                 $queryReturn->whereDate('t.transaction_date', '>=', $start)
-                ->whereDate('t.transaction_date', '<=', $end);
+                    ->whereDate('t.transaction_date', '<=', $end);
             }
             $sellProduct = $query3
-            ->groupBy('v.id')
-            ->groupBy('formated_date')->get();
+                ->groupBy('v.id')
+                ->groupBy('formated_date')->get();
             $productByCategory = [];
             foreach ($sellProduct as $value) {
                 if (isset($productByCategory[$value->catid])) {
@@ -4304,7 +4307,11 @@ class ReportController extends Controller
                 ->addSelect('sale.id as saleId')
                 ->addSelect('sale.payment_status as payment_status')
                 ->addSelect('sale.total_before_tax as saleTotalBeforeTax')
+                ->addSelect('sale.discount_type as discount_type')
+                ->addSelect('sale.discount_amount as discount_amount')
                 ->addSelect('sale.final_total as trans_final_amount')
+                ->addSelect('sale.additional_expense_key_1 as due_type')
+                ->addSelect('sale.additional_expense_value_1 as due_amount')
                 ->addSelect('sale.shipping_charges as shipping_charges')
                 ->groupBy('sale.id')->get();
             $transaction_types = [
@@ -4320,7 +4327,7 @@ class ReportController extends Controller
 
             $total_purchase_return_inc_tax = $transaction_totals['total_purchase_return_inc_tax'];
             $total_sell_return_inc_tax = $transaction_totals['total_sell_return_inc_tax'];
-            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments', 'payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id', 'sellProduct','productByCategory','dateRange'))->render();
+            return view('report.partials.profit_loss_details_custom', compact('data', 'incomeByCategories', 'totalByMethod', 'total_sell_return_inc_tax', 'payments', 'payReturn', 'totalbyTransaction', 'start_date', 'end_date', 'location_id', 'sellProduct', 'productByCategory', 'dateRange', 'location_id'))->render();
         }
         $business_locations = BusinessLocation::forDropdown($business_id, true);
         return view('report.profit_loss_custom', compact('business_locations'));
@@ -4665,26 +4672,175 @@ class ReportController extends Controller
     }
     public function sellDetails(Request $request)
     {
-        // Extract date range and location_id from the request
-        $dateRange = $request->input('date_range');
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+        $dateRange = $startDate->format('d-M-Y') . '~' . $endDate->format('d-M-Y');
+
         $locationId = $request->input('location_id');
         $categoryIds = explode(',', $request->input('category_id'));
-        // Ensure $categoryIds is an array
         if (!is_array($categoryIds)) {
-            $categoryIds = [$categoryIds]; // Convert to array if it's not already
+            $categoryIds = [$categoryIds];
         }
+
         $categories = Category::whereIn('id', $categoryIds)->get();
         $location = BusinessLocation::where('id', $locationId)->first();
 
-        // Pass these parameters to the view
-        return view('report.custom.sell_details', compact('dateRange', 'location', 'categories'));
+        return view('report.custom.sell_details', compact('dateRange', 'location', 'categories', 'startDate', 'endDate', 'categoryIds', 'locationId'));
+    }
+    public function getproductSellReportWithReturn(Request $request)
+    {
+        if (!auth()->user()->can('purchase_n_sell_report.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $business_id = $request->session()->get('user.business_id');
+        $location_id = $request->get('location_id', null);
 
+        $vld_str = '';
+        if (!empty($location_id)) {
+            $vld_str = "AND vld.location_id=$location_id";
+        }
+        if ($request->ajax()) {
+            $variation_id = $request->get('variation_id', null);
+            $today = $request->get('transaction_date');
+
+            $query = TransactionSellLine::join(
+                'transactions as t',
+                'transaction_sell_lines.transaction_id',
+                '=',
+                't.id'
+            )
+                ->join(
+                    'variations as v',
+                    'transaction_sell_lines.variation_id',
+                    '=',
+                    'v.id'
+                )
+                ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
+                ->join('products as p', 'pv.product_id', '=', 'p.id')
+                ->leftjoin('units as u', 'p.unit_id', '=', 'u.id')
+                ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
+                ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
+                ->where('t.business_id', $business_id)
+                ->where('t.type', 'sell')
+                ->where('t.status', 'final')
+                ->select(
+                    'p.name as product_name',
+                    'p.enable_stock',
+                    'cat.name as category_name',
+                    'b.name as brand_name',
+                    'p.type as product_type',
+                    'pv.name as product_variation',
+                    'v.name as variation_name',
+                    'v.sub_sku',
+                    't.id as transaction_id',
+                    't.transaction_date as transaction_date',
+                    'transaction_sell_lines.parent_sell_line_id',
+                    DB::raw('DATE_FORMAT(t.transaction_date, "%Y-%m-%d") as formated_date'),
+                    DB::raw("(SELECT SUM(vld.qty_available) FROM variation_location_details as vld WHERE vld.variation_id=v.id $vld_str) as current_stock"),
+                    DB::raw('SUM(transaction_sell_lines.quantity) as total_qty_sold'),
+                    'u.short_name as unit',
+                    DB::raw('SUM((transaction_sell_lines.quantity) * transaction_sell_lines.unit_price_before_discount) as subtotal')
+                )
+                ->groupBy('v.id')
+                ->groupBy('formated_date');
+
+            if (!empty($today)) {
+                $query->whereDate('t.transaction_date', $today);
+            }
+
+            if (!empty($variation_id)) {
+                $query->where('transaction_sell_lines.variation_id', $variation_id);
+            }
+            $start_date = $request->get('start_date');
+            $end_date = $request->get('end_date');
+            if (!empty($start_date) && !empty($end_date)) {
+                $query->whereDate('t.transaction_date', '>=', $start_date)
+                    ->whereDate('t.transaction_date', '<=', $end_date);
+            }
+
+            $permitted_locations = auth()->user()->permitted_locations();
+            if ($permitted_locations != 'all') {
+                $query->whereIn('t.location_id', $permitted_locations);
+            }
+
+            if (!empty($location_id)) {
+                $query->where('t.location_id', $location_id);
+            }
+
+            $customer_id = $request->get('customer_id', null);
+            if (!empty($customer_id)) {
+                $query->where('t.contact_id', $customer_id);
+            }
+
+            $customer_group_id = $request->get('customer_group_id', null);
+            if (!empty($customer_group_id)) {
+                $query->leftjoin('contacts AS c', 't.contact_id', '=', 'c.id')
+                    ->leftjoin('customer_groups AS CG', 'c.customer_group_id', '=', 'CG.id')
+                    ->where('CG.id', $customer_group_id);
+            }
+
+            $category_id = $request->get('category_id', null);
+            if (!empty($category_id)) {
+                $query->whereIn('p.category_id', $category_id);
+            }
+
+            $brand_id = $request->get('brand_id', null);
+            if (!empty($brand_id)) {
+                $query->whereIn('p.brand_id', $brand_id);
+            }
+            $unit_ids = request()->get('unit_id', null);
+            if (!empty($unit_ids)) {
+                $query->whereIn('p.unit_id', $unit_ids);
+            }
+
+            $tax_ids = request()->get('tax_id', null);
+            if (!empty($tax_ids)) {
+                $query->whereIn('p.tax', $tax_ids);
+            }
+
+            $types = request()->get('type', null);
+            if (!empty($types)) {
+                $query->whereIn('p.type', $types);
+            }
+            return Datatables::of($query)
+                ->editColumn('product_name', function ($row) {
+                    $product_name = $row->product_name;
+                    if ($row->product_type == 'variable') {
+                        $product_name .= ' - ' . $row->product_variation . ' - ' . $row->variation_name;
+                    }
+
+                    return $product_name;
+                })
+                ->editColumn('transaction_date', '{{@format_date($formated_date)}}')
+                ->editColumn('total_qty_sold', function ($row) {
+                    return '<span data-is_quantity="true" class="display_currency sell_qty" data-currency_symbol=false data-orig-value="' . (float) $row->total_qty_sold . '" data-unit="' . $row->unit . '" >' . (float) $row->total_qty_sold . '</span> ' . $row->unit;
+                })
+                ->editColumn('current_stock', function ($row) use ($start_date) {
+                    if ($row->enable_stock) {
+                        return '<span data-is_quantity="true" class="display_currency current_stock" data-currency_symbol=false data-orig-value="' . (float) $row->current_stock . '" data-unit="' . $row->unit . '" >' . (float) $row->current_stock . '</span> ' . $row->unit;
+                    } else {
+                        return '';
+                    }
+                })
+                ->editColumn('subtotal', function ($row) {
+                    $class = is_null($row->parent_sell_line_id) ? 'row_subtotal' : '';
+
+                    return '<span class="' . $class . '" data-orig-value="' . $row->subtotal . '">' .
+                        $this->transactionUtil->num_f($row->subtotal, true) . '</span>';
+                })
+                ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
+
+                ->rawColumns(['current_stock', 'subtotal', 'total_qty_sold'])
+                ->make(true);
+        }
     }
 
     public function returnDetails(Request $request)
     {
-        // Extract date range and location_id from the request
-        $dateRange = $request->input('date_range');
+        $startDate = Carbon::parse($request->input('start_date'));
+        $endDate = Carbon::parse($request->input('end_date'));
+        // Format the dates and concatenate them into a date range string
+        $dateRange = $startDate->format('d-M-Y') . '~' . $endDate->format('d-M-Y');
         $locationId = $request->input('location_id');
         $categoryIds = explode(',', $request->input('category_id'));
         // Ensure $categoryIds is an array
@@ -4696,6 +4852,5 @@ class ReportController extends Controller
 
         // Pass these parameters to the view
         return view('report.custom.return_details', compact('dateRange', 'location', 'categories'));
-
     }
 }

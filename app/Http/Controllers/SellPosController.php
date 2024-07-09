@@ -45,6 +45,7 @@ use App\TransactionPayment;
 use App\TransactionSellLine;
 use App\TypesOfService;
 use App\User;
+use App\Utils\Util;
 use App\Utils\BusinessUtil;
 use App\Utils\CashRegisterUtil;
 use App\Utils\ContactUtil;
@@ -342,7 +343,10 @@ class SellPosController extends Controller
                 $change_return = $input['payment']['change_return'];
                 unset($input['payment']['change_return']);
             }
-
+            $payamount = 0;
+            foreach ($input['payment'] as $amount) {
+                $payamount += $amount['amount'];
+            }
             //Check Customer credit limit
             $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);
 
@@ -451,7 +455,10 @@ class SellPosController extends Controller
 
                 if ($request->input('additional_expense_value_1') != '') {
                     $input['additional_expense_key_1'] = $request->input('additional_expense_key_1');
-                    $input['additional_expense_value_1'] = $request->input('additional_expense_value_1');
+                }
+                $due_amount =$this->transactionUtil->num_uf($input['final_total'])-$payamount;
+                if($due_amount>0){
+                    $input['additional_expense_value_1'] = $due_amount;
                 }
 
                 if ($request->input('additional_expense_value_2') != '') {
@@ -651,7 +658,7 @@ class SellPosController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::emergency('File:' . $e->getFile() . ' Line:' . $e->getLine() . ' Message:' . $e->getMessage() , [' Input' => $input]);
+            \Log::emergency('File:' . $e->getFile() . ' Line:' . $e->getLine() . ' Message:' . $e->getMessage(), [' Input' => $input]);
             $msg = trans('messages.something_went_wrong');
 
             if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {

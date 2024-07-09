@@ -68,6 +68,10 @@
                     'total_amount' => $item->saleTotalBeforeTax,
                     'final_total' => $item->trans_final_amount,
                     'shipping_charges' => $item->shipping_charges,
+                    'discount_amount' => $item->discount_amount,
+                    'discount_type' => $item->discount_type,
+                    'due_type' => $item->due_type,
+                    'due_amount' => $item->due_amount,
                     'payment_status' => $item->payment_status,
                     'selling_price' => $item->selling_price,
                     'sale_line_total' => $item->selling_price_after_discount,
@@ -79,10 +83,19 @@
                 $partial_total += $item->final_amount;
             }
         }
+        $dueRemaining = 0;
         foreach ($transactions as $transaction) {
             $transactionTotal += $transaction['selling_price'];
             $transactionFinalTotal += $transaction['final_total'];
-            $total_discount += $transaction['total_amount']+$transaction['shipping_charges'] - $transaction['final_total'];
+            if ($transaction['discount_type'] =='percentage') {
+                $total_discount += $transaction['total_amount']*($transaction['discount_amount']/100);
+            } else {
+                $total_discount +=$transaction['discount_amount'];
+            }
+            if ($transaction['due_type'] == 'due' || $transaction['due_type'] == 'partial') {
+                $dueRemaining += $transaction['due_amount'];
+            }
+            
         }
         foreach ($payments as $item) {
             if ($item->method == 'cash') {
@@ -136,17 +149,18 @@
                     </li>
                 @endforeach
                 <h4>{{$totalWithoutdiscountWithSellReturn}} --- {{$totalWithDiscount}}</h4>
-            </ul> --}}
+            </ul>
+            <a href="{{ url('/return-details', ['date_range' => $dateRange, 'location_id' => $location_id, 'category_id' => $item['id']]) }}" class="sell_details_link">Click</a>
+             --}}
             @foreach ($productByCategory as $item)
                 <tr>
-                    <th><a href="#" class="sell_details_link" >{{ $item['category_name'] ?? __('lang_v1.uncategorized') }}</a>
+                    <th>
+                        <a href="{{ url('/sell-details') }}?start_date={{$start_date}}&end_date={{$end_date}}&location_id={{$location_id}}&category_id={{$item['id']}}" class="sell_details_link" target="_blank">
+                        {{ $item['category_name'] ?? __('lang_v1.uncategorized') }}</a>
                         <br>
                         <small class="text-muted">Income With
                             discount:
                             {{ $item['subtotal'] }}
-                            id: {{ $item['id'] }}
-                            <input type="text" class="category_id" value="{{$item['id']}}">
-                            
                         </small> <br>
                     </th>
                     <td>
@@ -211,7 +225,9 @@
             </tr>
             <tr>
                 <th>
-                    Sale Return <br>
+                    <a href="{{ url('/return-details') }}?start_date={{$start_date}}&end_date={{$end_date}}&location_id={{$location_id}}" class="sell_details_link" target="_blank">
+                    Sale Return </a>
+                    <br>
                     <small class="text-muted">
                         Cash = {{ $re_cash }} <br>
                         Bkash = {{ $re_bkash }}<br>
@@ -228,14 +244,14 @@
                 <th>Due Remaining <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $partial_total - $partial_amount }}</span>
+                        data-currency_symbol="true">{{ $dueRemaining}}</span>
                 </td>
             </tr>
             <tr>
                 <th>Total <br><small class="text-muted"></small></th>
                 <td>
                     <span class="display_currency"
-                        data-currency_symbol="true">{{ $partial_total - $partial_amount+$total_sell_return_inc_tax+$total_discount+$line_discount }}</span>
+                        data-currency_symbol="true">{{ $dueRemaining+$total_sell_return_inc_tax+$total_discount+$line_discount }}</span>
                 </td>
             </tr>
 

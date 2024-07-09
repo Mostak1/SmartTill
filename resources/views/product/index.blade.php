@@ -76,12 +76,10 @@
         @endif
 
         <div class="col-md-3">
-          <div class="form-group">
-            <br>
-            <label>
-              {!! Form::checkbox('not_for_selling', 1, false, ['class' => 'input-icheck', 'id' => 'not_for_selling']); !!} <strong>@lang('lang_v1.not_for_selling')</strong>
-            </label>
-          </div>
+            <div class="form-group">
+                {!! Form::label('selling_state', __('Selling Status') . ':') !!}
+                {!! Form::select('selling_state', ['all' => __('lang_v1.all'), '0' => __('For selling'), '1' => __('lang_v1.not_for_selling')], 'all', ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'selling_state']) !!}
+            </div>
         </div>
     </div>
 </div>
@@ -203,7 +201,7 @@
                         d.unit_id = $('#product_list_filter_unit_id').val();
                         d.tax_id = $('#product_list_filter_tax_id').val();
                         d.active_state = $('#active_state').val();
-                        d.not_for_selling = $('#not_for_selling').is(':checked');
+                        d.selling_state = $('#selling_state').val();
                         d.location_id = $('#location_id').val();
                         d.stock_status = $('#product_list_filter_stock_status').val();
                         if ($('#repair_model_id').length == 1) {
@@ -286,7 +284,7 @@ $(document).ready(function() {
                 d.unit_id = $('#product_list_filter_unit_id').val();
                 d.tax_id = $('#product_list_filter_tax_id').val();
                 d.active_state = $('#active_state').val();
-                d.not_for_selling = $('#not_for_selling').is(':checked');
+                d.selling_state = $('#selling_state').val();
                 d.location_id = $('#location_id').val();
                 d.transaction_date = todayDate; // Add transaction_date filter
                 d.stock_status = $('#product_list_filter_stock_status').val();
@@ -326,11 +324,7 @@ $(document).ready(function() {
     });
 
     // Trigger DataTable reload on filter change
-    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status').change(function() {
-        product_sell_table.draw();
-    });
-
-    $('#not_for_selling').change(function() {
+    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status, #selling_state').change(function() {
         product_sell_table.draw();
     });
 });
@@ -359,7 +353,7 @@ $(document).ready(function() {
                 d.unit_id = $('#product_list_filter_unit_id').val();
                 d.tax_id = $('#product_list_filter_tax_id').val();
                 d.active_state = $('#active_state').val();
-                d.not_for_selling = $('#not_for_selling').is(':checked');
+                d.selling_state = $('#selling_state').val();
                 d.location_id = $('#location_id').val();
                 d.transaction_date = todayDate; // Add transaction_date filter
                 d.stock_status = $('#product_list_filter_stock_status').val();
@@ -397,11 +391,7 @@ $(document).ready(function() {
         }
     });
     // Trigger DataTable reload on filter change
-    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status').change(function() {
-        sell_return_table.draw();
-    });
-
-    $('#not_for_selling').change(function() {
+    $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status, #selling_state').change(function() {
         sell_return_table.draw();
     });
 });
@@ -599,7 +589,7 @@ $(document).ready(function() {
                 });
             });
 
-            $(document).on('change', '#product_list_filter_type, #product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_unit_id, #product_list_filter_tax_id, #product_list_filter_stock_status, #location_id, #active_state, #repair_model_id', 
+            $(document).on('change', '#product_list_filter_type, #product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_unit_id, #product_list_filter_tax_id, #product_list_filter_stock_status, #location_id, #active_state, #repair_model_id, #selling_state', 
                 function() {
                     if ($("#product_list_tab").hasClass('active')) {
                         product_table.ajax.reload();
@@ -739,7 +729,7 @@ $(document).ready(function() {
                                 d.unit_id = $('#product_list_filter_unit_id').val();
                                 d.type = $('#product_list_filter_type').val();
                                 d.active_state = $('#active_state').val();
-                                d.not_for_selling = $('#not_for_selling').is(':checked');
+                                d.selling_state = $('#selling_state').val();
                                 if ($('#repair_model_id').length == 1) {
                                     d.repair_model_id = $('#repair_model_id').val();
                                 }
