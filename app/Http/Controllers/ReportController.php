@@ -4714,8 +4714,9 @@ class ReportController extends Controller
                     'transaction_sell_lines.variation_id',
                     '=',
                     'v.id'
-                )
-                ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
+                    )
+                    ->join('product_variations as pv', 'v.product_variation_id', '=', 'pv.id')
+                    ->join('contacts as cn', 't.contact_id', '=', 'cn.id')
                 ->join('products as p', 'pv.product_id', '=', 'p.id')
                 ->leftjoin('units as u', 'p.unit_id', '=', 'u.id')
                 ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
@@ -4728,6 +4729,7 @@ class ReportController extends Controller
                     'p.enable_stock',
                     'cat.name as category_name',
                     'b.name as brand_name',
+                    'cn.name as contact_name',
                     'p.type as product_type',
                     'pv.name as product_variation',
                     'v.name as variation_name',
@@ -4809,7 +4811,7 @@ class ReportController extends Controller
                         $product_name .= ' - ' . $row->product_variation . ' - ' . $row->variation_name;
                     }
 
-                    return $product_name;
+                    return $product_name .'('.$row->contact_name.')';
                 })
                 ->editColumn('transaction_date', '{{@format_date($formated_date)}}')
                 ->editColumn('total_qty_sold', function ($row) {
@@ -4829,8 +4831,17 @@ class ReportController extends Controller
                         $this->transactionUtil->num_f($row->subtotal, true) . '</span>';
                 })
                 ->editColumn('transaction_date', '{{format_datetime($transaction_date)}}')
+                ->editColumn('brand_name',function ($row){
+                    return $row->brand_name;
+                } )
+                ->editColumn('category_name',function ($row){
+                    return $row->category_name;
+                } )
+                ->editColumn('contact_name',function ($row){
+                    return $row->contact_name;
+                } )
 
-                ->rawColumns(['current_stock', 'subtotal', 'total_qty_sold'])
+                ->rawColumns(['transaction_date','brand_name','category_name','sub_sku','product_name','current_stock', 'subtotal', 'total_qty_sold','contact_name'])
                 ->make(true);
         }
     }

@@ -345,7 +345,7 @@ class SellPosController extends Controller
             }
             $payamount = 0;
             foreach ($input['payment'] as $amount) {
-                $payamount += $amount['amount'];
+                $payamount += $this->transactionUtil->num_uf($amount['amount']);
             }
             //Check Customer credit limit
             $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);

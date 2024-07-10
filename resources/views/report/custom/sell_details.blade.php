@@ -40,6 +40,7 @@
                                     <thead>
                                         <tr>
                                             <th>@lang('sale.product')</th>
+                                            <th>Customer</th>
                                             <th>@lang('product.sku')</th>
                                             <th>Category</th>
                                             <th>Brand</th>
@@ -51,7 +52,7 @@
                                     </thead>
                                     <tfoot>
                                         <tr class="bg-gray font-17 footer-total text-center">
-                                            <td colspan="6"><strong>@lang('sale.total'):</strong></td>
+                                            <td colspan="7"><strong>@lang('sale.total'):</strong></td>
                                             <td id="footer_total_today_sold"></td>
                                             <td><span class="display_currency" id="footer_today_subtotal"
                                                     data-currency_symbol="true"></span></td>
@@ -101,6 +102,10 @@
                         name: 'p.name'
                     },
                     {
+                        data: 'contact_name',
+                        name: 'contact_name'
+                    },
+                    {
                         data: 'sub_sku',
                         name: 'v.sub_sku'
                     },
@@ -119,25 +124,22 @@
                     {
                         data: 'current_stock',
                         name: 'current_stock',
-                        searchable: false,
                         orderable: false
                     },
                     {
                         data: 'total_qty_sold',
                         name: 'total_qty_sold',
-                        searchable: false
                     },
                     {
                         data: 'subtotal',
                         name: 'subtotal',
-                        searchable: false
                     },
                 ],
                 fnDrawCallback: function(oSettings) {
                     let api = this.api();
 
                     // Calculate the total quantity sold
-                    let totalQtySold = api.column(6, {
+                    let totalQtySold = api.column(7, {
                         page: 'current'
                     }).data().reduce(function(a, b) {
                         let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
@@ -145,7 +147,7 @@
                     }, 0);
 
                     // Calculate the total sold subtotal
-                    let totalSubtotal = api.column(7, {
+                    let totalSubtotal = api.column(8, {
                         page: 'current'
                     }).data().reduce(function(a, b) {
                         let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));

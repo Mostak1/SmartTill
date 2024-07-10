@@ -182,7 +182,7 @@
                         ) !!} <b>%</b>
                     </td>
                     <td>
-                        @if ($purchase_line->product->category_id == $foreign_cat->id)
+                        @if ($purchase_line->product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null))
                         {!! Form::text(
                             'purchases[' . $loop->index . '][purchase_price]',
                             number_format(
@@ -259,7 +259,7 @@
                         ) !!}
                     </td>
                     <td>
-                        @if ($purchase_line->product->category_id == $foreign_cat->id)
+                        @if ($purchase_line->product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null))
                         <span class="row_subtotal_after_tax">
                             {{ number_format(($purchase_line->variations->foreign_p_price_inc_tex * $purchase_line->quantity) / $purchase->exchange_rate, $currency_precision, $currency_details->decimal_separator, $currency_details->thousand_separator) }}
                         </span>
@@ -276,7 +276,7 @@
 
                     <td class="@if (!session('business.enable_editing_product_from_purchase') || !empty($is_purchase_order)) hide @endif">
                         @php
-                        if ($purchase_line->product->category_id == $foreign_cat->id) {
+                        if ($purchase_line->product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null)) {
                             $fsp = $purchase_line->variations->foreign_s_price_inc_tex;
                             $fpp = $purchase_line->variations->foreign_p_price_inc_tex;
                             if (!empty($purchase_line->sub_unit->base_unit_multiplier)) {
@@ -314,7 +314,7 @@
                     </td>
                     @if (empty($is_purchase_order))
                     <td>
-                        @if ($purchase_line->product->category_id == $foreign_cat->id)
+                        @if ($purchase_line->product->category_id == (isset($foreign_cat) ? $foreign_cat->id : null))
                                 @if (session('business.enable_editing_product_from_purchase'))
                                     {!! Form::text(
                                         'purchases[' . $loop->index . '][default_sell_price]',
