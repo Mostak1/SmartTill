@@ -172,7 +172,7 @@ $(document).ready( function(){
             { data: 'final_total', name: 'final_total'},
             { data: 'total_paid', name: 'total_paid', "searchable": false},
             { data: 'total_remaining', name: 'total_remaining'},
-            { data: 'line_discount_amount', name: 'line_discount_amount'},
+            { data: 'line_discount_amount', name: 'line_discount_amount', "searchable": false},
             { data: 'discount_amount', name: 'discount_amount'},
             { data: 'return_due', orderable: false, "searchable": false},
             { data: 'shipping_status', name: 'shipping_status'},
