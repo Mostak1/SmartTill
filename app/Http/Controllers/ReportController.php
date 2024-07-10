@@ -2558,7 +2558,7 @@ class ReportController extends Controller
                 ->leftjoin('brands as b', 'p.brand_id', '=', 'b.id')
                 ->where('t.business_id', $business_id)
                 ->where('t.type', 'sell')
-                ->where('t.status', 'draft')
+                ->where('t.status', 'final')
                 ->select(
                     'p.name as product_name',
                     'p.enable_stock',

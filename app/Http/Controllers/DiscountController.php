@@ -286,6 +286,8 @@ class DiscountController extends Controller
                 $discount = Discount::where('business_id', $business_id)
                     ->find($id);
 
+                $discount->brand_id=null;
+                $discount->category_id=null;
                 $discount->update($input);
 
                 $discount->variations()->sync($variation_ids);
