@@ -1111,7 +1111,9 @@ class PurchaseController extends Controller
 
                 $last_purchase_line = $this->getLastPurchaseLine($variation_id, $location_id, $supplier_id);
                 $foreign_cat = Category::where('is_us_product', 1)->first();
-                $cat_desck = $foreign_cat->description;
+                if ($foreign_cat) {
+                    $cat_desck = $foreign_cat->description;
+                }
 
                 return view('purchase.partials.purchase_entry_row')
                     ->with(compact(
