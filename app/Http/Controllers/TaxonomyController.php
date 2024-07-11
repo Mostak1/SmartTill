@@ -281,7 +281,7 @@ class TaxonomyController extends Controller
                     foreach ($foreign_variations as $foreign_variation) {
                         $foreign_variation->currency_rate = $category->description;
                         $foreign_variation->default_purchase_price = $foreign_variation->foreign_p_price * $category->description;
-                        $foreign_variation->dpp_inc_tax = $foreign_variation->foreign_p_price_inc_tex * $category->description;
+                        $foreign_variation->dpp_inc_tax = round(($foreign_variation->foreign_p_price_inc_tex * $category->description)/10)*10;
                         $foreign_variation->default_sell_price = round(($foreign_variation->foreign_s_price * $category->description)/10) * 10;
 
                         // Update the variation's price
