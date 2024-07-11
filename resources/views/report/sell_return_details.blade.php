@@ -169,7 +169,7 @@ $(document).ready(function() {
             { data: 'sub_sku', name: 'v.sub_sku' },
             { data: 'category_name', name: 'cat.name' },
             { data: 'brand_name', name: 'b.name' },
-            { data: 'transaction_date', name: 'transaction_date' },
+            { data: 'transaction_date', name: 'transaction_date', searchable: false, },
             { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
             { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
             { data: 'subtotal', name: 'subtotal', searchable: false },
@@ -251,12 +251,12 @@ $(document).ready(function() {
             { data: 'sku', name: 'sku' },
             { data: 'category', name: 'category' },
             { data: 'brand', name: 'brand' },
-            { data: 'transaction_date', name: 'transaction_date' },
+            { data: 'transaction_date', name: 'transaction_date', searchable: false, },
             { data: 'parent_sale', name: 'T1.invoice_no' },
-            { data: 'payment_status', name: 'payment_status' },
-            { data: 'current_stock', name: 'current_stock' },
-            { data: 'total_return_qty', name: 'total_return_qty' },
-            { data: 'final_total', name: 'final_total' }
+            { data: 'payment_status', name: 'payment_status', searchable: false, },
+            { data: 'current_stock', name: 'current_stock', searchable: false, },
+            { data: 'total_return_qty', name: 'total_return_qty', searchable: false, },
+            { data: 'final_total', name: 'final_total' , searchable: false,}
         ],
         fnDrawCallback: function(oSettings) {
             var total_sell = sum_table_col($('#sell_return_table'), 'final_total');
