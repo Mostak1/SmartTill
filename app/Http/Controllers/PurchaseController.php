@@ -1113,8 +1113,9 @@ class PurchaseController extends Controller
                 $foreign_cat = Category::where('is_us_product', 1)->first();
                 if ($foreign_cat) {
                     $cat_desck = $foreign_cat->description;
+                }else{
+                    $cat_desck=null;
                 }
-                $cat_desck=null;
                 return view('purchase.partials.purchase_entry_row')
                     ->with(compact(
                         'product',
