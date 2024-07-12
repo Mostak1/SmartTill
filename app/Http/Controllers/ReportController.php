@@ -2525,9 +2525,6 @@ class ReportController extends Controller
      */
     public function getproductSellGroupedReport(Request $request)
     {
-        if (!auth()->user()->can('purchase_n_sell_report.view')) {
-            abort(403, 'Unauthorized action.');
-        }
         $business_id = $request->session()->get('user.business_id');
         $location_id = $request->get('location_id', null);
 

@@ -921,8 +921,9 @@ class ContactController extends Controller
                 $contacts->where(function ($query) use ($term) {
                     $query->where('contacts.name', 'like', '%'.$term.'%')
                             ->orWhere('supplier_business_name', 'like', '%'.$term.'%')
-                            ->orWhere('mobile', 'like', '%'.$term.'%')
-                            ->orWhere('contacts.contact_id', 'like', '%'.$term.'%');
+                            ->orWhere('contact_id', 'like', '%'.$term.'%')
+                            ->orWhere('contacts.contact_id', 'like', '%'.$term.'%')
+                            ->orWhere('mobile', 'like', '%'.$term.'%');
                 });
             }
 
