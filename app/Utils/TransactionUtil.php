@@ -6132,7 +6132,7 @@ class TransactionUtil extends Util
     public function getListSells($business_id, $sale_type = 'sell')
     {
         $sells = Transaction::leftJoin('contacts', 'transactions.contact_id', '=', 'contacts.id')
-            // ->leftJoin('transaction_payments as tp', 'transactions.id', '=', 'tp.transaction_id')
+            ->leftJoin('transaction_payments as tp', 'transactions.id', '=', 'tp.transaction_id')
             ->leftJoin('transaction_sell_lines as tsl', function ($join) {
                 $join->on('transactions.id', '=', 'tsl.transaction_id')
                     ->whereNull('tsl.parent_sell_line_id');
@@ -6178,6 +6178,7 @@ class TransactionUtil extends Util
                 'transactions.tax_amount',
                 'tsl.line_discount_type',
                 'tsl.line_discount_amount',
+                'tp.method',
                 'transactions.discount_amount',
                 'transactions.discount_type',
                 'transactions.total_before_tax',

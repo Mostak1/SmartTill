@@ -635,7 +635,7 @@ class PurchaseController extends Controller
                 ->pluck('ref_no', 'id');
         }
         $foreign_cat = Category::where('is_us_product', 1)->first();
-        $cat_desck = $foreign_cat->description;
+        $cat_desck = $foreign_cat->description ?? null;
         return view('purchase.edit')
             ->with(compact(
                 'taxes',

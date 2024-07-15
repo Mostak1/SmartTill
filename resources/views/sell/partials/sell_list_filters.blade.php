@@ -67,6 +67,22 @@
         </div>
     </div>
 @endif
+@if(empty($only) || in_array('sell_list_filter_discount_type', $only))
+<div class="col-md-3">
+    <div class="form-group">
+        {!! Form::label('sell_list_filter_discount_type', __('Discount Type') . ':') !!}
+        {!! Form::select('sell_list_filter_discount_type', ['' => __('lang_v1.all'), 'campaign' => __('Campaign'), 'special' => __('Special')], null, ['class' => 'form-control select2', 'style' => 'width:100%']); !!}
+    </div>
+</div>
+@endif
+@if(empty($only) || in_array('sell_list_filter_payment_method', $only))
+<div class="col-md-3">
+    <div class="form-group">
+        {!! Form::label('sell_list_filter_payment_method', __('lang_v1.payment_method') . ':') !!}
+        {!! Form::select('sell_list_filter_payment_method', $payment_types, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'placeholder' => __('lang_v1.all')]); !!}
+    </div>
+</div>
+@endif
 @if(empty($only) || in_array('only_subscriptions', $only))
 <div class="col-md-3">
     <div class="form-group">

@@ -61,8 +61,8 @@
         </div>
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('active_state',  __('Product Status') . ':') !!}
-                {!! Form::select('active_state', ['active' => __('business.is_active'), 'inactive' => __('lang_v1.inactive')], null, ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'active_state', 'placeholder' => __('lang_v1.all')]); !!}
+                {!! Form::label('active_state', __('Product Status') . ':') !!}
+                {!! Form::select('active_state', ['active' => __('business.is_active'), 'inactive' => __('lang_v1.inactive')], request('active_state', 'active'), ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'active_state', 'placeholder' => __('lang_v1.all')]) !!}
             </div>
         </div>
 
@@ -185,6 +185,7 @@
     <script src="{{ asset('js/opening_stock.js?v=' . $asset_v) }}"></script>
     <script type="text/javascript">
         $(document).ready( function(){
+            $('#active_state').val($('#active_state').val() || 'active');
             product_table = $('#product_table').DataTable({
                 processing: true,
                 serverSide: true,
