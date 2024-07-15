@@ -63,7 +63,7 @@
             <div class="form-group">
                 {!! Form::label('active_state', __('Product Status') . ':') !!}
                 {!! Form::select('active_state', ['active' => __('business.is_active'), 'inactive' => __('lang_v1.inactive')], request('active_state', 'active'), ['class' => 'form-control select2', 'style' => 'width:100%', 'id' => 'active_state', 'placeholder' => __('lang_v1.all')]) !!}
-            </div>
+            </div>            
         </div>
 
         <!-- include module filter -->
@@ -169,7 +169,6 @@
 <div class="modal fade" id="opening_stock_modal" tabindex="-1" role="dialog" 
     aria-labelledby="gridSystemModalLabel">
 </div>
-
 @if($is_woocommerce)
     @include('product.partials.toggle_woocommerce_sync_modal')
 @endif
@@ -264,65 +263,196 @@
 
 $(document).ready(function() {
     var product_sell_table = $('#product_sell_table').DataTable({
-        processing: true,
-        serverSide: true,
-        aaSorting: [[4, 'desc']],  // Sort by date
-        ajax: {
-            url: '/reports/product-sell-grouped-report',
-            data: function(d) {
-                var today = new Date();
-                var day = String(today.getDate()).padStart(2, '0');
-                var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
-                var year = today.getFullYear();
-                var todayDate = year + '-' + month + '-' + day;
+    processing: true,
+    serverSide: true,
+    aaSorting: [[4, 'desc']],  // Sort by date
+    ajax: {
+        url: '/reports/product-sell-grouped-report',
+        data: function(d) {
+            var today = new Date();
+            var day = String(today.getDate()).padStart(2, '0');
+            var month = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+            var year = today.getFullYear();
+            var todayDate = year + '-' + month + '-' + day;
 
-                d.variation_id = $('#variation_id').val();
-                d.customer_id = $('select#customer_id').val();
-                d.customer_group_id = $('#psr_customer_group_id').val();
-                d.type = $('#product_list_filter_type').val();
-                d.category_id = $('#product_list_filter_category_id').val();
-                d.brand_id = $('#product_list_filter_brand_id').val();
-                d.unit_id = $('#product_list_filter_unit_id').val();
-                d.tax_id = $('#product_list_filter_tax_id').val();
-                d.active_state = $('#active_state').val();
-                d.selling_state = $('#selling_state').val();
-                d.location_id = $('#location_id').val();
-                d.transaction_date = todayDate; // Add transaction_date filter
-                d.stock_status = $('#product_list_filter_stock_status').val();
+            d.variation_id = $('#variation_id').val();
+            d.customer_id = $('select#customer_id').val();
+            d.customer_group_id = $('#psr_customer_group_id').val();
+            d.type = $('#product_list_filter_type').val();
+            d.category_id = $('#product_list_filter_category_id').val();
+            d.brand_id = $('#product_list_filter_brand_id').val();
+            d.unit_id = $('#product_list_filter_unit_id').val();
+            d.tax_id = $('#product_list_filter_tax_id').val();
+            d.active_state = $('#active_state').val();
+            d.selling_state = $('#selling_state').val();
+            d.location_id = $('#location_id').val();
+            d.transaction_date = todayDate; // Add transaction_date filter
+            d.stock_status = $('#product_list_filter_stock_status').val();
+        },
+    },
+    columns: [
+        { data: 'product_name', name: 'p.name' },
+        { data: 'sub_sku', name: 'v.sub_sku' },
+        { data: 'category_name', name: 'cat.name' },
+        { data: 'brand_name', name: 'b.name' },
+        { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
+        { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
+        { data: 'subtotal', name: 'subtotal', searchable: false },
+    ],
+    fnDrawCallback: function(oSettings) {
+        let api = this.api();
+
+        // Calculate the total quantity sold
+        let totalQtySold = api.column(5, { page: 'current' }).data().reduce(function(a, b) {
+            let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
+            return parseFloat(a) + numericValueB;
+        }, 0);
+
+        // Calculate the total sold subtotal
+        let totalSubtotal = api.column(6, { page: 'current' }).data().reduce(function(a, b) {
+            let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
+            return parseFloat(a) + numericValueB;
+        }, 0);
+
+        // Update the footer with the totals
+        $('#footer_today_subtotal').text(totalSubtotal.toFixed(2));
+
+        __currency_convert_recursively($('#product_sell_table'));
+    },
+    buttons: [
+        {
+            extend: 'csv',
+            text: '<i class="fa fa-file-csv" aria-hidden="true"></i> ' + LANG.export_to_csv,
+            className: 'btn-sm',
+            exportOptions: {
+                columns: ':visible',
             },
+            footer: true,
         },
-        columns: [
-            { data: 'product_name', name: 'p.name' },
-            { data: 'sub_sku', name: 'v.sub_sku' },
-            { data: 'category_name', name: 'cat.name' },
-            { data: 'brand_name', name: 'b.name' },
-            { data: 'current_stock', name: 'current_stock', searchable: false, orderable: false },
-            { data: 'total_qty_sold', name: 'total_qty_sold', searchable: false },
-            { data: 'subtotal', name: 'subtotal', searchable: false },
-        ],
-        fnDrawCallback: function(oSettings) {
-            let api = this.api();
-            
-            // Calculate the total quantity sold
-            let totalQtySold = api.column(5, { page: 'current' }).data().reduce(function (a, b) {
-                // Filter out non-numeric characters and then parse the numeric value
-                let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
-                return parseFloat(a) + numericValueB;
-            }, 0);
-            
-            // Calculate the total sold subtotal
-            let totalSubtotal = api.column(6, { page: 'current' }).data().reduce(function (a, b) {
-                // Filter out non-numeric characters and then parse the numeric value
-                let numericValueB = parseFloat(b.replace(/[^\d.]/g, ''));
-                return parseFloat(a) + numericValueB;
-            }, 0);
-
-            // Update the footer with the totals
-            $('#footer_today_subtotal').text(totalSubtotal.toFixed(2));
-
-            __currency_convert_recursively($('#product_sell_table'));
+        {
+            extend: 'excel',
+            text: '<i class="fa fa-file-excel" aria-hidden="true"></i> ' + LANG.export_to_excel,
+            className: 'btn-sm',
+            exportOptions: {
+                columns: ':visible',
+            },
+            footer: true,
         },
-    });
+        {
+            extend: 'print',
+            text: '<i class="fa fa-print" aria-hidden="true"></i> ' + LANG.print,
+            className: 'btn-sm',
+            exportOptions: {
+            columns: ':visible',
+            stripHtml: true,
+            },
+            footer: true,
+        },
+        {
+            extend: 'colvis',
+            text: '<i class="fa fa-columns" aria-hidden="true"></i> ' + LANG.col_vis,
+            className: 'btn-sm',
+        },
+        {
+            extend: 'pdf',
+            text: '<i class="fa fa-file-pdf" aria-hidden="true"></i> ' + LANG.export_to_pdf,
+            className: 'btn-sm',
+            exportOptions: {
+                columns: ':visible',
+            },
+            footer: true,
+        },
+        {
+            extend: 'print',
+            text: '<i class="fa fa-print" aria-hidden="true"></i> ' + 'Custom Print',
+            className: 'btn-sm',
+            action: function(e, dt, button, config) {
+                var oldStart = dt.settings()[0]._iDisplayStart;  // Get the current start position
+                dt.page.len(-1).draw().one('draw', function() {
+                    $.fn.dataTable.ext.buttons.print.action.call(this, e, dt, button, config);
+                    dt.page.len(25).draw().one('draw', function() {
+                        dt.settings()[0]._iDisplayStart = oldStart;  // Restore the start position
+                        dt.draw(false);
+                    });
+                });
+            },
+            exportOptions: {
+                columns: [0, 2, 3, 4], // Columns: product name, category, brand, total quantity sold, subtotal
+                format: {
+                    body: function(data, row, column, node) {
+                        return data;
+                    }
+                },
+            customize: function (win) {
+            if ($('.print_table_part').length > 0) {
+                $($('.print_table_part').html()).insertBefore(
+                    $(win.document.body).find('table')
+                );
+            }
+            if ($(win.document.body).find('table.hide-footer').length) {
+                $(win.document.body).find('table.hide-footer tfoot').remove();
+            }
+            __currency_convert_recursively($(win.document.body).find('table'));
+            },
+            },
+            customize: function(win) {
+                var data = product_sell_table.rows({ search: 'applied' }).data().toArray();
+                data.sort(function(a, b) {
+                    if (a.category_name < b.category_name) return -1;
+                    if (a.category_name > b.category_name) return 1;
+                    if (a.brand_name < b.brand_name) return -1;
+                    if (a.brand_name > b.brand_name) return 1;
+                    return 0;
+                });
+
+                var body = $(win.document.body).find('table tbody');
+                body.empty();
+                data.forEach(function(row) {
+                    var tr = $('<tr></tr>');
+                    var categoryName = row.category_name.length > 8 
+                        ? row.category_name.substring(0, 6) + '..' + row.category_name.slice(-2) 
+                        : row.category_name;
+                    var brandName = row.brand_name.length > 6 ? row.brand_name.substring(0, 6) + '..' : row.brand_name;
+                    tr.append('<td style="padding: 2px; margin: 2px;">' + row.product_name + '</td>');
+                    tr.append('<td style="padding: 2px; margin: 2px;">' + categoryName + '</td>');
+                    tr.append('<td style="padding: 2px; margin: 2px;">' + brandName + '</td>');
+                    tr.append('<td style="padding: 2px; margin: 2px;">' + row.current_stock + '</td>');
+                    body.append(tr);
+                });
+                $(win.document.body).find('table')
+                    .addClass('compact')
+                    .css({
+                        'font-size': '10px',
+                        'margin-left': '0.5px',
+                        'margin-right': '3px',
+                        'padding-left': '0px',
+                        'padding-right': '2px'
+                    });
+                $(win.document.body).css({
+                        'margin-left': '0.5px',
+                        'margin-right': '3px',
+                        'padding-left': '0px',
+                        'padding-right': '2px'
+                    });
+                
+                $(win.document.body).find('table').parent()
+                    .css({
+                        'margin-left': '2px',
+                        'margin-right': '3px',
+                        'padding-left': '2px',
+                        'padding-right': '3px'
+                    });
+                
+                // Hide default title if present
+                $(win.document.body).find('h1').first().hide();
+
+                // Insert custom title
+                var customTitle = '<h1 style="font-size: 16px; text-align: center;margin-top:0px;padding-top:0px;">AWC Today sell details</h1>';
+                $(win.document.body).prepend(customTitle);
+            }
+        }
+    ]
+});
 
     // Trigger DataTable reload on filter change
     $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status, #selling_state').change(function() {
