@@ -458,10 +458,11 @@ class SellPosController extends Controller
 
                 if ($request->input('additional_expense_value_1') != '') {
                     $input['additional_expense_key_1'] = $request->input('additional_expense_key_1');
+                    $input['additional_expense_value_1'] = $request->input('additional_expense_value_1');
                 }
                 $due_amount =$this->transactionUtil->num_uf($input['final_total'])-$payamount;
                 if($due_amount>0){
-                    $input['additional_expense_value_1'] = $due_amount;
+                    $input['due_amount'] = $due_amount;
                 }
 
                 if ($request->input('additional_expense_value_2') != '') {
