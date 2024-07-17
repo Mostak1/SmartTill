@@ -112,7 +112,7 @@
 	<div class="box box-solid">
 		<div class="box-body">
 			<div class="row">
-				<div class="col-sm-4">
+				<div class="col-sm-4 " id="total_amount_recovered_section">
 					<div class="form-group">
 							{!! Form::label('total_amount_recovered', __('stock_adjustment.total_amount_recovered') . ':') !!} @show_tooltip(__('tooltip.total_amount_recovered'))
 							{!! Form::text('total_amount_recovered', 0, ['class' => 'form-control input_number', 'placeholder' => __('stock_adjustment.total_amount_recovered')]); !!}

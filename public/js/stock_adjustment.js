@@ -83,6 +83,17 @@ $(document).ready(function() {
         $('#product_row_index').val(0);
         update_table_total();
     });    
+    $('select#adjustment_sign').change(function() {
+        let sign = $('#adjustment_sign').val();
+        if (sign=='Plus') {
+            $('#total_amount_recovered_section').addClass('hide');
+        } else if(sign=='Minus') {
+            $('#total_amount_recovered_section').removeClass('hide');
+        }
+        $('table#stock_adjustment_product_table tbody').html('');
+        $('#product_row_index').val(0);
+        update_table_total();
+    });    
 
     $(document).on('change', 'input.product_quantity', function() {
         update_table_row($(this).closest('tr'));

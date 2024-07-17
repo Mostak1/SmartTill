@@ -205,22 +205,20 @@ class StockAdjustmentController extends Controller
                 $product_data = [];
 
                 foreach ($products as $product) {
-                    $adjustment_line = [
-                        'product_id' => $product['product_id'],
-                        'variation_id' => $product['variation_id'],
-                        'quantity' => $this->productUtil->num_uf($product['quantity']),
-                        'unit_price' => $this->productUtil->num_uf($product['unit_price']),
-                        'sign' => $request->adjustment_sign,
-                    ];
-                    if (!empty($product['lot_no_line_id'])) {
-                        //Add lot_no_line_id to stock adjustment line
-                        $adjustment_line['lot_no_line_id'] = $product['lot_no_line_id'];
-                    }
-                    $product_data[] = $adjustment_line;
-
                     //Decrease available quantity increaseProductQuantity
                     if ($request->adjustment_sign == 'Minus') {
-
+                        $adjustment_line = [
+                            'product_id' => $product['product_id'],
+                            'variation_id' => $product['variation_id'],
+                            'quantity' => $this->productUtil->num_uf($product['quantity']),
+                            'unit_price' => $this->productUtil->num_uf($product['unit_price']),
+                            'sign' => $request->adjustment_sign,
+                        ];
+                        if (!empty($product['lot_no_line_id'])) {
+                            //Add lot_no_line_id to stock adjustment line
+                            $adjustment_line['lot_no_line_id'] = $product['lot_no_line_id'];
+                        }
+                        $product_data[] = $adjustment_line;
                         $this->productUtil->decreaseProductQuantity(
                             $product['product_id'],
                             $product['variation_id'],
@@ -228,6 +226,18 @@ class StockAdjustmentController extends Controller
                             $this->productUtil->num_uf($product['quantity'])
                         );
                     } elseif ($request->adjustment_sign == 'Plus') {
+                        $adjustment_line = [
+                            'product_id' => $product['product_id'],
+                            'variation_id' => $product['variation_id'],
+                            'quantity' => $this->productUtil->num_uf(-$product['quantity']),
+                            'unit_price' => $this->productUtil->num_uf($product['unit_price']),
+                            'sign' => $request->adjustment_sign,
+                        ];
+                        if (!empty($product['lot_no_line_id'])) {
+                            //Add lot_no_line_id to stock adjustment line
+                            $adjustment_line['lot_no_line_id'] = $product['lot_no_line_id'];
+                        }
+                        $product_data[] = $adjustment_line;
                         $this->productUtil->increaseProductQuantity(
                             $product['product_id'],
                             $product['variation_id'],

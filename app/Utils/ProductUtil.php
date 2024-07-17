@@ -2167,6 +2167,7 @@ class ProductUtil extends Util
                                 ->leftjoin('transaction_sell_lines as rsl',
                                         'rsl.transaction_id', '=', 'return.id')
                                 ->leftjoin('contacts as c', 'transactions.contact_id', '=', 'c.id')
+                                ->leftjoin('users as us', 'transactions.created_by', '=', 'us.id')
                                 ->where('transactions.location_id', $location_id)
                                 ->where(function ($q) use ($variation_id) {
                                     $q->where('sl.variation_id', $variation_id)
@@ -2193,6 +2194,8 @@ class ProductUtil extends Util
                                     'transactions.ref_no',
                                     'transactions.additional_notes',
                                     'c.name as contact_name',
+                                    'us.first_name as first_name',
+                                    'us.last_name as last_name',
                                     'c.supplier_business_name',
                                     'pl.secondary_unit_quantity as purchase_secondary_unit_quantity',
                                     'sl.secondary_unit_quantity as sell_secondary_unit_quantity'
@@ -2209,6 +2212,7 @@ class ProductUtil extends Util
                 'transaction_id' => $stock_line->transaction_id,
                 'contact_name' => $stock_line->contact_name,
                 'supplier_business_name' => $stock_line->supplier_business_name,
+                'created_by' =>  $stock_line->first_name.' '.$stock_line->last_name,
             ];
             if ($stock_line->transaction_type == 'sell') {
                 if ($stock_line->status != 'final') {

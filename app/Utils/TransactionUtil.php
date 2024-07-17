@@ -4426,36 +4426,7 @@ class TransactionUtil extends Util
                         PurchaseLine::where('id', $row->purchase_lines_id)
                             ->update(['quantity_adjusted' => $row->quantity_adjusted + $qty_allocated]);
                     }
-                } elseif ($mapping_type == 'purchase') {
-                    //Mapping of purchase
-                    if ($qty_allocated != 0) {
-                        $purchase_sell_map[] = [
-                            'sell_line_id' => $line->id,
-                            'purchase_line_id' => $row->purchase_lines_id,
-                            'quantity' => $qty_allocated,
-                            'created_at' => \Carbon::now(),
-                            'updated_at' => \Carbon::now(),
-                        ];
-                        //Update purchase line
-                        PurchaseLine::where('id', $row->purchase_lines_id)
-                            ->update(['quantity_sold' => $row->quantity_sold + $qty_allocated]);
-                    }
-                } elseif ($mapping_type == 'production_purchase') {
-                    //Mapping of purchase
-                    if ($qty_allocated != 0) {
-                        $purchase_sell_map[] = [
-                            'sell_line_id' => $line->id,
-                            'purchase_line_id' => $row->purchase_lines_id,
-                            'quantity' => $qty_allocated,
-                            'created_at' => \Carbon::now(),
-                            'updated_at' => \Carbon::now(),
-                        ];
-
-                        //Update purchase line
-                        PurchaseLine::where('id', $row->purchase_lines_id)
-                            ->update(['mfg_quantity_used' => $row->mfg_quantity_used + $qty_allocated]);
-                    }
-                }
+                };
 
                 if ($qty_selling == 0) {
                     break;
