@@ -45,7 +45,7 @@
         <script src="https://cdn.jsdelivr.net/npm/luckyexcel/dist/luckyexcel.umd.js"></script> -->
 
         <script src="https://cdn.jsdelivr.net/npm/luckysheet@latest/dist/plugins/js/plugin.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/luckysheet@2.1.12/dist/luckysheet.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/luckysheet@2.1.13/dist/luckysheet.umd.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/luckyexcel/dist/luckyexcel.umd.js"></script>
 
         {{-- /spreadsheet --}}

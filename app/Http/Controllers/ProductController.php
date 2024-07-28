@@ -94,7 +94,7 @@ class ProductController extends Controller
             if (!empty($location_id) && $location_id != 'none') {
                 if ($permitted_locations == 'all' || in_array($location_id, $permitted_locations)) {
                     $query->whereHas('product_locations', function ($query) use ($location_id) {
-                        $query->where('product_locations.location_id', '=', $location_id);
+                        $query->where('product_locations.location_id', '=', $location_id)->where('vld.location_id', '=', $location_id)->addSelect('vld.qty_available as quantity');
                     });
                 }
             } elseif ($location_id == 'none') {
@@ -309,7 +309,11 @@ class ProductController extends Controller
                 })
                 ->editColumn('current_stock', function ($row) {
                     if ($row->enable_stock) {
-                        $stock = $this->productUtil->num_f($row->current_stock, false, null, true);
+                        if ($row->quantity) {
+                            $stock = $this->productUtil->num_f($row->quantity, false, null, true);
+                        } else {
+                            $stock = $this->productUtil->num_f($row->current_stock, false, null, true);
+                        }
 
                         return $stock . ' ' . $row->unit;
                     } else {
@@ -467,7 +471,7 @@ class ProductController extends Controller
         $variation = Variation::get();
         $foreign_cat = Category::where('is_us_product', 1)->first();
         return view('product.create')
-            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data', 'variation','foreign_cat'));
+            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'barcode_default', 'business_locations', 'duplicate_product', 'sub_categories', 'rack_details', 'selling_price_group_count', 'module_form_parts', 'product_types', 'common_settings', 'warranties', 'pos_module_data', 'variation', 'foreign_cat'));
     }
 
     private function product_types()
@@ -877,7 +881,7 @@ class ProductController extends Controller
 
                 $variation_history = Variation::find($single_data['single_variation_id']);
                 $oldPrice = $this->productUtil->num_uf($single_data['single_dpp_inc_tax']) * $foreign_cat->description;
-                $newPrice = round(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description)/10)*10;
+                $newPrice = round(($this->productUtil->num_uf($single_data['single_dsp_inc_tax']) * $foreign_cat->description) / 10) * 10;
                 $userId = auth()->id();
 
                 // Update the variation's price
@@ -885,8 +889,8 @@ class ProductController extends Controller
                     // Create a new price history entry
                     VariationPriceHistory::create([
                         'variation_id' => $id,
-                        'old_price' => '$ '.number_format($variation->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($oldPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
-                        'new_price' => '$ '.number_format($variation->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($newPrice,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
+                        'old_price' => '$ ' . number_format($variation->foreign_p_price_inc_tex, 2) . '<br>৳ ' . number_format($oldPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
+                        'new_price' => '$ ' . number_format($variation->foreign_s_price_inc_tex, 2) . '<br>৳ ' . number_format($newPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
                         'updated_by' => $userId,
                         'type' => 'product',
                         'h_type' => 'Edited'
@@ -928,7 +932,7 @@ class ProductController extends Controller
 
                 $variation->save();
 
-                Media::uploadMedia($product->business_id, $variation, $request, 'variation_images');            
+                Media::uploadMedia($product->business_id, $variation, $request, 'variation_images');
             } elseif ($product->type == 'variable') {
                 //Update existing variations
                 $input_variations_edit = $request->get('product_variation_edit');
@@ -1569,9 +1573,9 @@ class ProductController extends Controller
         $common_settings = session()->get('business.common_settings');
         $warranties = Warranty::forDropdown($business_id);
         $foreign_cat = Category::where('is_us_product', 1)->first();
-        
+
         return view('product.partials.quick_add_product')
-            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'product_name', 'locations', 'product_for', 'enable_expiry', 'enable_lot', 'module_form_parts', 'business_locations', 'common_settings', 'warranties','foreign_cat'));
+            ->with(compact('categories', 'brands', 'units', 'taxes', 'barcode_types', 'default_profit_percent', 'tax_attributes', 'product_name', 'locations', 'product_for', 'enable_expiry', 'enable_lot', 'module_form_parts', 'business_locations', 'common_settings', 'warranties', 'foreign_cat'));
     }
 
     /**
@@ -2007,7 +2011,7 @@ class ProductController extends Controller
 
         return redirect('products/add-selling-prices-category')->with('status', $output);
     }
-    
+
     public function saveSellingPricesMany(Request $request)
     {
         if (!auth()->user()->can('product.create')) {
@@ -2025,28 +2029,28 @@ class ProductController extends Controller
                 ->with(['variations'])
                 ->get();
             DB::beginTransaction();
-                    foreach ($request->input('group_prices') as $key => $value) {
-                        if (isset($value['price'])) {
-                            $variation = Variation::find($key);
-                            $base_price = $variation->sell_price_inc_tax;
-            
-                            if ($value['price_type'] == 'percentage') {
-                                $price_inc_tax = 100 - $value['price'];
-                            } else {
-                                $price_inc_tax = $base_price - $value['price'];
-                            }
-            
-                            $variation_group_price = VariationGroupPrice::updateOrCreate(
-                                [
-                                    'variation_id' => $key,
-                                    'price_group_id' => $request->selling_price_group_id,
-                                ],
-                                [
-                                    'price_inc_tax' => $price_inc_tax,
-                                    'price_type' => $value['price_type'],
-                                ]
-                            );
-                        }
+            foreach ($request->input('group_prices') as $key => $value) {
+                if (isset($value['price'])) {
+                    $variation = Variation::find($key);
+                    $base_price = $variation->sell_price_inc_tax;
+
+                    if ($value['price_type'] == 'percentage') {
+                        $price_inc_tax = 100 - $value['price'];
+                    } else {
+                        $price_inc_tax = $base_price - $value['price'];
+                    }
+
+                    $variation_group_price = VariationGroupPrice::updateOrCreate(
+                        [
+                            'variation_id' => $key,
+                            'price_group_id' => $request->selling_price_group_id,
+                        ],
+                        [
+                            'price_inc_tax' => $price_inc_tax,
+                            'price_type' => $value['price_type'],
+                        ]
+                    );
+                }
             }
             DB::commit();
             $output = ['success' => 1, 'msg' => __('lang_v1.updated_success')];
@@ -2581,13 +2585,19 @@ class ProductController extends Controller
         }
 
         $business_id = request()->session()->get('user.business_id');
-
+        $product = Product::where('business_id', $business_id)
+        ->with(['variations', 'variations.product_variation'])
+        ->findOrFail($id);
         if (request()->ajax()) {
 
             //for ajax call $id is variation id else it is product id
             $stock_details = $this->productUtil->getVariationStockDetails($business_id, $id, request()->input('location_id'));
             $stock_history = $this->productUtil->getVariationStockHistory($business_id, $id, request()->input('location_id'));
 
+            $for = 'view_product';
+            $filters['product_id'] = $product->id;
+            // $product_locations = $this->productUtil->getProductStockDetails($business_id, $filters, $for);
+            $product_locations = VariationLocationDetails::where('variation_id', $id)->leftjoin('business_locations as l', 'variation_location_details.location_id', '=', 'l.id')->select('variation_location_details.qty_available as stock','l.name as location_name')->get();
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
                 VariationLocationDetails::where('variation_id', $id)
@@ -2596,12 +2606,8 @@ class ProductController extends Controller
                 $stock_details['current_stock'] = $stock_history[0]['stock'];
             }
             return view('product.stock_history_details')
-                ->with(compact('stock_details', 'stock_history', 'priceHistory'));
+                ->with(compact('stock_details', 'stock_history', 'priceHistory','product_locations'));
         }
-
-        $product = Product::where('business_id', $business_id)
-            ->with(['variations', 'variations.product_variation'])
-            ->findOrFail($id);
 
         //Get all business locations
         $business_locations = BusinessLocation::forDropdown($business_id);

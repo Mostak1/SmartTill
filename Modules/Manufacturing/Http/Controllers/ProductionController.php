@@ -281,6 +281,7 @@ class ProductionController extends Controller
                 'created_by' => $transaction->created_by,
                 'status' => $is_final ? 'final' : 'draft',
                 'type' => 'production_sell',
+                'ref_no' => $transaction->ref_no,
                 'mfg_parent_production_purchase_id' => $transaction->id,
                 'payment_status' => 'due',
                 'final_total' => $transaction->final_total,

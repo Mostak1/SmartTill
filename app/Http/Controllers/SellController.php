@@ -681,7 +681,7 @@ class SellController extends Controller
         $business_details = $this->businessUtil->getDetails($business_id);
         $taxes = TaxRate::forBusinessDropdown($business_id, true, true);
 
-        $business_locations = BusinessLocation::forDropdown($business_id, false, true);
+        $business_locations = BusinessLocation::forDropdownSell($business_id, false, true);
         $bl_attributes = $business_locations['attributes'];
         $business_locations = $business_locations['locations'];
 

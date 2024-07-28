@@ -82,10 +82,27 @@
     <div class="col-md-4 col-xs-4">
         <strong>@lang('lang_v1.totals')</strong>
         <table class="table table-condensed">
+            @php
+            $total_quantity = 0;
+                foreach ($product_locations as $item) {
+                    $total_quantity+=$item->stock;
+                }
+            @endphp
+           
+            @foreach ($product_locations as $item)
+                
             <tr>
-                <th>@lang('report.current_stock')</th>
+                <th>{{$item->location_name}}</th>
                 <td>
-                    <span class="display_currency" data-is_quantity="true">{{ $stock_details['current_stock'] }}</span>
+                    <span class="display_currency" data-is_quantity="true">{{ $item->stock }}</span>
+                    {{ $stock_details['unit'] }}
+                </td>
+            </tr>
+            @endforeach
+            <tr>
+                <th>Total Stock</th>
+                <td>
+                    <span class="display_currency" data-is_quantity="true">{{ $total_quantity }}</span>
                     {{ $stock_details['unit'] }}
                 </td>
             </tr>
@@ -173,6 +190,11 @@
                                     data-href="{{ action([\Modules\Manufacturing\Http\Controllers\ProductionController::class, 'show'], $history['sele_id']) }}"
                                     class="btn-modal" data-container=".view_modal"
                                     data-target="#recipe_modal">{{ $history['ref_no'] }}</a>
+                            @elseif ($history['type_label'] == 'Ingredient')
+                                <a href="#"
+                                    data-href="{{ action([\Modules\Manufacturing\Http\Controllers\ProductionController::class, 'show'], $history['sele_id']) }}"
+                                    class="btn-modal" data-container=".view_modal"
+                                    data-target="#recipe_modal">{{ $history['ref_no']??'Manufactured' }}</a>
                             @elseif ($history['type_label'] == 'Stock Adjustment')
                                 <a href="#"
                                     data-href="{{ action([\App\Http\Controllers\StockAdjustmentController::class, 'show'], $history['sele_id']) }}"

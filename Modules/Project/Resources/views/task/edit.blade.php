@@ -118,7 +118,16 @@
                     <select name="custom_field_1" class="form-control">
                         <option value="">Select Label</option>
                         @foreach($levels as $level)
-                        <option class="select2" style="color: {{ $level['color'] }}; background-color: {{ $level['bg'] }};" value="{{ '<span title="Label" style="color: ' . $level['color'] . '; background-color: ' . $level['bg'] . '; border-radius: 10%; padding: 0px 4px 2px 4px; font-weight: bold;"><small>' . $level['name'] . '</small></span>' }}">{{ $level['name'] }}</option>
+                            @php
+                                $formattedValue = '<span title="Label" style="color: ' . $level['color'] . '; background-color: ' . $level['bg'] . '; border-radius: 10%; padding: 0px 4px 2px 4px; font-weight: bold;"><small>' . $level['name'] . '</small></span>';
+                            @endphp
+                            <option
+                                class="select2" style="color: {{ $level['color'] }}; background-color: {{ $level['bg'] }};"
+                                value="{{ $formattedValue }}"
+                                {{ $project_task->custom_field_1 === $formattedValue ? 'selected' : '' }}
+                            >
+                                {!! $formattedValue !!}
+                            </option>
                         @endforeach
                     </select>
                 </div>

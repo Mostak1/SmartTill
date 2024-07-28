@@ -257,7 +257,7 @@ class StockAdjustmentController extends Controller
                     'location_id' => $input_data['location_id'],
                 ];
                 if ($request->adjustment_sign == 'Plus') {
-                    $this->transactionUtil->mapPurchaseSellPlus($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
+                    $this->transactionUtil->mapPurchaseSell($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
                 } elseif ($request->adjustment_sign == 'Minus') {
                     $this->transactionUtil->mapPurchaseSell($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
                 }
@@ -280,7 +280,7 @@ class StockAdjustmentController extends Controller
             $msg = trans('messages.something_went_wrong');
 
             if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {
-                $msg = $e->getMessage();
+                $msg = 'Products must have an opening stock before adding surplus. Please add an opening stock first to proceed.' ;
             }
 
             $output = [

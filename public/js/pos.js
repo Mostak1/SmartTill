@@ -181,9 +181,9 @@ $(document).ready(function() {
                 },
                 minLength: 2,
                 response: function(event, ui) {
+                    console.log(ui.content);
                     if (ui.content.length == 1) {
                         ui.item = ui.content[0];
-
                         var is_overselling_allowed = false;
                         if($('input#is_overselling_allowed').length) {
                             is_overselling_allowed = true;
@@ -230,7 +230,8 @@ $(document).ready(function() {
                     if (ui.item.enable_stock != 1 || ui.item.qty_available > 0 || is_overselling_allowed || for_so || is_draft) {
                         $(this).val(null);
 
-                        //Pre select lot number only if the searched term is same as the lot number
+                        //Pre select lot number only if the searched term is same as the lot number var location_id= $('input#location_id').val();
+                // if (item.location_id.includes(location_id)) {
                         var purchase_line_id = ui.item.purchase_line_id && searched_term == ui.item.lot_number ? ui.item.purchase_line_id : null;
                         pos_product_row(ui.item.variation_id, purchase_line_id);
                     } else {
@@ -270,8 +271,11 @@ $(document).ready(function() {
                     '<br> Price: ' +
                     selling_price +
                     ' (Out of stock) </li>';
+                    string += ' Location_id:'+item.location_name+'</div>';
                 return $(string).appendTo(ul);
             } else {
+                var location_id= $('input#location_id').val();
+                // if (item.location_id.includes(location_id)) {
                 var string = '<div>' + item.name;
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
@@ -284,13 +288,14 @@ $(document).ready(function() {
 
                 string += ' (' + item.sub_sku + ')' + '<br> Price: ' + selling_price;
                 if (item.enable_stock == 1) {
+                    console.log(item);
                     var qty_available = __currency_trans_from_en(item.qty_available, false, false, __currency_precision, true);
                     string += ' - ' + qty_available + item.unit;
                 }
                 if(item.brand_id){
                     string += '</br>Brand: ' + item.brand.name;
                 }
-                string += '</div>';
+                string += ' Location_id:'+location_id+item.location_name+'</div>';
 
                 return $('<li>')
                     .append(string)

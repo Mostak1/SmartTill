@@ -1781,7 +1781,7 @@ class ProductUtil extends Util
                             });
                         }
                     }
-                );
+                )->leftjoin('business_locations as l', 'vld.location_id', '=', 'l.id');
 
         if (! is_null($not_for_selling)) {
             $query->where('products.not_for_selling', $not_for_selling);
@@ -1875,12 +1875,21 @@ class ProductUtil extends Util
         if (! empty($location_id)) {
             $query->ForLocation($location_id);
         }
-
+        if (!empty($location_id)) {
+            $query->where(function ($query) use ($location_id) {
+                $query->where('VLD.location_id', $location_id)
+                    ->orWhere(function ($query) use ($location_id) {
+                        $query->where('VLD.qty_available', '>', 0)
+                            ->where('VLD.location_id', '!=', $location_id)->addSelect('l.name as location_name','VLD.qty_available as stock',);
+                    });
+            });
+        }
         $query->select(
                 'products.id as product_id',
                 'products.name',
                 'products.type',
                 'products.brand_id',
+                'l.id as location_id',
                 'products.enable_stock',
                 'variations.id as variation_id',
                 'variations.name as variation',
@@ -2190,6 +2199,7 @@ class ProductUtil extends Util
                                     'transactions.return_parent_id',
                                     'transactions.transaction_date',
                                     'transactions.status',
+                                    'transactions.mfg_parent_production_purchase_id as mfg_parent_id',
                                     'transactions.invoice_no',
                                     'transactions.ref_no',
                                     'transactions.additional_notes',
@@ -2319,7 +2329,7 @@ class ProductUtil extends Util
                     'type' => 'sell',
                     'type_label' => __('manufacturing::lang.ingredient'),
                     'ref_no' => $stock_line->ref_no,
-                    'sele_id' => $stock_line->transaction_id,
+                    'sele_id' => $stock_line->mfg_parent_id,
                     'stock_in_second_unit' => $this->roundQuantity($stock_in_second_unit),
                 ]);
             } elseif ($stock_line->transaction_type == 'production_purchase') {

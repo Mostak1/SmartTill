@@ -135,7 +135,10 @@
 </script>
 
 <!-- Spectrum JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script>
+{{-- <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script> --}}
+<script src="{{ asset('js/spectrum.min.js?v=' . $asset_v) }}"></script>
 {{-- text editor cdn --}}
-<script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script>
+{{-- <script src="https://cdn.ckeditor.com/ckeditor5/41.2.1/classic/ckeditor.js"></script> --}}
+<script src="{{ asset('js/ckeditor.js?v=' . $asset_v) }}"></script>
+
 

@@ -54,7 +54,7 @@ class TaxonomyController extends Controller
 
             $category = Category::where('business_id', $business_id)
                 ->where('category_type', $category_type)
-                ->select(['name', 'short_code', 'description', 'id', 'parent_id','is_us_product']);
+                ->select(['name', 'short_code', 'description', 'id', 'parent_id', 'is_us_product']);
 
             return Datatables::of($category)
                 ->addColumn(
@@ -63,18 +63,17 @@ class TaxonomyController extends Controller
                         $html = '';
                         if ($row->is_us_product == 0 && $can_edit) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
-                        }
-                        elseif (auth()->user()->can('category.usa')) {
+                        } elseif (auth()->user()->can('category.usa')) {
                             $html .= '<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'edit'], [$row->id]) . '?type=' . $category_type . '" class="btn btn-xs btn-primary edit_category_button"><i class="glyphicon glyphicon-edit"></i>' . __('messages.edit') . '</button>';
                         }
                         if ($row->is_us_product == 0 && $can_delete) {
-                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
+                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';
                         }
                         // elseif(auth()->user()->can('superadmin') && $row->is_us_product == 1){
                         //     $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'destroy'], [$row->id]) . '" class="btn btn-xs btn-danger delete_category_button"><i class="glyphicon glyphicon-trash"></i> ' . __('messages.delete') . '</button>';  
                         // }
                         if ($row->is_us_product == 1 && auth()->user()->can('category.history')) {
-                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'getRate']) . '" class="btn btn-xs btn-info rate_category_button"><i class="fas fa-history"></i> ' . __('History') . '</button>';  
+                            $html .= '&nbsp;<button data-href="' . action([\App\Http\Controllers\TaxonomyController::class, 'getRate']) . '" class="btn btn-xs btn-info rate_category_button"><i class="fas fa-history"></i> ' . __('History') . '</button>';
                         }
                         return $html;
                     }
@@ -95,14 +94,14 @@ class TaxonomyController extends Controller
         $module_category_data = $this->moduleUtil->getTaxonomyData($category_type);
         $foreign_cat = Category::where('is_us_product', 1)->first();
         if ($foreign_cat) {
-            $PriceHistory = VariationPriceHistory::where('variation_id',  (isset($foreign_cat) ? $foreign_cat->id : null))
-            ->where('type', 'category')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
-            ->get();
-        }else{
+            $PriceHistory = VariationPriceHistory::where('variation_id', (isset($foreign_cat) ? $foreign_cat->id : null))
+                ->where('type', 'category')
+                ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+                ->get();
+        } else {
             $PriceHistory = VariationPriceHistory::where('type', 'category')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
-            ->get();
+                ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+                ->get();
         }
 
         return view('taxonomy.index')->with(compact('module_category_data', 'module_category_data', 'PriceHistory'));
@@ -258,12 +257,11 @@ class TaxonomyController extends Controller
                 } else {
                     $category->parent_id = 0;
                 }
-                
-                $foreign_cat = Category::where('is_us_product', 1)->first();
-                if (isset($foreign_cat)) { 
 
-                    if($category->description != $input['description'])
-                    {
+                $foreign_cat = $category->is_us_product;
+               if ($foreign_cat == 1) {
+
+                    if ($category->description != $input['description']) {
                         // Create a new price history entry
                         VariationPriceHistory::create([
                             'variation_id' => $category->id,
@@ -277,33 +275,31 @@ class TaxonomyController extends Controller
                     $category->save();
 
                     $foreign_variations = Variation::where('is_foreign', 1)->get();
-
                     foreach ($foreign_variations as $foreign_variation) {
                         $foreign_variation->currency_rate = $category->description;
                         $foreign_variation->default_purchase_price = $foreign_variation->foreign_p_price * $category->description;
-                        $foreign_variation->dpp_inc_tax = round(($foreign_variation->foreign_p_price_inc_tex * $category->description)/10)*10;
-                        $foreign_variation->default_sell_price = round(($foreign_variation->foreign_s_price * $category->description)/10) * 10;
+                        $foreign_variation->dpp_inc_tax = round(($foreign_variation->foreign_p_price_inc_tex * $category->description) / 10) * 10;
+                        $foreign_variation->default_sell_price = round(($foreign_variation->foreign_s_price * $category->description) / 10) * 10;
 
                         // Update the variation's price
                         $old_price = $foreign_variation->dpp_inc_tax;
-                        $newPrice = round(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
+                        $newPrice = round(($foreign_variation->foreign_s_price_inc_tex * $category->description) / 10) * 10;
                         if ($foreign_variation->sell_price_inc_tax != $newPrice) {
                             // Create a new price history entry
                             VariationPriceHistory::create([
                                 'variation_id' => $foreign_variation->product_id,
-                                'old_price' => '$ '.number_format($foreign_variation->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($old_price,2).'<br>$⇄৳ '.number_format($category->description,2),
-                                'new_price' => '$ '.number_format($foreign_variation->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($newPrice,2).'<br>$⇄৳ '.number_format($category->description,2),
+                                'old_price' => '$ ' . number_format($foreign_variation->foreign_p_price_inc_tex, 2) . '<br>৳ ' . number_format($old_price, 2) . '<br>$⇄৳ ' . number_format($category->description, 2),
+                                'new_price' => '$ ' . number_format($foreign_variation->foreign_s_price_inc_tex, 2) . '<br>৳ ' . number_format($newPrice, 2) . '<br>$⇄৳ ' . number_format($category->description, 2),
                                 'updated_by' => auth()->id(),
                                 'type' => 'product',
                                 'h_type' => 'Dollar Rate Change'
                             ]);
                         }
-                        $foreign_variation->sell_price_inc_tax = round(($foreign_variation->foreign_s_price_inc_tex * $category->description)/10) * 10;
+                        $foreign_variation->sell_price_inc_tax = round(($foreign_variation->foreign_s_price_inc_tex * $category->description) / 10) * 10;
 
                         $foreign_variation->save();
                     }
-                }
-                else{
+                } else {
                     $category->save();
                 }
 
