@@ -123,7 +123,7 @@
                 <div class="clearfix"></div>
                 @php
                 $custom_labels = json_decode(session('business.custom_labels'), true);
-                $location_custom_field1 = !empty($custom_labels['location']['custom_field_1']) ? $custom_labels['location']['custom_field_1'] : __('lang_v1.location_custom_field1');
+                $location_custom_field1 = !empty($custom_labels['location']['custom_field_1']) ? $custom_labels['location']['custom_field_1'] :'Sell Permissions';
                 $location_custom_field2 = !empty($custom_labels['location']['custom_field_2']) ? $custom_labels['location']['custom_field_2'] : __('lang_v1.location_custom_field2');
                 $location_custom_field3 = !empty($custom_labels['location']['custom_field_3']) ? $custom_labels['location']['custom_field_3'] : __('lang_v1.location_custom_field3');
                 $location_custom_field4 = !empty($custom_labels['location']['custom_field_4']) ? $custom_labels['location']['custom_field_4'] : __('lang_v1.location_custom_field4');
@@ -131,8 +131,7 @@
                 <div class="col-sm-3">
                     <div class="form-group">
                         {!! Form::label('custom_field1', $location_custom_field1 . ':') !!}
-                        {!! Form::text('custom_field1', null, ['class' => 'form-control',
-                        'placeholder' => $location_custom_field1]); !!}
+                        {!! Form::select('custom_field1',[null => 'Sell Allowed',1 =>'Sell Not Allowed'],null,['class' =>'form-control']) !!}
                     </div>
                 </div>
                 <div class="col-sm-3">

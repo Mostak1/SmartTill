@@ -1898,7 +1898,7 @@ class ProductUtil extends Util
                 'variations.sub_sku',
                 'U.short_name as unit'
             );
-
+            $query->addSelect(DB::raw('SUM(VLD.qty_available) as total_quantity'));
         if (! empty($price_group_id)) {
             $query->addSelect(DB::raw('IF (VGP.price_type = "fixed", VGP.price_inc_tax, VGP.price_inc_tax * variations.sell_price_inc_tax / 100) as variation_group_price'));
         }

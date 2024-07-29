@@ -171,7 +171,7 @@ $(document).ready(function() {
                         '/products/list',
                         {
                             price_group: price_group,
-                            location_id: $('input#location_id').val(),
+                            // location_id: $('input#location_id').val(),
                             term: request.term,
                             not_for_selling: 0,
                             search_fields: search_fields
@@ -256,7 +256,7 @@ $(document).ready(function() {
                 }
 
             if (item.enable_stock == 1 && item.qty_available <= 0 && !is_overselling_allowed && !for_so && !is_draft) {
-                var string = '<li class="ui-state-disabled">' + item.name;
+                var string = '<li class="ui-state-disabled"><span >' + item.name;
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
                 }
@@ -270,8 +270,12 @@ $(document).ready(function() {
                     ')' +
                     '<br> Price: ' +
                     selling_price +
-                    ' (Out of stock) </li>';
-                    string += ' Location_id:'+item.location_name+'</div>';
+                    ' (Out of stock)';
+                    if (item.total_quantity>0) {
+                        string += '</span></li><b> Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</b>';
+                    } else {
+                        string += '| Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</span></li>';
+                    }
                 return $(string).appendTo(ul);
             } else {
                 var location_id= $('input#location_id').val();
@@ -295,8 +299,6 @@ $(document).ready(function() {
                 if(item.brand_id){
                     string += '</br>Brand: ' + item.brand.name;
                 }
-                string += ' Location_id:'+location_id+item.location_name+'</div>';
-
                 return $('<li>')
                     .append(string)
                     .appendTo(ul);
