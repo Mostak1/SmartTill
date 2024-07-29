@@ -102,7 +102,7 @@
             <tr>
                 <th>Total Stock</th>
                 <td>
-                    {{-- <span class="display_currency" data-is_quantity="true">{{ $total_quantity }}</span> --}}
+                    <span class="display_currency" data-is_quantity="true">{{ $total_quantity }}</span>
                     {{ $stock_details['unit'] }}
                 </td>
             </tr>
