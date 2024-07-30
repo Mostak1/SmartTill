@@ -222,4 +222,13 @@ class Product extends Model
     {
         return $this->hasMany(\App\ProductRack::class);
     }
+    public function transactionSellLines()
+    {
+        return $this->hasMany(TransactionSellLine::class);
+    }
+
+    public function randomCheckDetails()
+    {
+        return $this->hasMany(RandomCheckDetail::class);
+    }
 }

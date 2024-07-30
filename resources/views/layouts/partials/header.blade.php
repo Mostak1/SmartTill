@@ -24,7 +24,7 @@
             <a href="{{ route('sign-in-as-user', session('previous_user_id')) }}"
                 class="btn btn-flat btn-danger m-8 btn-sm mt-10"><i class="fas fa-undo"></i> @lang('lang_v1.back_to_username', ['username' => session('previous_username')])</a>
         @endif
-        @if (env('APP_DEV')==true)
+        @if (env('APP_DEV')=='true')
         <div class="logo" style="background-color: brown">Test Project</div>
         @endif
         <!-- Navbar Right Menu -->

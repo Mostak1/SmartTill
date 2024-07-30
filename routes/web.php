@@ -193,7 +193,21 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/products/get-combo-product-entry-row', [ProductController::class, 'getComboProductEntryRow']);
     Route::post('/products/toggle-woocommerce-sync', [ProductController::class, 'toggleWooCommerceSync']);
 
+    
+// For Random Check of Product
+    Route::get('/products/random-check-index', [ProductController::class, 'randomCheck'])->name('products.randomCheckIndex');
+    Route::get('products/random-check-details', [ProductController::class, 'randomCheckDetails'])->name('products.randomCheckDetails');
+    Route::get('/products/random-check', [ProductController::class, 'createRandomCheck'])->name('products.createRandomCheck');
+    Route::post('/products/generate-random-product', [ProductController::class, 'generateRandom'])->name('products.generateRandom');
+    Route::post('/products/random-check-confirm', [ProductController::class, 'checkConfirm'])->name('random_check.confirm');
+    Route::post('/products/random-check-store', [ProductController::class, 'checkUpdate'])->name('random_check.store');
+    Route::get('/products/random-check/edit/{id}', [ProductController::class, 'checkEdit'])->name('products.checkEdit');
+    Route::post('/products/random-check/update/{id}', [ProductController::class, 'checkDetailUpdate'])->name('products.checkUpdate');
+    Route::get('/random-checks/show/{id}', [ProductController::class, 'checkShow'])->name('random_checks.show');
+    Route::get('/products/check-report', [ProductController::class, 'checkReport'])->name('products.checkReport');
+    
     Route::resource('products', ProductController::class);
+
     Route::get('/toggle-subscription/{id}', 'SellPosController@toggleRecurringInvoices');
     Route::post('/sells/pos/get-types-of-service-details', 'SellPosController@getTypesOfServiceDetails');
     Route::get('/sells/subscriptions', 'SellPosController@listSubscriptions');
@@ -263,6 +277,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/labels/preview', [LabelsController::class, 'preview']);
 
     //Reports...
+    Route::get('/reports/product-sell-grouped-report', [ReportController::class, 'getproductSellGroupedReport']);
     Route::get('/reports/gst-purchase-report', [ReportController::class, 'gstPurchaseReport']);
     Route::get('/reports/gst-sales-report', [ReportController::class, 'gstSalesReport']);
     Route::get('/reports/get-stock-by-sell-price', [ReportController::class, 'getStockBySellingPrice']);
@@ -298,7 +313,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/reports/product-sell-grouped-by', [ReportController::class, 'productSellReportBy']);
     Route::get('/reports/product-sell-report', [ReportController::class, 'getproductSellReport']);
     Route::get('/reports/product-sell-report-with-purchase', [ReportController::class, 'getproductSellReportWithPurchase']);
-    Route::get('/reports/product-sell-grouped-report', [ReportController::class, 'getproductSellGroupedReport']);
+   
     Route::get('/reports/lot-report', [ReportController::class, 'getLotReport']);
     Route::get('/reports/purchase-payment-report', [ReportController::class, 'purchasePaymentReport']);
     Route::get('/reports/sell-payment-report', [ReportController::class, 'sellPaymentReport']);

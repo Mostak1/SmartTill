@@ -186,13 +186,13 @@ class AdminSidebarMenu
                                 ['icon' => 'fa fas fa-tags', 'active' => request()->segment(1) == 'taxonomies' && request()->get('type') == 'product']
                             );
                         }
-                        if (auth()->user()->can('category.view') || auth()->user()->can('category.create')) {
-                            $sub->url(
-                                action([\App\Http\Controllers\SubCategoryController::class, 'index']),
-                                __('subcategory.subcategories'),
-                                ['icon' => 'fa fas fa-tags', 'active' => request()->segment(1) == 'taxonomies' && request()->get('type') == 'product']
-                            );
-                        }
+                        // if (auth()->user()->can('category.view') || auth()->user()->can('category.create')) {
+                        //     $sub->url(
+                        //         action([\App\Http\Controllers\SubCategoryController::class, 'index']),
+                        //         __('subcategory.subcategories'),
+                        //         ['icon' => 'fa fas fa-tags', 'active' => request()->segment(1) == 'taxonomies' && request()->get('type') == 'product']
+                        //     );
+                        // }
                         if (auth()->user()->can('brand.view') || auth()->user()->can('brand.create')) {
                             $sub->url(
                                 action([\App\Http\Controllers\BrandController::class, 'index']),
@@ -205,6 +205,11 @@ class AdminSidebarMenu
                             action([\App\Http\Controllers\WarrantyController::class, 'index']),
                             __('lang_v1.warranties'),
                             ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'warranties']
+                        );
+                        $sub->url(
+                            action([\App\Http\Controllers\ProductController::class, 'randomCheck']),
+                            __('Random Check'),
+                            ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'random-check-index']
                         );
                     },
                     ['icon' => 'fa fas fa-cubes', 'id' => 'tour_step5']

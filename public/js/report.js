@@ -1024,6 +1024,7 @@ $(document).ready(function() {
                 d.location_id = $('select#location_id').val();
                 d.category_id = $('select#psr_filter_category_id').val();
                 d.brand_id = $('select#psr_filter_brand_id').val();
+                d.single = 2;
                 d.customer_group_id = $('#psr_customer_group_id').val();
             },
         },
@@ -1076,6 +1077,7 @@ $(document).ready(function() {
                 d.location_id = $('select#location_id').val();
                 d.category_id = $('select#psr_filter_category_id').val();
                 d.brand_id = $('select#psr_filter_brand_id').val();
+                d.single = 1;
                 d.customer_group_id = $('#psr_customer_group_id').val();
             },
         },

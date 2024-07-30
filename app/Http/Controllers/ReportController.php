@@ -2535,6 +2535,7 @@ class ReportController extends Controller
         if ($request->ajax()) {
             $variation_id = $request->get('variation_id', null);
             $today = $request->get('transaction_date');
+            $single = $request->get('single');
 
             $query = TransactionSellLine::join(
                 'transactions as t',
@@ -2574,9 +2575,11 @@ class ReportController extends Controller
                     'u.short_name as unit',
                     DB::raw('SUM((transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) * transaction_sell_lines.unit_price_inc_tax) as subtotal')
                 )
-                ->groupBy('v.id')
-                ->groupBy('formated_date');
+                ->groupBy('v.id');
 
+            if ($single==2) {
+                $query->groupBy('formated_date');
+            }
             if (!empty($today)) {
                 $query->whereDate('t.transaction_date', $today);
             }
