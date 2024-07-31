@@ -13,7 +13,7 @@
 @endsection
 @section('content')
     <section class="content">
-        @component('components.widget', ['class' => 'box-primary'])
+        @component('components.widget')
             <!-- Back Button -->
             <div class="mb-3">
                 <a href="{{ route('products.randomCheckIndex') }}" class="btn btn-secondary"
@@ -27,13 +27,13 @@
                     <div class="col-md-3">
                         <div class="form-group">
                             {!! Form::label('start_date', __('Start Date') . ':') !!}
-                            {!! Form::date('start_date', request()->input('start_date'), ['class' => 'form-control']) !!}
+                            {!! Form::date('start_date',$startDate, ['class' => 'form-control']) !!}
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
                             {!! Form::label('end_date', __('End Date') . ':') !!}
-                            {!! Form::date('end_date', request()->input('end_date'), ['class' => 'form-control']) !!}
+                            {!! Form::date('end_date',$endDate, ['class' => 'form-control']) !!}
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -52,8 +52,8 @@
                     Missing/Surplus Product Report
                 </div>
                 <p style="font-size: 16px; width:fit-content; margin:0 auto;">@lang('Start Date'): <span
-                        id="reportStartDate">{{ request()->input('start_date') }},</span>
-                    @lang('End Date'): <span id="reportEndDate">{{ request()->input('end_date') }}</span></p>
+                        id="reportStartDate">{{ $startDate }}</span>,
+                    @lang('End Date'): <span id="reportEndDate">{{ $endDate }}</span></p>
 
                 <h3>@lang('Missing Items')</h3>
                 <table class="table table-bordered print-font">
@@ -77,12 +77,19 @@
                                 <td>{{ $item->sku }}</td>
                                 <td>{{ $item->brand_name }}</td>
                                 <td>{{ abs($item->physical_count) }}</td>
-                                <td>{{ number_format(abs($item->physical_count) * $item->sell_price_inc_tax, 2) }}</td>
+                                <td>৳ {{ number_format(abs($item->physical_count) * $item->sell_price_inc_tax, 2) }}</td>
                                 <td>{{ $item->comment }}</td>
                                 <td>{{ $item->created_at->format('d M Y') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-right"><strong>Total:</strong></td>
+                            <td><b>৳ {{ number_format($totalMissingSellPrice, 2) }}</b></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
                 </table>
 
                 <h3>@lang('Surplus Items')</h3>
@@ -107,17 +114,24 @@
                                 <td>{{ $item->sku }}</td>
                                 <td>{{ $item->brand_name }}</td>
                                 <td>{{ number_format($item->physical_count) }}</td>
-                                <td>{{ number_format($item->physical_count * $item->sell_price_inc_tax, 2) }}</td>
+                                <td>৳ {{ number_format($item->physical_count * $item->sell_price_inc_tax, 2) }}</td>
                                 <td>{{ $item->comment }}</td>
                                 <td>{{ $item->created_at->format('d M Y') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-right"><strong>Total:</strong></td>
+                            <td><b>৳ {{ number_format($totalSurplusSellPrice, 2) }}</b></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
                 </table>
                 <br>
                 <h3 style="text-align: center;">@lang('Net Result')</h3>
                 <p style="text-align: center">
-                    @lang('Net Result'): {{ number_format($netResult, 2) }} ({{ $resultStatus }})
+                    <b>@lang('Net Result'): ৳ {{ number_format($netResult, 2) }} ({{ $resultStatus }})</b>
                 </p>
             </div>
         @endcomponent
@@ -127,13 +141,13 @@
 @section('javascript')
     <script>
         $(document).ready(function() {
-            $('input[name="start_date"], input[name="end_date"]').daterangepicker({
-                singleDatePicker: true,
-                showDropdowns: true,
-                locale: {
-                    format: 'YYYY-MM-DD'
-                }
-            });
+            // $('input[name="start_date"], input[name="end_date"]').daterangepicker({
+            //     singleDatePicker: true,
+            //     showDropdowns: true,
+            //     locale: {
+            //         format: 'YYYY-MM-DD'
+            //     }
+            // });
 
             $('#printReport').click(function() {
                 var originalContents = $('body').html();
@@ -144,13 +158,4 @@
             });
         });
     </script>
-@endsection
-@section('styles')
-    <style>
-        @media print {
-            table {
-                font-size: 6px !important;
-            }
-        }
-    </style>
 @endsection

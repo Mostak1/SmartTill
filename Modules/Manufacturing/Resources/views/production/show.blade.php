@@ -173,6 +173,9 @@
                         </tfoot>                        
                     </table>
                 </div>
+                <div class="col-md-9">
+                    <b>Additional Notes:</b> <br>{{ $production_sell->additional_notes }}
+                </div>
             </div>
         </div>
 

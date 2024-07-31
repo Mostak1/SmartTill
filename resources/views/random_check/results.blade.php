@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
+<section class="content">
+        @component('components.widget')
         <div style="display: flex; align-items: center; margin-bottom: 1rem;">
             <h3 style="margin-right: 1rem;">Random Check Results  <small><strong>Location: </strong>{{$location->name}}</small></h3>
             <input type="hidden" name="location_id" value="{{ $location->id }}">
@@ -51,7 +52,8 @@
             @endforeach
             {!! Form::submit('Confirm', ['id' => 'confirm-btn', 'class' => 'btn btn-primary', 'style' => 'display: block; width: 160px; height: 50px; margin: 0 auto; font-size: 18px;']) !!}
         {!! Form::close() !!}
-    </div>
+        @endcomponent
+</section>
 @endsection
 
 @section('javascript')

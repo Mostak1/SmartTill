@@ -1717,8 +1717,8 @@ class SellPosController extends Controller
             $variation_group_prices = $this->productUtil->getVariationGroupPrice($variation_id, $price_group, $product->tax_id);
 
             if (!empty($variation_group_prices['price_inc_tax'])) {
-                $product->sell_price_inc_tax = round(($variation_group_prices['price_inc_tax'])/10)*10;
-                $product->default_sell_price = round(($variation_group_prices['price_exc_tax'])/10)*10;
+                $product->sell_price_inc_tax = round(($variation_group_prices['price_inc_tax']));
+                $product->default_sell_price = round(($variation_group_prices['price_exc_tax']));
             }
         }
 

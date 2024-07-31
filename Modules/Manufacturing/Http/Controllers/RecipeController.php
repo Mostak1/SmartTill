@@ -594,9 +594,9 @@ class RecipeController extends Controller
                     //Keep sell price constant and change profit margin
                     // $profit_margin = $this->transactionUtil->get_percent($unit_price, $variation->sell_price_inc_tax);
                     // $sell_price_excluding_tax = $this->transactionUtil->calc_percentage($unit_price_exc_tax, $profit_margin, $unit_price_exc_tax);
+                 $sell_price_excluding_tax = $variation->sell_price_inc_tax;
 
-                    $profit_margin = $variation->profit_percent;
-                    $sell_price_excluding_tax = $unit_price * (1 + $profit_margin / 100);
+                    // $sell_price_excluding_tax = $unit_price * (1 + $profit_margin / 100);
 
                     $newPrice = $unit_price;
                     $userId = auth()->id();
@@ -609,10 +609,6 @@ class RecipeController extends Controller
                         'type' => 'product',
                         'h_type' => 'Manufacturing'
                     ]);
-
-                    $variation->default_sell_price = $sell_price_excluding_tax;
-                    $variation->sell_price_inc_tax = $sell_price_excluding_tax;
-                    $variation->profit_percent = $profit_margin;
                     $variation->save();
                 }
                 $output = [

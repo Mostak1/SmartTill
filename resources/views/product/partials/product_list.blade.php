@@ -22,6 +22,12 @@
                 @endphp
                 <th>@lang('lang_v1.selling_price')</th>
             @endcan
+            @can('view_purchase_price')
+                @php 
+                    $colspan++;
+                @endphp
+                <th>Profit Margine</th>
+            @endcan
             <th>@lang('report.current_stock')</th>
             <th>@lang('product.product_type')</th>
             <th>@lang('product.category')</th>

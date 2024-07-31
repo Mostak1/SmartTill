@@ -232,6 +232,9 @@
                         @can('access_default_selling_price')
                             { data: 'selling_price', name: 'max_price', searchable: false},
                         @endcan
+                        @can('view_purchase_price')
+                            { data: 'profit_margin', name: 'profit_margin', searchable: false},
+                        @endcan
                         { data: 'current_stock', searchable: false},
                         { data: 'type', name: 'products.type'},
                         { data: 'category', name: 'c1.name'},

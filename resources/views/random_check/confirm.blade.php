@@ -1,7 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
+<section class="content">
+        @component('components.widget')
         <h3>Confirm Random Check  <small><strong>Location: </strong>{{$location->name}}</small></h3>
         {!! Form::open([
             'url' => action([\App\Http\Controllers\ProductController::class, 'checkUpdate']),
@@ -78,28 +79,29 @@
             'style' => 'display: block; width: 160px; height: 50px; margin: 0 auto; margin-top:10px; font-size: 18px;',
         ]) !!}
         {!! Form::close() !!}
-    </div>
+        @endcomponent
+</section>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             function updatePhysicalCountText(id, value) {
-                const textElement = document.querySelector(`#physical_count_text_${id}`);
+                const textElement = document.querySelector(#physical_count_text_${id});
                 if (value === 0) {
                     textElement.textContent = '0 (match)';
                 } else if (value < 0) {
-                    textElement.textContent = `${value} (missing)`;
+                    textElement.textContent = ${value} (missing);
                 } else if (value > 0) {
-                    textElement.textContent = `+${value} (surplus)`;
+                    textElement.textContent = +${value} (surplus);
                 }
                 else if (value == 0) {
-                    textElement.textContent = `${value} (match)`;
+                    textElement.textContent = ${value} (match);
                 }
             }
 
             document.querySelectorAll('.quantity-down-int').forEach(button => {
                 button.addEventListener('click', function() {
                     const index = this.getAttribute('data-index');
-                    const input = document.querySelector(`#physical_count_${index}`);
+                    const input = document.querySelector(#physical_count_${index});
                     let value = parseInt(input.value);
                     input.value = value - 1;
                     updatePhysicalCountText(index, input.value);
@@ -109,7 +111,7 @@
             document.querySelectorAll('.quantity-up-int').forEach(button => {
                 button.addEventListener('click', function() {
                     const index = this.getAttribute('data-index');
-                    const input = document.querySelector(`#physical_count_${index}`);
+                    const input = document.querySelector(#physical_count_${index});
                     let value = parseInt(input.value);
                     input.value = value + 1;
                     updatePhysicalCountText(index, input.value);

@@ -285,6 +285,7 @@ class ProductionController extends Controller
                 'mfg_parent_production_purchase_id' => $transaction->id,
                 'payment_status' => 'due',
                 'final_total' => $transaction->final_total,
+                'additional_notes' => $request->input('additional_notes')
             ];
 
             $sell_lines = [];

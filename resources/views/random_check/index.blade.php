@@ -22,7 +22,8 @@
             <div class="col-md-3">
                 <div class="form-group">
                     <label for="random_check_filter_physical_count">Physical Count:</label>
-                    <select id="random_check_filter_physical_count" class="form-control select2" multiple="multiple" style="width: 100%;">
+                    <select id="random_check_filter_physical_count" class="form-control select2" style="width: 100%;">
+                        <option value="">All</option>
                         <option value="surplus">Surplus</option>
                         <option value="match">Match</option>
                         <option value="missing">Missing</option>
