@@ -2579,60 +2579,45 @@ class ProductController extends Controller
 
     public function productStockHistory($id)
     {
-        $priceHistory = VariationPriceHistory::where('variation_id', $id)
-            ->where('type', 'product')
-            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
-            ->get();
-
         if (!auth()->user()->can('product.view')) {
             abort(403, 'Unauthorized action.');
         }
 
         $business_id = request()->session()->get('user.business_id');
-        $product = Product::where('business_id', $business_id)
-        ->with(['variations', 'variations.product_variation'])
-        ->findOrFail($id);
-        Log::info('Fetching variation stock details.', [
-            'business_id' => $business_id,
-            'variation_id' => $id,
-            'location_id' => request()->input('location_id')
-        ]);
+
         if (request()->ajax()) {
 
             //for ajax call $id is variation id else it is product id
             $stock_details = $this->productUtil->getVariationStockDetails($business_id, $id, request()->input('location_id'));
-            Log::info('Stock details fetched.', [
-                'stock_details' =>"ok"
-            ]);
             $stock_history = $this->productUtil->getVariationStockHistory($business_id, $id, request()->input('location_id'));
-            Log::info('Stock history fetched.', [
-                'stock_history' => 'OK'
-            ]);
-            $for = 'view_product';
-            $filters['product_id'] = $product->id;
-            // $product_locations = $this->productUtil->getProductStockDetails($business_id, $filters, $for);
             $product_locations = VariationLocationDetails::where('variation_id', $id)->leftjoin('business_locations as l', 'variation_location_details.location_id', '=', 'l.id')->select('variation_location_details.qty_available as stock','l.name as location_name')->get();
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
-                VariationLocationDetails::where('variation_id', $id)
+                VariationLocationDetails::where(
+                    'variation_id',
+                    $id
+                )
                     ->where('location_id', request()->input('location_id'))
                     ->update(['qty_available' => $stock_history[0]['stock']]);
                 $stock_details['current_stock'] = $stock_history[0]['stock'];
             }
+
             return view('product.stock_history_details')
-                ->with(compact('stock_details', 'stock_history', 'priceHistory','product_locations'));
+                ->with(compact('stock_details', 'stock_history','product_locations'));
         }
 
+        $product = Product::where('business_id', $business_id)
+            ->with(['variations', 'variations.product_variation'])
+            ->findOrFail($id);
+        $priceHistory = VariationPriceHistory::where('variation_id', $id)
+            ->where('type', 'product')
+            ->orderBy('created_at', 'desc') // You can change the order as per your requirement
+            ->get();
         //Get all business locations
         $business_locations = BusinessLocation::forDropdown($business_id);
-        // dd($priceHistory);
-        Log::info('Fetching variation stock details.', [
-            'business_locations' => $business_locations,
-            'variation_id' => $id,
-            'product' => $product
-        ]);
+
         return view('product.stock_history')
-            ->with(compact('product', 'business_locations', 'priceHistory'));
+            ->with(compact('product', 'business_locations','priceHistory'));
     }
 
     /**
@@ -2720,7 +2705,7 @@ class ProductController extends Controller
                 if ($request->has('physical_count_filter') && is_array($request->physical_count_filter)) {
                     $physicalCountFilters = $request->physical_count_filter;
 
-                    $random_checks->where(function($q) use ($physicalCountFilters) {
+                    $random_checks->where(function ($q) use ($physicalCountFilters) {
                         if (in_array('surplus', $physicalCountFilters)) {
                             $q->orWhere('random_check_details.physical_count', '>', 0);
                         }
@@ -2738,17 +2723,17 @@ class ProductController extends Controller
                     $start = request()->start_date;
                     $end = request()->end_date;
                     $random_checks->whereDate('random_checks.created_at', '>=', $start)
-                                ->whereDate('random_checks.created_at', '<=', $end);
+                        ->whereDate('random_checks.created_at', '<=', $end);
                 }
 
                 $random_checks->groupBy(
-                    'random_checks.id', 
-                    'random_checks.check_no', 
-                    'random_checks.comment', 
-                    'checked_by_user.first_name', 
-                    'checked_by_user.last_name', 
-                    'modified_by_user.first_name', 
-                    'modified_by_user.last_name', 
+                    'random_checks.id',
+                    'random_checks.check_no',
+                    'random_checks.comment',
+                    'checked_by_user.first_name',
+                    'checked_by_user.last_name',
+                    'modified_by_user.first_name',
+                    'modified_by_user.last_name',
                     'business_locations.name', // Group by location name
                     'random_checks.created_at'
                 )->orderBy('random_checks.created_at', 'desc');
@@ -2781,7 +2766,7 @@ class ProductController extends Controller
                     ->addColumn('check_no', function ($row) {
                         $url = action([\App\Http\Controllers\ProductController::class, 'checkShow'], [$row->check_id]);
                         return '<a href="#" data-href="' . $url . '" class="edit-random-check text-black">' . $row->check_no . '</a>';
-                    })                    
+                    })
                     ->addColumn('random_check_comment', function ($row) {
                         $comment = $row->random_check_comment;
                         $url = action([\App\Http\Controllers\ProductController::class, 'checkShow'], [$row->check_id]);
@@ -2839,7 +2824,7 @@ class ProductController extends Controller
             return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
         }
     }
-   
+
 
     public function randomCheckDetails(Request $request)
     {
@@ -2864,46 +2849,46 @@ class ProductController extends Controller
                     )
                     ->orderBy('random_check_details.created_at', 'desc');
 
-                    // Filter by location_id if provided in the request
-                    if ($request->has('location_id') && $request->location_id != null) {
-                        $query->where('random_check_details.location_id', $request->location_id);
-                    }
+                // Filter by location_id if provided in the request
+                if ($request->has('location_id') && $request->location_id != null) {
+                    $query->where('random_check_details.location_id', $request->location_id);
+                }
 
-                    // Filter by physical count type (multiple options)
-                    if ($request->has('physical_count_filter') && is_array($request->physical_count_filter)) {
-                        $physicalCountFilters = $request->physical_count_filter;
+                // Filter by physical count type (multiple options)
+                if ($request->has('physical_count_filter') && is_array($request->physical_count_filter)) {
+                    $physicalCountFilters = $request->physical_count_filter;
 
-                        $query->where(function($q) use ($physicalCountFilters) {
-                            if (in_array('surplus', $physicalCountFilters)) {
-                                $q->orWhere('random_check_details.physical_count', '>', 0);
-                            }
-                            if (in_array('match', $physicalCountFilters)) {
-                                $q->orWhere('random_check_details.physical_count', '=', 0);
-                            }
-                            if (in_array('missing', $physicalCountFilters)) {
-                                $q->orWhere('random_check_details.physical_count', '<', 0);
-                            }
-                        });
-                    }
+                    $query->where(function ($q) use ($physicalCountFilters) {
+                        if (in_array('surplus', $physicalCountFilters)) {
+                            $q->orWhere('random_check_details.physical_count', '>', 0);
+                        }
+                        if (in_array('match', $physicalCountFilters)) {
+                            $q->orWhere('random_check_details.physical_count', '=', 0);
+                        }
+                        if (in_array('missing', $physicalCountFilters)) {
+                            $q->orWhere('random_check_details.physical_count', '<', 0);
+                        }
+                    });
+                }
 
-                    // Filter by category_name if provided in the request
-                    if ($request->has('category_name') && !empty($request->category_name)) {
-                        $categories = $request->category_name;
-                        $query->whereIn('random_check_details.category_name', $categories);
-                    }
+                // Filter by category_name if provided in the request
+                if ($request->has('category_name') && !empty($request->category_name)) {
+                    $categories = $request->category_name;
+                    $query->whereIn('random_check_details.category_name', $categories);
+                }
 
-                     // Filter by category_name if provided in the request
-                    if ($request->has('category_name') && $request->category_name != null) {
-                        $query->where('random_check_details.category_name', $request->category_name);
-                    }
+                // Filter by category_name if provided in the request
+                if ($request->has('category_name') && $request->category_name != null) {
+                    $query->where('random_check_details.category_name', $request->category_name);
+                }
 
-                    // Filter by date range
-                    if (!empty(request()->start_date) && !empty(request()->end_date)) {
-                        $start = request()->start_date;
-                        $end = request()->end_date;
-                        $query->whereDate('random_check_details.created_at', '>=', $start)
-                                    ->whereDate('random_check_details.created_at', '<=', $end);
-                    }
+                // Filter by date range
+                if (!empty(request()->start_date) && !empty(request()->end_date)) {
+                    $start = request()->start_date;
+                    $end = request()->end_date;
+                    $query->whereDate('random_check_details.created_at', '>=', $start)
+                        ->whereDate('random_check_details.created_at', '<=', $end);
+                }
 
                 return Datatables::of($query)
                     ->editColumn('physical_count', function ($row) {
@@ -2911,12 +2896,9 @@ class ProductController extends Controller
                         $html = "";
                         if ($p_count > 0) {
                             $html = '+' . number_format($p_count) . ' (surplus)';
-                        }
-                        elseif($p_count < 0)
-                        {
+                        } elseif ($p_count < 0) {
                             $html =   number_format($p_count) . ' (missing)';
-                        }
-                         else {
+                        } else {
                             $html =   number_format($p_count) . ' (match)';
                         }
                         return  $html;
@@ -2945,7 +2927,7 @@ class ProductController extends Controller
     }
 
 
-    
+
 
     public function createRandomCheck()
     {
@@ -2977,9 +2959,9 @@ class ProductController extends Controller
         // $business_id = $request->session()->get('user.business_id');
         $location_id = $request->input('random_check_filter_location_id');
         $categories = $request->input('categories');
-    
+
         $categories_products = [];
-    
+
         foreach ($categories as $category) {
             $query = Product::with(['media'])
                 ->leftJoin('brands', 'products.brand_id', '=', 'brands.id')
@@ -2987,12 +2969,12 @@ class ProductController extends Controller
                 ->leftJoin('categories as c', 'products.category_id', '=', 'c.id')
                 ->leftJoin('tax_rates', 'products.tax', '=', 'tax_rates.id')
                 ->join('variations as v', 'v.product_id', '=', 'products.id')
-                ->leftJoin('variation_location_details as vld', 'vld.variation_id', '=', 'v.id') 
+                ->leftJoin('variation_location_details as vld', 'vld.variation_id', '=', 'v.id')
                 ->whereNull('products.deleted_at')
                 ->where('products.business_id', $location_id)
                 ->where('products.type', '!=', 'modifier')
                 ->Active();
-    
+
             // Exclude products that have not been sold in the last year
             $query->whereHas('transactionSellLines', function ($query) {
                 $query->where('created_at', '>=', now()->subYear());
@@ -3002,8 +2984,8 @@ class ProductController extends Controller
             $query->whereDoesntHave('randomCheckDetails', function ($query) {
                 $query->where('created_at', '>=', now()->subWeek());
             });
-            
-    
+
+
             $category_products = $query->where('products.category_id', $category['category_id'])
                 ->inRandomOrder()
                 ->take($category['number_of_products'])
@@ -3018,17 +3000,17 @@ class ProductController extends Controller
                 )
                 ->groupBy('products.id')
                 ->get();
-    
+
             if ($category_products->isNotEmpty()) {
                 $categories_products[$category['category_id']] = $category_products;
             }
         }
-            $location = BusinessLocation::findOrFail($location_id);
+        $location = BusinessLocation::findOrFail($location_id);
 
         return view('random_check.results', compact('categories_products', 'location'));
     }
-    
-    
+
+
     public function checkConfirm(Request $request)
     {
         try {
@@ -3071,8 +3053,7 @@ class ProductController extends Controller
             }
 
             // Redirect to the confirmation page with the products data
-            return view('random_check.confirm',compact('products', 'randomCheckId', 'location'));
-
+            return view('random_check.confirm', compact('products', 'randomCheckId', 'location'));
         } catch (\Exception $e) {
             \Log::error('Error in checkConfirm method: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to process data. Please try again.']);
@@ -3113,8 +3094,7 @@ class ProductController extends Controller
 
             // Redirect to the index or any desired route with a success message
             return redirect()->route('products.randomCheckIndex')
-            ->with('success', 'Random check data saved successfully.');
-
+                ->with('success', 'Random check data saved successfully.');
         } catch (\Exception $e) {
             \Log::error('Error storing random check data: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to save random check data. Please try again.']);
@@ -3141,31 +3121,30 @@ class ProductController extends Controller
 
             // Fetch the RandomCheck by ID
             $randomCheck = RandomCheck::findOrFail($id);
-            
+
             // Update the random check details
             foreach ($details as $detailId => $detail) {
                 $randomCheckDetail = RandomCheckDetail::where('random_check_id', $id)
                     ->where('id', $detailId)
                     ->first();
-                
+
                 if ($randomCheckDetail) {
                     $randomCheckDetail->physical_count = $detail['physical_count'] ?? 0;
                     $randomCheckDetail->comment = $detail['comment'] ?? null;
                     $randomCheckDetail->save();
                 }
             }
-            
+
             // Update the overall comment
             $randomCheck->comment = $comment;
             $randomCheck->modified_by = auth()->id();
             $randomCheck->save();
 
             $this->productUtil->activityLog($randomCheck, 'updated');
-            
+
             // Redirect to the index or any desired route with a success message
             return redirect()->route('products.randomCheckIndex')
-            ->with('success', 'Random check details updated successfully.');
-
+                ->with('success', 'Random check details updated successfully.');
         } catch (\Exception $e) {
             \Session::flash('error', 'Failed to update.');
             \Log::error('Error updating random check details: ' . $e->getMessage());
@@ -3179,9 +3158,9 @@ class ProductController extends Controller
             // Fetch the RandomCheck record by ID
             $randomCheck = RandomCheck::with('randomCheckDetails.product.category', 'checkedBy', 'modifiedBy')->findOrFail($id);
             $activities = Activity::forSubject($randomCheck)
-           ->with(['causer', 'subject'])
-           ->get();
-            
+                ->with(['causer', 'subject'])
+                ->get();
+
             // Return the view with data
             return view('random_check.show', compact('randomCheck', 'activities'));
         } catch (\Exception $e) {
@@ -3194,7 +3173,7 @@ class ProductController extends Controller
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
-        
+
         $randomCheckDetails = RandomCheckDetail::select(
             'random_check_details.category_name',
             'random_check_details.product_name',
@@ -3205,11 +3184,11 @@ class ProductController extends Controller
             'random_check_details.comment',
             'random_check_details.created_at'
         )
-        ->join('variations', 'random_check_details.variation_id', '=', 'variations.id')
-        ->whereBetween('random_check_details.created_at', [$startDate, $endDate])
-        ->orderBy('random_check_details.category_name')
-        ->orderBy('random_check_details.product_name')
-        ->get();
+            ->join('variations', 'random_check_details.variation_id', '=', 'variations.id')
+            ->whereBetween('random_check_details.created_at', [$startDate, $endDate])
+            ->orderBy('random_check_details.category_name')
+            ->orderBy('random_check_details.product_name')
+            ->get();
 
         $missingItems = $randomCheckDetails->where('physical_count', '<', 0);
         $surplusItems = $randomCheckDetails->where('physical_count', '>', 0);

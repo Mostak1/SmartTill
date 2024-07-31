@@ -208,7 +208,7 @@ class AdminSidebarMenu
                         );
                         $sub->url(
                             action([\App\Http\Controllers\ProductController::class, 'randomCheck']),
-                            __('Random Check'),
+                            __('Stock Audit'),
                             ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'random-check-index']
                         );
                     },

@@ -80,7 +80,7 @@
     </div>
 
     <div class="col-md-4 col-xs-4">
-        <strong>@lang('lang_v1.totals')</strong>
+        <strong>Current Stock</strong>
         <table class="table table-condensed">
             @php
             $total_quantity = 0;
