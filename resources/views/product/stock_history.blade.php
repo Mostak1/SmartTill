@@ -42,7 +42,8 @@
                                     @foreach ($product->variations as $variation)
                                         <option value="{{ $variation->id }}" @if (request()->input('variation_id', null) == $variation->id) selected @endif>
                                             {{ $variation->product_variation->name }} - {{ $variation->name }}
-                                            ({{ $variation->sub_sku }})</option>
+                                            ({{ $variation->sub_sku }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -130,7 +131,9 @@
                 window.location.href = "{{ url('/') }}/products/stock-history/" + data.id
             });
         });
-
+        $(document).on('change', '#variation_id, #location_id', function() {
+            load_stock_history($('#variation_id').val(), $('#location_id').val());
+        });
         function load_stock_history(variation_id, location_id) {
             $('#product_stock_history').fadeOut();
             $.ajax({
@@ -140,7 +143,10 @@
                     $('#product_stock_history')
                         .html(result)
                         .fadeIn();
-
+                    // Ensure DataTable is properly initialized
+                    if ($.fn.DataTable.isDataTable('#stock_history_table')) {
+                        $('#stock_history_table').DataTable().destroy();
+                    }
                     __currency_convert_recursively($('#product_stock_history'));
 
                     $('#stock_history_table').DataTable({
@@ -154,8 +160,6 @@
             searching: false,
             ordering: false
         });
-        $(document).on('change', '#variation_id, #location_id', function() {
-            load_stock_history($('#variation_id').val(), $('#location_id').val());
-        });
+        
     </script>
 @endsection

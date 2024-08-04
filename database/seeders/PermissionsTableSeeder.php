@@ -83,6 +83,11 @@ class PermissionsTableSeeder extends Seeder
 
             ['name' => 'access_all_locations'],
             ['name' => 'dashboard.data'],
+            
+            ['name' => 'stock_audit.view'],
+            ['name' => 'stock_audit.create'],
+            ['name' => 'stock_audit.update'],
+            ['name' => 'stock_audit.delete'],
         ];
 
         $insert_data = [];

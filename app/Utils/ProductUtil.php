@@ -117,6 +117,17 @@ class ProductUtil extends Util
 
         return true;
     }
+    public function variationPriceHistory($variation,$old_price,$new_price,$type,$h_type){
+        VariationPriceHistory::create([
+            'variation_id' => $variation,
+            'old_price' => round($old_price,2),
+            'new_price' => round($new_price,2),
+            'updated_by' => auth()->id(),
+            'type' => $type,
+            'h_type' => $h_type,
+        ]);
+        return true;
+    }
 
     /**
      * Create variable type product variation

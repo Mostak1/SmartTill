@@ -195,16 +195,23 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
 
     
 // For Random Check of Product
-    Route::get('/products/random-check-index', [ProductController::class, 'randomCheck'])->name('products.randomCheckIndex');
-    Route::get('products/random-check-details', [ProductController::class, 'randomCheckDetails'])->name('products.randomCheckDetails');
-    Route::get('/products/random-check', [ProductController::class, 'createRandomCheck'])->name('products.createRandomCheck');
-    Route::post('/products/generate-random-product', [ProductController::class, 'generateRandom'])->name('products.generateRandom');
-    Route::post('/products/random-check-confirm', [ProductController::class, 'checkConfirm'])->name('random_check.confirm');
-    Route::post('/products/random-check-store', [ProductController::class, 'checkUpdate'])->name('random_check.store');
-    Route::get('/products/random-check/edit/{id}', [ProductController::class, 'checkEdit'])->name('products.checkEdit');
-    Route::post('/products/random-check/update/{id}', [ProductController::class, 'checkDetailUpdate'])->name('products.checkUpdate');
-    Route::get('/random-checks/show/{id}', [ProductController::class, 'checkShow'])->name('random_checks.show');
-    Route::get('/products/check-report', [ProductController::class, 'checkReport'])->name('products.checkReport');
+Route::get('/products/random-check-index', [ProductController::class, 'randomCheck'])->name('products.randomCheckIndex');
+Route::get('products/archived-random-check', [ProductController::class, 'archivedRandomCheck'])->name('products.archivedRandomCheck');
+Route::get('products/random-check-details', [ProductController::class, 'randomCheckDetails'])->name('products.randomCheckDetails');
+Route::get('/products/random-check', [ProductController::class, 'createRandomCheck'])->name('products.createRandomCheck');
+Route::post('/products/generate-random-product', [ProductController::class, 'generateRandom'])->name('products.generateRandom');
+Route::post('/products/random-check-confirm', [ProductController::class, 'checkConfirm'])->name('random_check.confirm');
+Route::post('/products/random-check-store', [ProductController::class, 'checkUpdate'])->name('random_check.store');
+Route::get('/products/random-check/edit/{id}', [ProductController::class, 'checkEdit'])->name('products.checkEdit');
+Route::post('/products/random-check/update/{id}', [ProductController::class, 'checkDetailUpdate'])->name('products.checkUpdate');
+Route::get('/random-checks/show/{id}', [ProductController::class, 'checkShow'])->name('random_checks.show');
+Route::get('/products/check-report', [ProductController::class, 'checkReport'])->name('products.checkReport');
+Route::get('/products/generate-report', [ProductController::class, 'generateReport'])->name('products.generateReport');
+Route::delete('/random-checks/{id}', [ProductController::class, 'checkDelete'])->name('checkDelete');
+Route::post('/products/random-check-restore/{id}', [ProductController::class, 'checkRestore'])->name('products.checkRestore');
+Route::delete('products/check-permanent-delete/{id}', [ProductController::class, 'checkPermanentDelete'])->name('products.checkPermanentDelete');
+Route::get('/random-check/print/a4/{id}', [ProductController::class, 'printA4'])->name('random_check.printA4');
+Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'])->name('random_check.printPOS');
     
     Route::resource('products', ProductController::class);
 

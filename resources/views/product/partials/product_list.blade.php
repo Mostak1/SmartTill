@@ -26,7 +26,7 @@
                 @php 
                     $colspan++;
                 @endphp
-                <th>Profit Margine</th>
+                <th>Profit Margin</th>
             @endcan
             <th>@lang('report.current_stock')</th>
             <th>@lang('product.product_type')</th>

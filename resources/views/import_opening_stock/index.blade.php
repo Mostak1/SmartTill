@@ -84,7 +84,7 @@
                 </tr>
                 <tr>
                     <td>4</td>
-                    <td>@lang('purchase.unit_cost_before_tax') <small class="text-muted">(@lang('lang_v1.required'))</small></td>
+                    <td>@lang('purchase.unit_cost_before_tax') <small class="text-muted">(@lang('lang_v1.required'))</small>@show_tooltip('This value is used in various reports, but be aware, it will not affect the products purchase price.')</td>
                     <td></td>
                 </tr>
                 <tr>

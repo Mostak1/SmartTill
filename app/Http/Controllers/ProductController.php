@@ -366,7 +366,7 @@ class ProductController extends Controller
                         }
                     },
                 ])
-                ->rawColumns(['profit_margin','action', 'image', 'mass_delete', 'product', 'selling_price', 'purchase_price', 'category', 'current_stock'])
+                ->rawColumns(['profit_margin', 'action', 'image', 'mass_delete', 'product', 'selling_price', 'purchase_price', 'category', 'current_stock'])
                 ->make(true);
         }
 
@@ -898,14 +898,14 @@ class ProductController extends Controller
                 // Update the variation's price
                 if ($variation_history->sell_price_inc_tax != $newPrice || $variation_history->dpp_inc_tax != $oldPrice) {
                     // Create a new price history entry
-                    VariationPriceHistory::create([
-                        'variation_id' => $id,
-                        'old_price' => '$ ' . number_format($variation->foreign_p_price_inc_tex, 2) . '<br>৳ ' . number_format($oldPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
-                        'new_price' => '$ ' . number_format($variation->foreign_s_price_inc_tex, 2) . '<br>৳ ' . number_format($newPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
-                        'updated_by' => $userId,
-                        'type' => 'product',
-                        'h_type' => 'Edited'
-                    ]);
+
+                    $variationId = $id;
+                    $old_price = '$ ' . number_format($variation->foreign_p_price_inc_tex, 2) . '<br>৳ ' . number_format($oldPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2);
+                    $new_price = '$ ' . number_format($variation->foreign_s_price_inc_tex, 2) . '<br>৳ ' . number_format($newPrice, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2);
+                    $type = 'product';
+                    $h_type = 'Edited';
+
+                    $this->productUtil->variationPriceHistory($variationId, $old_price, $new_price, $type, $h_type);
                 }
 
                 $variation->save();
@@ -931,14 +931,12 @@ class ProductController extends Controller
                 // Update the variation's price
                 if ($variation_history->sell_price_inc_tax != $newPrice || $variation_history->dpp_inc_tax != $oldPrice) {
                     // Create a new price history entry
-                    VariationPriceHistory::create([
-                        'variation_id' => $id,
-                        'old_price' => $oldPrice,
-                        'new_price' => $newPrice,
-                        'updated_by' => $userId,
-                        'type' => 'product',
-                        'h_type' => 'Edited'
-                    ]);
+                    $variationId = $id;
+                    $old_price = '৳ ' . $oldPrice;
+                    $new_price = '৳ ' . $newPrice;
+                    $type = 'product';
+                    $h_type = 'Edited';
+                    $this->productUtil->variationPriceHistory($variationId, $old_price, $new_price, $type, $h_type);
                 }
 
                 $variation->save();
@@ -2597,7 +2595,7 @@ class ProductController extends Controller
             //for ajax call $id is variation id else it is product id
             $stock_details = $this->productUtil->getVariationStockDetails($business_id, $id, request()->input('location_id'));
             $stock_history = $this->productUtil->getVariationStockHistory($business_id, $id, request()->input('location_id'));
-            $product_locations = VariationLocationDetails::where('variation_id', $id)->leftjoin('business_locations as l', 'variation_location_details.location_id', '=', 'l.id')->select('variation_location_details.qty_available as stock','l.name as location_name')->get();
+            $product_locations = VariationLocationDetails::where('variation_id', $id)->leftjoin('business_locations as l', 'variation_location_details.location_id', '=', 'l.id')->select('variation_location_details.qty_available as stock', 'l.name as location_name')->get();
             //if mismach found update stock in variation location details
             if (isset($stock_history[0]) && (float) $stock_details['current_stock'] != (float) $stock_history[0]['stock']) {
                 VariationLocationDetails::where(
@@ -2610,7 +2608,7 @@ class ProductController extends Controller
             }
 
             return view('product.stock_history_details')
-                ->with(compact('stock_details', 'stock_history','product_locations'));
+                ->with(compact('stock_details', 'stock_history', 'product_locations'));
         }
 
         $product = Product::where('business_id', $business_id)
@@ -2624,7 +2622,7 @@ class ProductController extends Controller
         $business_locations = BusinessLocation::forDropdown($business_id);
 
         return view('product.stock_history')
-            ->with(compact('product', 'business_locations','priceHistory'));
+            ->with(compact('product', 'business_locations', 'priceHistory'));
     }
 
     /**
@@ -2681,7 +2679,11 @@ class ProductController extends Controller
         return Excel::download(new ProductsExport, $filename);
     }
     public function randomCheck(Request $request)
-    {
+    {  
+        if (!auth()->user()->can('stock_audit.view')) {
+        abort(403, 'Unauthorized action.');
+        }
+
         $business_id = $request->session()->get('user.business_id');
 
         try {
@@ -2758,13 +2760,23 @@ class ProductController extends Controller
                                             <a data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkShow'], [$row->check_id]) . '" class="cursor-pointer view_random_check">
                                                 <i class="fa fa-eye"></i> ' . __('messages.view') . '
                                             </a>
-                                        </li>
-                                        <li>
-                                            <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkEdit'], [$row->check_id]) . '" class="cursor-pointer edit-random-check">
-                                                <i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '
-                                            </a>
-                                        </li>
-                                    </ul>
+                                        </li>';
+    if (auth()->user()->can('stock_audit.update')) {
+                        $html .=     '<li>
+                                        <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkEdit'], [$row->check_id]) . '" class="cursor-pointer edit-random-check">
+                                            <i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '
+                                        </a>
+                                    </li>';
+        }
+    if (auth()->user()->can('stock_audit.delete')) {
+                        $html .=
+                                        '<li>
+                                        <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkDelete'], [$row->check_id]) . '" class="cursor-pointer delete-random-check">
+                                            <i class="fas fa-file-archive"></i> ' . __('Archive') . '
+                                        </a>
+                                    </li>';
+        }
+                        $html .=  '</ul>
                                 </div>';
                         return $html;
                     })
@@ -2829,7 +2841,173 @@ class ProductController extends Controller
             return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
         }
     }
-   
+
+
+    public function archivedRandomCheck(Request $request)
+    {  
+        if (!auth()->user()->can('stock_audit.view')) {
+        abort(403, 'Unauthorized action.');
+        }
+
+        $business_id = $request->session()->get('user.business_id');
+
+        try {
+            if ($request->ajax()) {
+                // Aggregate the sum of physical_count for each check
+                $random_checks = RandomCheck::onlyTrashed()
+                    ->leftJoin('random_check_details', 'random_check_details.random_check_id', '=', 'random_checks.id')
+                    ->leftJoin('users as checked_by_user', 'random_checks.checked_by', '=', 'checked_by_user.id') // Join with users table for checked_by
+                    ->leftJoin('users as modified_by_user', 'random_checks.modified_by', '=', 'modified_by_user.id') // Join with users table for modified_by
+                    ->leftJoin('business_locations', 'random_check_details.location_id', '=', 'business_locations.id') // Join with business_locations table
+                    ->select(
+                        'random_checks.id as check_id',
+                        'random_checks.check_no as check_no',
+                        'random_checks.comment as random_check_comment',
+                        DB::raw("CONCAT(checked_by_user.first_name, ' ', checked_by_user.last_name) as checked_by"), // Concatenate first and last name
+                        DB::raw("CONCAT(modified_by_user.first_name, ' ', modified_by_user.last_name) as modified_by"), // Concatenate first and last name
+                        'business_locations.name as location_name', // Select location name
+                        DB::raw('SUM(random_check_details.physical_count) as total_physical_count'),
+                        DB::raw('COUNT(DISTINCT random_check_details.product_name) as total_product_count'),
+                        'random_checks.created_at'
+                    );
+
+                // Filter by location_id if provided in the request
+                if ($request->has('location_id') && $request->location_id != null) {
+                    $random_checks->where('random_check_details.location_id', $request->location_id);
+                }
+
+                // Filter by physical count type (multiple options)
+                if ($request->has('physical_count_filter') && $request->physical_count_filter != 'all') {
+                    switch ($request->physical_count_filter) {
+                        case 'surplus':
+                            $random_checks->where('random_check_details.physical_count', '>', 0);
+                            break;
+                        case 'match':
+                            $random_checks->where('random_check_details.physical_count', '=', 0);
+                            break;
+                        case 'missing':
+                            $random_checks->where('random_check_details.physical_count', '<', 0);
+                            break;
+                    }
+                }
+
+                // Filter by date range
+                if (!empty(request()->start_date) && !empty(request()->end_date)) {
+                    $start = request()->start_date;
+                    $end = request()->end_date;
+                    $random_checks->whereDate('random_checks.created_at', '>=', $start)
+                                ->whereDate('random_checks.created_at', '<=', $end);
+                }
+
+                $random_checks->groupBy(
+                    'random_checks.id', 
+                    'random_checks.check_no', 
+                    'random_checks.comment', 
+                    'checked_by_user.first_name', 
+                    'checked_by_user.last_name', 
+                    'modified_by_user.first_name', 
+                    'modified_by_user.last_name', 
+                    'business_locations.name', // Group by location name
+                    'random_checks.created_at'
+                )->orderBy('random_checks.created_at', 'desc');
+                // Log the count of the retrieved records
+                \Log::info('Total random checks fetched: ' . $random_checks->count());
+
+                return Datatables::of($random_checks)
+                    ->addColumn('action', function ($row) {
+                        $html = '<div class="btn-group">
+                                    <button class="btn btn-info dropdown-toggle btn-xs" type="button" data-toggle="dropdown" aria-expanded="false">
+                                        ' . __('messages.action') . '
+                                        <span class="caret"></span>
+                                        <span class="sr-only">' . __('messages.action') . '</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-left" role="menu">';
+                    
+                        if (auth()->user()->can('stock_audit.create')) {
+                            $html .= '<li>
+                                        <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkRestore'], [$row->check_id]) . '" class="cursor-pointer restore-check">
+                                            <i class="fas fa-trash-restore"></i> ' . __('Restore') . '
+                                        </a>
+                                    </li>';
+                        }
+                    
+                        if (auth()->user()->can('stock_audit.delete')) {
+                            $html .= '<li>
+                                        <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkPermanentDelete'], [$row->check_id]) . '" class="cursor-pointer delete-permanent-check">
+                                            <i class="fa fa-trash"></i> ' . __('messages.delete') . '
+                                        </a>
+                                    </li>';
+                        }
+                    
+                        $html .= '</ul>
+                                </div>';
+                    
+                        return $html;
+                    })
+                
+                    ->addColumn('check_no', function ($row) {
+                        
+                        return $row->check_no;
+                    })                    
+                    ->addColumn('random_check_comment', function ($row) {
+                        $comment = $row->random_check_comment;
+                        
+                        return (strlen($comment) > 30 ? substr($comment, 0, 30) . '...' : $comment);
+                    })
+                    ->addColumn('checked_by', function ($row) {
+                        
+                        return $row->checked_by;
+                    })
+                    ->addColumn('modified_by', function ($row) {
+                        return '<span>' . $row->modified_by . '</span>';
+                    })
+                    ->addColumn('location_name', function ($row) {
+                        
+                        return $row->location_name;
+                    })
+                    ->addColumn('total_physical_count', function ($row) {
+                        // Fetch all physical counts for the current check
+                        $details = RandomCheckDetail::where('random_check_id', $row->check_id)->onlyTrashed()->get();
+
+                        $positiveCount = $details->where('physical_count', '>', 0)->sum('physical_count');
+                        $negativeCount = $details->where('physical_count', '<', 0)->sum('physical_count');
+                        
+
+                        if ($positiveCount == 0 && $negativeCount == 0) {
+                            return '0 (match)';
+                        } elseif ($positiveCount > 0 && $negativeCount < 0) {
+                            return '+' . number_format($positiveCount) . ' (surplus)<br>' . number_format($negativeCount) . '(missing)';
+                        } elseif ($positiveCount > 0) {
+                            return '+' . number_format($positiveCount) . ' (surplus)';
+                        } else {
+                            return number_format($negativeCount) . ' (missing)';
+                        }
+
+                    })
+                    ->addColumn('total_product_count', function ($row) {
+                        
+                        return $row->total_product_count;
+                    })
+                    ->editColumn('created_at', function ($row) {
+                        
+                        return \Carbon\Carbon::parse($row->created_at)->format('d F Y, g:i A');
+                    })
+                    ->rawColumns(['action', 'created_at', 'check_no', 'random_check_comment', 'checked_by', 'modified_by', 'location_name', 'total_physical_count', 'total_product_count'])
+                    ->make(true);
+            }
+
+            // For non-AJAX requests, prepare necessary data like dropdowns, etc.
+            $business_locations = BusinessLocation::forDropdown($business_id, false);
+            $categories = Category::forDropdown($business_id, 'product');
+
+            return view('random_check.index')->with(compact('business_locations', 'categories'));
+        } catch (\Exception $e) {
+            // Log any exceptions for troubleshooting
+            \Log::error('Error in randomCheck method: ' . $e->getMessage());
+            return response()->json(['error' => 'Something went wrong. Please try again.'], 500);
+        }
+    }
+
 
     public function randomCheckDetails(Request $request)
     {
@@ -2895,10 +3073,28 @@ class ProductController extends Controller
                     }
 
                 return Datatables::of($query)
-                    ->addColumn('check_no', function ($row) {
-                        $url = action([\App\Http\Controllers\ProductController::class, 'checkEdit'], [$row->check_id]);
-                        return '<a href="#" data-href="' . $url . '" class="edit-random-check">' . $row->check_no . '</a>';
-                    })   
+                    ->addColumn('action', function ($row) {
+                        $html = '<div class="btn-group">
+                                    <button class="btn btn-info dropdown-toggle btn-xs" type="button" data-toggle="dropdown" aria-expanded="false">
+                                        ' . __('messages.action') . '
+                                        <span class="caret"></span>
+                                        <span class="sr-only">' . __('messages.action') . '</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                                        <li>
+                                            <a data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkShow'], [$row->check_id]) . '" class="cursor-pointer view_random_check">
+                                                <i class="fa fa-eye"></i> ' . __('messages.view') . '
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#" data-href="' . action([\App\Http\Controllers\ProductController::class, 'checkEdit'], [$row->check_id]) . '" class="cursor-pointer edit-random-check">
+                                                <i class="glyphicon glyphicon-edit"></i> ' . __('messages.edit') . '
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>';
+                        return $html;
+                    })  
                     ->editColumn('physical_count', function ($row) {
                         $p_count = $row->physical_count;
                         $html = "";
@@ -2924,7 +3120,7 @@ class ProductController extends Controller
                             return \Carbon\Carbon::parse($row->updated_at)->format('d F Y, g:i A');
                         }
                     })
-                    ->rawColumns(['check_no'])
+                    ->rawColumns(['action'])
                     ->make(true);
             }
 
@@ -2943,6 +3139,10 @@ class ProductController extends Controller
 
     public function createRandomCheck()
     {
+        if (!auth()->user()->can('stock_audit.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $business_id = request()->session()->get('user.business_id');
         $business_locations = BusinessLocation::forDropdown($business_id);
         $category_type = 'product';
@@ -2968,6 +3168,10 @@ class ProductController extends Controller
 
     public function generateRandom(Request $request)
     {
+        if (!auth()->user()->can('stock_audit.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         // $business_id = $request->session()->get('user.business_id');
         $location_id = $request->input('random_check_filter_location_id');
         $categories = $request->input('categories');
@@ -2994,7 +3198,7 @@ class ProductController extends Controller
 
             // Exclude products checked within the last week
             $query->whereDoesntHave('randomCheckDetails', function ($query) {
-                $query->where('created_at', '>=', now()->subWeek());
+                $query->where('created_at', '>=', now()->subWeek())->whereNull('deleted_at');
             });
             
     
@@ -3021,8 +3225,7 @@ class ProductController extends Controller
 
         return view('random_check.results', compact('categories_products', 'location'));
     }
-    
-    
+
     public function checkConfirm(Request $request)
     {
         try {
@@ -3033,6 +3236,43 @@ class ProductController extends Controller
             // Create a new random check record
             $lastCheck = RandomCheck::latest()->first();
             $check_no = $lastCheck ? $lastCheck->id + 1 : 1;
+            if ($lastCheck) {
+                // Get details of the last random check
+                $lastCheckDetails = RandomCheckDetail::where('random_check_id', $lastCheck->id)->get();
+            } else {
+                $lastCheckDetails = collect();
+            }
+            // Check for duplicates
+            $duplicateCount = 0;
+            // Check for duplicates
+            foreach ($products as $id => $product) {
+                $duplicate = $lastCheckDetails->firstWhere(function ($detail) use ($product, $id) {
+                    return $detail->product_id == $id &&
+                        $detail->location_id == ($product['location_id'] ?? null) &&
+                        $detail->variation_id == ($product['variation_id'] ?? null) &&
+                        $detail->category_name == $product['category_name'] &&
+                        $detail->product_name == $product['product_name'] &&
+                        $detail->sku == $product['sku'] &&
+                        $detail->brand_name == $product['brand_name'] &&
+                        $detail->current_stock == $product['current_stock'] &&
+                        $detail->physical_count == ($product['physical_count'] ?? 0) &&
+                        $detail->comment == ($product['comment'] ?? null);
+                });
+                $location = BusinessLocation::findOrFail($product['location_id']);
+                if ($duplicate) {
+                    $duplicateCount++;
+                }
+            }
+            // If all products are duplicates, return with an error
+            // dd($duplicateCount .'==='. count($products));
+            if ($duplicateCount === count($products)) {
+                $randomCheckId = $lastCheck->id;
+                $output = [
+                    'success' => 0,
+                    'msg' =>'Duplicate Entries found for all products.',
+                ];
+                return view('random_check.confirm', compact('products', 'randomCheckId', 'location'))->with('output', $output);
+            }
             $randomCheck = RandomCheck::create([
                 'checked_by' => auth()->id(),
                 'check_no' => 'CHECK-' . $check_no,
@@ -3065,18 +3305,18 @@ class ProductController extends Controller
             }
 
             // Redirect to the confirmation page with the products data
-            return view('random_check.confirm',compact('products', 'randomCheckId', 'location'));
-
+            return view('random_check.confirm', compact('products', 'randomCheckId', 'location'));
         } catch (\Exception $e) {
             \Log::error('Error in checkConfirm method: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to process data. Please try again.']);
         }
     }
-
-
-
     public function checkUpdate(Request $request)
     {
+        if (!auth()->user()->can('stock_audit.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         try {
             $products = $request->input('products', []);
 
@@ -3118,6 +3358,10 @@ class ProductController extends Controller
 
     public function checkEdit($id)
     {
+        if (!auth()->user()->can('stock_audit.update')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         // Fetch the RandomCheck data by ID
         $randomCheck = RandomCheck::with('randomCheckDetails.product')->findOrFail($id);
         $categories = Category::all()->pluck('name', 'id');
@@ -3129,6 +3373,9 @@ class ProductController extends Controller
 
     public function checkDetailUpdate(Request $request, $id)
     {
+        if (!auth()->user()->can('stock_audit.update')) {
+            abort(403, 'Unauthorized action.');
+        }
         try {
             $details = $request->input('details', []);
             $comment = $request->input('comment');
@@ -3169,6 +3416,10 @@ class ProductController extends Controller
 
     public function checkShow($id)
     {
+        if (!auth()->user()->can('stock_audit.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         try {
             // Fetch the RandomCheck record by ID
             $randomCheck = RandomCheck::with('randomCheckDetails.product.category', 'checkedBy', 'modifiedBy')->findOrFail($id);
@@ -3184,14 +3435,27 @@ class ProductController extends Controller
         }
     }
 
-    public function checkReport(Request $request)
+    public function checkReport()
     {
+        if (!auth()->user()->can('stock_audit.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        return view('random_check.check_report');
+    }
+
+    public function generateReport(Request $request)
+    {
+        if (!auth()->user()->can('stock_audit.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         // Adjust dates to include one day before start and one day after end
         $endDateAdjusted = \Carbon\Carbon::parse($endDate)->addDay()->format('Y-m-d');
-    
+
         $randomCheckDetails = RandomCheckDetail::select(
             'random_check_details.category_name',
             'random_check_details.product_name',
@@ -3207,21 +3471,146 @@ class ProductController extends Controller
         ->orderBy('random_check_details.category_name')
         ->orderBy('random_check_details.product_name')
         ->get();
-    
+
         $missingItems = $randomCheckDetails->where('physical_count', '<', 0);
         $surplusItems = $randomCheckDetails->where('physical_count', '>', 0);
-    
+
         $totalMissingSellPrice = $missingItems->sum(function ($item) {
             return abs($item->physical_count) * $item->sell_price_inc_tax;
         });
-    
+
         $totalSurplusSellPrice = $surplusItems->sum(function ($item) {
             return $item->physical_count * $item->sell_price_inc_tax;
         });
-    
+
         $netResult = $totalSurplusSellPrice - $totalMissingSellPrice;
         $resultStatus = $netResult < 0 ? 'Loss' : 'Profit';
+
+        $content = view('random_check.check_report_content', compact('missingItems', 'surplusItems', 'totalMissingSellPrice', 'totalSurplusSellPrice', 'netResult', 'resultStatus', 'startDate', 'endDate'))->render();
+
+        return response()->json(['content' => $content]);
+    }
     
-        return view('random_check.check_report', compact('missingItems', 'surplusItems', 'totalMissingSellPrice', 'totalSurplusSellPrice', 'netResult', 'resultStatus', 'startDate', 'endDate'));
+    public function checkDelete($id)
+    {
+        if (!auth()->user()->can('stock_audit.delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+            $randomCheck = RandomCheck::findOrFail($id);
+            $randomCheck->delete();
+
+            RandomCheckDetail::where('random_check_id', $id)->delete();
+            DB::commit();
+
+            return response()->json(['success' => 'Random check deleted successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in checkDelete method: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete random check. Please try again.']);
+        }
+    }
+
+    public function checkRestore($id)
+    {
+        if (!auth()->user()->can('stock_audit.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Restore the random check
+            $randomCheck = RandomCheck::onlyTrashed()->findOrFail($id);
+            $randomCheck->restore();
+
+            // Restore the associated details
+            RandomCheckDetail::onlyTrashed()->where('random_check_id', $id)->restore();
+
+            DB::commit();
+
+            return response()->json(['success' => 'Random check restored successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in restore method: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to restore random check. Please try again.']);
+        }
+    }
+
+
+    public function checkPermanentDelete($id)
+    {
+        if (!auth()->user()->can('stock_audit.delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Fetch the random check to be permanently deleted
+            $randomCheck = RandomCheck::onlyTrashed()->findOrFail($id);
+            
+            // Permanently delete the associated details
+            RandomCheckDetail::onlyTrashed()->where('random_check_id', $id)->forceDelete();
+            
+            // Permanently delete the random check
+            $randomCheck->forceDelete();
+            
+            DB::commit();
+
+            return response()->json(['success' => 'Random check permanently deleted successfully.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error in checkPermanentDelete method: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to permanently delete random check. Please try again.']);
+        }
+    }
+
+
+
+    public function printA4($id)
+    {
+        if (!auth()->user()->can('stock_audit.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+    
+        try {
+            $randomCheck = RandomCheck::with('randomCheckDetails.product.category')->findOrFail($id);
+
+            // Fetch the first randomCheckDetail associated with the RandomCheck model
+            $randomCheckDetail = $randomCheck->randomCheckDetails->first();
+
+            // Fetch the associated BusinessLocation model using the location_id from the randomCheckDetail
+            $location = BusinessLocation::findOrFail($randomCheckDetail->location_id);
+            return view('random_check.print_a4', compact('randomCheck', 'location'));
+        } catch (\Exception $e) {
+            \Log::error('Error fetching random check details: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch details.'], 500);
+        }
+    }
+    
+    public function printPOS($id)
+    {
+        if (!auth()->user()->can('stock_audit.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+    
+        try {
+            $randomCheck = RandomCheck::with('randomCheckDetails.product.category')->findOrFail($id);
+
+            // Fetch the first randomCheckDetail associated with the RandomCheck model
+            $randomCheckDetail = $randomCheck->randomCheckDetails->first();
+
+            // Fetch the associated BusinessLocation model using the location_id from the randomCheckDetail
+            $location = BusinessLocation::findOrFail($randomCheckDetail->location_id);
+
+
+            return view('random_check.print_pos', compact('randomCheck', 'location'));
+        } catch (\Exception $e) {
+            \Log::error('Error fetching random check details: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch details.'], 500);
+        }
     }
 }

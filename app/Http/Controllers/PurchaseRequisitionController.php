@@ -397,9 +397,7 @@ class PurchaseRequisitionController extends Controller
                     ->where('p.business_id', $business_id)
                     ->where('p.enable_stock', 1)
                     ->where('p.is_inactive', 0)
-                    ->whereNull('v.deleted_at')
-                    ->whereNotNull('p.alert_quantity')
-                    ->whereRaw('variation_location_details.qty_available <= p.alert_quantity');
+                    ->whereNull('v.deleted_at');
 
             //Check for permitted locations of a user
             $permitted_locations = auth()->user()->permitted_locations();
@@ -422,7 +420,7 @@ class PurchaseRequisitionController extends Controller
                 'p.name as product',
                 'p.type',
                 'p.sku',
-                'p.alert_quantity',
+                'p.alert_quantity as alert_quantity',
                 'pv.name as product_variation',
                 'v.name as variation',
                 'v.sub_sku',

@@ -95,4 +95,9 @@ return [
     'dashboard.data' => 'View Home data',
     'profit_loss_report.view' => 'View profit/loss report',
     'direct_sell.access' => 'Access sell',
+
+    'stock_audit.view' => 'View stock audit',
+    'stock_audit.create' => 'Add stock audit',
+    'stock_audit.update' => 'Edit stock audit',
+    'stock_audit.delete' => 'Delete stock audit',
 ];

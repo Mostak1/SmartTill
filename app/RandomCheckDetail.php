@@ -4,11 +4,13 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RandomCheckDetail extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
 
+    protected $dates =['deleted_at'];
     protected $fillable = [
         'random_check_id',
         'product_id',

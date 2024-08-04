@@ -190,6 +190,7 @@ class StockAdjustmentController extends Controller
             $input_data['business_id'] = $business_id;
             $input_data['created_by'] = $user_id;
             $input_data['transaction_date'] = $this->productUtil->uf_date($input_data['transaction_date'], true);
+            dd($input_data['transaction_date']);
             $input_data['total_amount_recovered'] = $this->productUtil->num_uf($input_data['total_amount_recovered']);
 
             //Update reference count

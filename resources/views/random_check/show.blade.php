@@ -1,25 +1,27 @@
+{{-- random_check/show.blade.php --}}
 <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                     aria-hidden="true">&times;</span></button>
-     
+
         </div>
         <div class="modal-body" id="printableArea">
             <h4 class="modal-title text-center">Random Check Details</h4>
             <br>
-                        <div class="">
-                            <ul class="list-unstyled" >
-                                <li><strong>Check No:</strong> {{ $randomCheck->check_no }}</li>
-                                <li><strong>Checked By:</strong> {{ $randomCheck->checkedBy->first_name }}
-                                    {{ $randomCheck->checkedBy->last_name }}</li>
-                                <li><strong>Checked At:</strong>
-                                    {{ \Carbon\Carbon::parse($randomCheck->created_at)->format('d F Y, g:i A') }}</li>
-                            </ul>
-                            <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
-                        </div>
+            <div class="">
+                <ul class="list-unstyled">
+                    <li><strong>Check No:</strong> {{ $randomCheck->check_no }}</li>
+                    <li><strong>Checked By:</strong> {{ $randomCheck->checkedBy->first_name }}
+                        {{ $randomCheck->checkedBy->last_name }}</li>
+                    <li><strong>Checked At:</strong>
+                        {{ \Carbon\Carbon::parse($randomCheck->created_at)->format('d F Y, g:i A') }}</li>
+                </ul>
+                <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
+            </div>
             <!-- Random Check Details -->
             <div class="form-group">
+                <div class="table-responsive">
                 <table class="table table-bordered table-striped random-print-font">
                     <thead>
                         <tr>
@@ -28,7 +30,7 @@
                             <th>SKU</th>
                             <th>Brand Name</th>
                             <th>Soft. Count</th>
-                            <th>Physical Count</th>
+                            <th>Phy. Count Dif.</th>
                             <th>Comment</th>
                         </tr>
                     </thead>
@@ -58,6 +60,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
             <!-- Overall Comment -->
             <div class="row">
@@ -75,7 +78,9 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary no-print" onclick="printDiv('printableArea')">Print</button>
+                <button type="button" class="btn btn-info no-print btn-sm"
+                    onclick="printDiv('printableArea')">Print(A4)</button>
+                    <a href="{{ route('random_check.printPOS', $randomCheck->id) }}" style="margin-right: 15px;" class="btn btn-info btn-sm no-print">Print(POS)</a>
                 <button type="button" class="btn btn-default no-print" data-dismiss="modal">Close</button>
             </div>
         </div><!-- /.modal-content -->

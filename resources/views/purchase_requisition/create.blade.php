@@ -44,15 +44,6 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-sm-12 text-right">
-				<br>
-				<button type="button" class="btn bg-yellow" id="show_pr_products"><i class="fas fa-search"></i> @lang('lang_v1.show_products')</button>
-			</div>
-		</div>
-	@endcomponent
-
-	@component('components.widget', ['class' => 'box-solid'])
-		<div class="row">
 			<div class="col-sm-4">
 				<div class="form-group">
 					{!! Form::label('ref_no', __('purchase.ref_no').':') !!}
@@ -67,9 +58,15 @@
 						<span class="input-group-addon">
 							<i class="fa fa-calendar"></i>
 						</span>
-						{!! Form::text('delivery_date', null, ['class' => 'form-control', 'readonly']); !!}
+						{!! Form::text('delivery_date', null, ['class' => 'form-control',]); !!}
 					</div>
 				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12 text-right">
+				<br>
+				<button type="button" class="btn bg-yellow" id="show_pr_products"><i class="fas fa-search"></i> @lang('lang_v1.show_products')</button>
 			</div>
 		</div>	
 	@endcomponent
