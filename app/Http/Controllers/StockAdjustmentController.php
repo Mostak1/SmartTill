@@ -190,7 +190,7 @@ class StockAdjustmentController extends Controller
             $input_data['business_id'] = $business_id;
             $input_data['created_by'] = $user_id;
             $input_data['transaction_date'] = $this->productUtil->uf_date($input_data['transaction_date'], true);
-            dd($input_data['transaction_date']);
+            // dd($input_data['transaction_date']);
             $input_data['total_amount_recovered'] = $this->productUtil->num_uf($input_data['total_amount_recovered']);
 
             //Update reference count
@@ -256,6 +256,7 @@ class StockAdjustmentController extends Controller
                     'id' => $business_id,
                     'accounting_method' => $request->session()->get('business.accounting_method'),
                     'location_id' => $input_data['location_id'],
+                    'adjustment_sign'=>$request->adjustment_sign,
                 ];
                 if ($request->adjustment_sign == 'Plus') {
                     $this->transactionUtil->mapPurchaseSell($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
@@ -272,7 +273,6 @@ class StockAdjustmentController extends Controller
                 'success' => 1,
                 'msg' => __('stock_adjustment.stock_adjustment_added_successfully'),
             ];
-
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();

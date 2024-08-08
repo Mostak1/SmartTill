@@ -1,6 +1,6 @@
 <div class="modal-dialog" role="document">
     <div class="modal-content">
-        {!! Form::open(['url' => action([\App\Http\Controllers\ProductController::class, 'generateRandom']), 'method' => 'post', 'id' => 'random_check_form' ]) !!}
+        {!! Form::open(['url' => action([\App\Http\Controllers\CheckController::class, 'generateRandom']), 'method' => 'post', 'id' => 'random_check_form' ]) !!}
         {!! csrf_field() !!}
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>

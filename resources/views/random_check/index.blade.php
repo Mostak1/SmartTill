@@ -2,6 +2,23 @@
 
 @section('title', __('Product Stock Audit'))
 
+@section('css')
+<style>
+    @media print {
+        .print-font {
+            font-size: 10px !important;
+        }
+        .print-exclude {
+            display: none !important;
+        }
+    }
+    .break-after-6 {
+            word-break: break-all;
+            width: 8ch; /* 6 characters width */
+        }
+</style>
+@endsection
+
 @section('content')
 
     <!-- Content Header (Page header) -->
@@ -53,23 +70,23 @@
 
         <!-- Navigation Tabs -->
         <ul class="nav nav-tabs">
-            <li class="{{ request()->is('products/random-check-index') ? 'active' : '' }}">
-                <a href="{{ url('products/random-check-index') }}">
+            <li class="{{ request()->is('random/random-check-index') ? 'active' : '' }}">
+                <a href="{{ url('random/random-check-index') }}">
                     <i class="fa fa-random"></i> @lang('Random Checks')
                 </a>
             </li>
-            <li class="{{ request()->is('products/random-check-details') ? 'active' : '' }}">
-                <a href="{{ url('products/random-check-details') }}">
+            <li class="{{ request()->is('random/random-check-details') ? 'active' : '' }}">
+                <a href="{{ url('random/random-check-details') }}">
                     <i class="fa fa-list"></i> @lang('Random Check Details')
                 </a>
             </li>
-            <li class="{{ request()->is('products/check-report') ? 'active' : '' }}">
-                <a href="{{ url('products/check-report') }}">
-                    <i class="fas fa-file-invoice"></i> @lang('Check Report')
+            <li class="{{ request()->is('random/check-report-index') ? 'active' : '' }}">
+                <a href="{{ url('random/check-report-index') }}">
+                    <i class="fas fa-file-invoice"></i> @lang('Reports')
                 </a>
             </li>
-            <li class="{{ request()->is('products/archived-random-check') ? 'active' : '' }}">
-                <a href="{{ url('products/archived-random-check') }}">
+            <li class="{{ request()->is('random/archived-random-check') ? 'active' : '' }}">
+                <a href="{{ url('random/archived-random-check') }}">
                     <i class="fas fa-archive"></i> @lang('Archive')
                 </a>
             </li>
@@ -77,13 +94,13 @@
 
         <div class="tab-content">
             <!-- Random Check Tab -->
-            <div class="tab-pane {{ request()->is('products/random-check-index') ? 'active' : '' }}" id="random-check-index">
+            <div class="tab-pane {{ request()->is('random/random-check-index') ? 'active' : '' }}" id="random-check-index">
                 @component('components.widget', ['title' => __('All Random Checks')])
                     @slot('tool')
                         <div class="box-tools">
                             <!-- Product Random Check Button -->
                             <button type="button" class="btn btn-block btn-primary btn-modal" 
-                            data-href="{{ action([\App\Http\Controllers\ProductController::class, 'createRandomCheck']) }}" 
+                            data-href="{{ action([\App\Http\Controllers\CheckController::class, 'createRandomCheck']) }}" 
                             data-container=".random_check_modal">
                             <i class="fa fa-random"></i> @lang('Check')
                             </button>
@@ -113,7 +130,7 @@
             </div>
 
             <!-- Random Check Details Tab -->
-            <div class="tab-pane {{ request()->is('products/random-check-details') ? 'active' : '' }}" id="random-check-details">
+            <div class="tab-pane {{ request()->is('random/random-check-details') ? 'active' : '' }}" id="random-check-details">
                 @component('components.widget', ['title' => __('All Random Check Details')])
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped" id="random_check_details_table">
@@ -139,8 +156,42 @@
                 @endcomponent
             </div>
 
+            <!-- Reports Tab -->
+            <div class="tab-pane {{ request()->is('random/check-report-index') ? 'active' : '' }}" id="reports">
+                @component('components.widget', ['title' => __('All Reports')])
+                @slot('tool')
+                        <div class="box-tools">
+                            <a class="btn btn-block btn-primary"  href="{{ url('random/check-report') }}">
+                                <i class="fa fa-plus"></i> @lang('messages.add')</a>
+                            </a>
+                        </div>
+                    @endslot
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="reports_table">
+                            <thead>
+                                <tr>
+                                    <th>Report No.</th>
+                                    <th>Date</th>
+                                    <th>Finalized By</th>
+                                    <th>Location</th>
+                                    <th>Date Range Covered</th>
+                                    <th>Checks @show_tooltip(__('Number of Checks Covered'))</th>
+                                    <th>Net Result</th>
+                                    <th>Status</th>
+                                    <th>Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- DataTable body will be populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                @endcomponent
+            </div>
+
+
             <!-- Random Check Archive Tab -->
-            <div class="tab-pane {{ request()->is('products/archived-random-check') ? 'active' : '' }}" id="random-check-archive">
+            <div class="tab-pane {{ request()->is('random/archived-random-check') ? 'active' : '' }}" id="random-check-archive">
                 @component('components.widget', ['title' => __('Random Check Archive')])
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped" id="random_check_archive_table">
@@ -163,12 +214,16 @@
                     </div>
                 @endcomponent
             </div>
+
         </div>
 
         <!-- Random Check Modals -->
         <div class="modal fade random_check_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
         <div class="modal fade random_check_edit_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
         <div class="modal fade view_random_check_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
+        <div class="modal fade report_item_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel" aria-hidden="true">
+            <!-- Modal content will be loaded here -->
+        </div>
     </section>
     <!-- /.content -->
 
@@ -197,7 +252,7 @@ $(document).ready(function(){
         processing: true,
         serverSide: true,
         ajax: {
-            url: '/products/random-check-index',
+            url: '/random/random-check-index',
             data: function (d) {
                 if ($('#random_check_table_filter_date_range').val()) {
                     var start = $('#random_check_table_filter_date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
@@ -214,13 +269,13 @@ $(document).ready(function(){
             }
         },
         columns: [
-            { data: 'check_no', name: 'check_no' },
+            { data: 'check_no', name: 'check_no', searchable: true},
             { data: 'created_at', name: 'created_at', searchable: false},
-            { data: 'checked_by', name: 'checked_by' },
-            { data: 'location_name', name: 'location_name' },
+            { data: 'checked_by', name: 'checked_by', searchable: false },
+            { data: 'location_name', name: 'location_name', searchable: false},
             { data: 'total_product_count', name: 'total_product_count', searchable: false },
             { data: 'total_physical_count', name: 'total_physical_count', searchable: false },
-            { data: 'random_check_comment', name: 'random_check_comment' },
+            { data: 'random_check_comment', name: 'random_check_comment', searchable: false },
             { data: 'action', name: 'action', searchable: false }
         ],
         order: [[0, 'desc']], // Default sorting by date descending
@@ -229,7 +284,7 @@ $(document).ready(function(){
 
     var random_check_archive_table = $('#random_check_archive_table').DataTable({
         ajax: {
-            url: '{{ route('products.archivedRandomCheck') }}',
+            url: '{{ route('random.archivedRandomCheck') }}',
             data: function (d) {
                 if ($('#random_check_table_filter_date_range').val()) {
                     var start = $('#random_check_table_filter_date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
@@ -248,11 +303,11 @@ $(document).ready(function(){
         columns: [
             { data: 'check_no', name: 'check_no' },
             { data: 'created_at', name: 'created_at', searchable: false},
-            { data: 'checked_by', name: 'checked_by' },
-            { data: 'location_name', name: 'location_name' },
+            { data: 'checked_by', name: 'checked_by', searchable: false },
+            { data: 'location_name', name: 'location_name', searchable: false },
             { data: 'total_product_count', name: 'total_product_count', searchable: false },
             { data: 'total_physical_count', name: 'total_physical_count', searchable: false },
-            { data: 'random_check_comment', name: 'random_check_comment' },
+            { data: 'random_check_comment', name: 'random_check_comment', searchable: false },
             { data: 'action', name: 'action', searchable: false }
         ],
         order: [[0, 'desc']], // Default sorting by date descending
@@ -263,7 +318,7 @@ $(document).ready(function(){
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route('products.randomCheckDetails') }}',
+            url: '{{ route('random.randomCheckDetails') }}',
             data: function (d) {
                 if ($('#random_check_table_filter_date_range').val()) {
                     var start = $('#random_check_table_filter_date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
@@ -283,10 +338,10 @@ $(document).ready(function(){
             }
         },
         columns: [
-            { data: 'check_no', name: 'check_no' },
-            { data: 'category_name', name: 'category_name' },
-            { data: 'product_name', name: 'product_name' },
-            { data: 'sku', name: 'sku' },
+            { data: 'check_no', name: 'check_no', searchable: false},
+            { data: 'category_name', name: 'category_name', searchable: false },
+            { data: 'product_name', name: 'product_name', searchable: true },
+            { data: 'sku', name: 'sku', searchable: true },
             { data: 'brand_name', name: 'brand_name', searchable: false },
             { data: 'current_stock', name: 'current_stock', searchable: false },
             { data: 'physical_count', name: 'physical_count', searchable: false },
@@ -304,11 +359,43 @@ $(document).ready(function(){
         ]
     });
 
+    var reports_table = $('#reports_table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route('random.checkReportIndex') }}',
+            data: function (d) {
+                if ($('#report_table_filter_date_range').val()) {
+                    var start = $('#report_table_filter_date_range').data('daterangepicker').startDate.format('YYYY-MM-DD');
+                    var end = $('#report_table_filter_date_range').data('daterangepicker').endDate.format('YYYY-MM-DD');
+                    d.start_date = start;
+                    d.end_date = end;
+                }
+                if ($('#report_filter_location_id').length) {
+                    d.location_id = $('#report_filter_location_id').val();
+                }
+            }
+        },
+        columns: [
+            { data: 'report_no', name: 'report_no', searchable: true },
+            { data: 'date', name: 'date', searchable: false },
+            { data: 'finalized_by', name: 'finalized_by', searchable: false },
+            { data: 'location_name', name: 'location_name', searchable: false },
+            { data: 'date_range_covered', name: 'date_range_covered', searchable: false },
+            { data: 'number_of_checks_covered', name: 'number_of_checks_covered', searchable: false },
+            { data: 'net_result', name: 'net_result', searchable: false },
+            { data: 'status', name: 'status', searchable: false },
+            { data: 'comments', name: 'comments' }
+        ],
+        order: [[0, 'desc']]
+    });
+
 
     $(document).on('change', '#random_check_filter_location_id, #random_check_filter_physical_count, #category_name', function () {
         random_check_table.ajax.reload();
         random_check_details_table.ajax.reload();
         random_check_archive_table.ajax.reload();
+        reports_table.ajax.reload();
     });
 
     // Initialize Product Random Check Modal
@@ -335,6 +422,16 @@ $(document).ready(function(){
             $(this).modal('show');
         });
     });
+
+    $(document).on('click', '.view_report_item', function (e) {
+        e.preventDefault();
+        var href = $(this).data('href');
+        
+        $('.report_item_modal').load(href, function () {
+            $(this).modal('show');
+        });
+    });
+
 
     // Delete random check
     $(document).on('click', '.delete-random-check', function(e) {

@@ -1,9 +1,9 @@
-{{-- random_check/check_report_content.blade.php --}}
 <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
 <div style="font-size: 24px; width:fit-content; margin:0 auto;">
     Missing/Surplus Product Report
 </div>
 <p style="font-size: 16px; width:fit-content; margin:0 auto;">@lang('Start Date'): <span id="reportStartDate">{{ $startDate }}</span>, @lang('End Date'): <span id="reportEndDate">{{ $endDate }}</span></p>
+<p style="font-size: 14px; width:fit-content; margin:0 auto;"><strong>Location: </strong>{{ $location->name }}</p>
 
 <h3>@lang('Missing Items')</h3>
 <table class="table table-bordered print-font">
@@ -81,8 +81,22 @@
 
 <h3 class="text-center">@lang('Net Result'): ৳ {{ number_format(abs($netResult), 2) }} <span class="{{ $resultStatus == 'Loss' ? 'text-danger' : 'text-success' }}">({{ $resultStatus }})</span></h3>
 
-{!! Form::submit('Finalize', [
-            'class' => 'btn btn-primary print-exclude btn-finalize',
-            'id' => 'finalize-button',
-            'style' => 'display: block; width: 160px; height: 50px; margin: 0 auto; margin-top:30px; font-size: 18px;',
-        ]) !!}
+<form id="finalize-report-form" method="POST" action="{{ route('random.finalizeReport') }}">
+    @csrf
+    {!! Form::hidden('location_id', $location->id, ['class' => 'form-control', 'placeholder' => 'Location ID', 'readonly']) !!}
+    {!! Form::hidden('start_date', $startDate, ['class' => 'form-control', 'placeholder' => 'Start Date', 'readonly']) !!}
+    {!! Form::hidden('end_date', $endDate, ['class' => 'form-control', 'placeholder' => 'End Date', 'readonly']) !!}
+    {!! Form::hidden('net_result', $netResult, ['class' => 'form-control', 'placeholder' => 'Net Result', 'readonly']) !!}
+
+    <div class="row">
+        <div class="col-md-3"></div>
+        <div class="col-md-6">
+            <div class="form-group">
+                {!! Form::textarea('comments', null, ['class' => 'form-control no-print', 'style' => 'display: block; margin: 0 auto; margin-top:30px;', 'rows' => 3, 'placeholder' => 'Comments...']) !!}
+            </div>
+        </div>
+        <div class="col-md-3"></div>
+    </div>
+
+    <button type="button" id="finalize-button" class="btn btn-primary print-exclude btn-finalize" style="display: block; width: 160px; height: 50px; margin: 0 auto; margin-top:30px; font-size: 18px;">@lang('Finalize Report')</button>
+</form>

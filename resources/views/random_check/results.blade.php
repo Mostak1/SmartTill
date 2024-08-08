@@ -36,7 +36,7 @@
                 </tbody>
             </table>
         </div>
-        {!! Form::open(['url' => action([\App\Http\Controllers\ProductController::class, 'checkConfirm']), 'method' => 'post',
+        {!! Form::open(['url' => action([\App\Http\Controllers\CheckController::class, 'checkConfirm']), 'method' => 'post',
     'id' => 'random_check_form']) !!}
             @csrf
             @foreach($categories_products as $category_id => $products)
@@ -45,7 +45,7 @@
                     {!! Form::hidden("products[{$product->id}][category_name]", $product->category_name) !!}
                     {!! Form::hidden("products[{$product->id}][product_name]", $product->product) !!}
                     {!! Form::hidden("products[{$product->id}][sku]", $product->sku) !!}
-                    {!! Form::hidden("products[{$product->id}][brand_name]", !empty($product->brand) ? $product->brand : 'No Brand') !!}
+                    {!! Form::hidden("products[{$product->id}][brand_name]", $product->brand) !!}
                     {!! Form::hidden("products[{$product->id}][current_stock]", $product->current_stock) !!}
                     {!! Form::hidden("products[{$product->id}][variation_id]", $product->variation_id) !!}
                 @endforeach

@@ -1,14 +1,14 @@
 <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
         {!! Form::open([
-            'url' => action([\App\Http\Controllers\ProductController::class, 'checkDetailUpdate'], $randomCheck->id),
+            'url' => action([\App\Http\Controllers\CheckController::class, 'checkDetailUpdate'], $randomCheck->id),
             'method' => 'post',
         ]) !!}
         {!! csrf_field() !!}
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Edit Random Check <small><strong>Location: </strong></small></h3>
+                <h3>Edit Random Check <small><strong>Location: </strong>{{ $location->name }}</small></h3>
                 <div>
                     <a href="{{ route('random_check.printA4', $randomCheck->id) }}" class="btn btn-info btn-sm">Print(A4)</a>
                     <a href="{{ route('random_check.printPOS', $randomCheck->id) }}" style="margin-right: 15px;" class="btn btn-info btn-sm">Print(POS)</a>
@@ -25,8 +25,8 @@
                             <th>SKU</th>
                             <th>Brand Name</th>
                             <th>Soft. Count</th>
-                            <th>Phy. Count Dif.</th>
-                            <th>Comment</th>
+                            <th style="width: 15%;">Phy. Count Diff.</th>
+                            <th style="width: 20%;">Comment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -34,8 +34,8 @@
                             <tr>
                                 <td>{{ $detail->product->category->name }}</td>
                                 <td>{{ $detail->product->name }}</td>
-                                <td>{{ $detail->product->sku }}</td>
-                                <td>{{ $detail->product->brand_name }}</td>
+                                <td class="break-after-6">{{ $detail->product->sku }}</td>
+                                <td>{{ $detail->brand_name }}</td>
                                 <td>{{ $detail->current_stock }}</td>
                                 <td>
                                     <div class="input-group input-number ">
@@ -89,19 +89,19 @@
 <script>
     $(document).ready(function() {
         function updatePhysicalCountText(id, value) {
-            const textElement = document.querySelector(#physical_count_text_${id});
+            const textElement = $(`#physical_count_text_${id}`);
             if (value === 0) {
-                textElement.textContent = '0 (match)';
+                textElement.text('0 (match)');
             } else if (value < 0) {
-                textElement.textContent = ${value} (missing);
+                textElement.text(`${value} (missing)`);
             } else if (value > 0) {
-                textElement.textContent = +${value} (surplus);
+                textElement.text(`+${value} (surplus)`);
             }
         }
 
         $('.quantity-down-int').on('click', function() {
             const index = $(this).data('index');
-            const input = $(#physical_count_${index});
+            const input = $(`#physical_count_${index}`);
             let value = parseInt(input.val()) || 0; // Ensure value is an integer
             input.val(value - 1);
             updatePhysicalCountText(index, parseInt(input.val()));
@@ -109,7 +109,7 @@
 
         $('.quantity-up-int').on('click', function() {
             const index = $(this).data('index');
-            const input = $(#physical_count_${index});
+            const input = $(`#physical_count_${index}`);
             let value = parseInt(input.val()) || 0; // Ensure value is an integer
             input.val(value + 1);
             updatePhysicalCountText(index, parseInt(input.val()));

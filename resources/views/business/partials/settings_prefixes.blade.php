@@ -186,5 +186,14 @@
                 {!! Form::text('ref_no_prefixes[sales_order]', $sales_order_prefix, ['class' => 'form-control']); !!}
             </div>
         </div>
+        <div class="col-sm-4">
+            <div class="form-group">
+                @php
+                    $check_prefix = !empty($business->ref_no_prefixes['check']) ? $business->ref_no_prefixes['check'] : '';
+                @endphp
+                {!! Form::label('ref_no_prefixes[check]', __('Random Check') . ':') !!}
+                {!! Form::text('ref_no_prefixes[check]', $check_prefix, ['class' => 'form-control']); !!}
+            </div>
+        </div>
     </div>
 </div>

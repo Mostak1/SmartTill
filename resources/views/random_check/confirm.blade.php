@@ -11,7 +11,7 @@
         </div>
     </div>
     {!! Form::open([
-        'url' => action([\App\Http\Controllers\ProductController::class, 'checkUpdate']),
+        'url' => action([\App\Http\Controllers\CheckController::class, 'checkUpdate']),
         'method' => 'post',
     ]) !!}
     @csrf
@@ -25,8 +25,8 @@
                 <th>SKU</th>
                 <th>Product Name</th>
                 <th>Current Stock</th>
-                <th>Phy. Count Diff.</th>
-                <th>Comment</th>
+                <th style="width: 10%;">Phy. Count Diff.</th>
+                <th style="width: 25%;">Comment</th>
             </tr>
         </thead>
         <tbody>
@@ -38,7 +38,7 @@
                     <td>{{ $product['product_name'] }}</td>
                     <td>{{ number_format($product['current_stock'], 2) }}</td>
                     <td>
-                        <div class="input-group input-number ">
+                        <div class="input-group input-number">
                             <span class="input-group-btn">
                                 <button type="button" class="btn btn-default btn-flat quantity-down-int" data-index="{{ $id }}">
                                     <i class="fa fa-minus text-danger"></i>
@@ -57,11 +57,16 @@
                             </span>
                         </div>
                         <div style="text-align: center;">
-                            <small id="physical_count_text_{{ $id }}" class="form-text "></small>
+                            <small id="physical_count_text_{{ $id }}" class="form-text"></small>
                         </div>
                     </td>
                     <td>
-                        {!! Form::text("products[{$id}][comment]", null, ['class' => '']) !!}
+                        <span class="comment-placeholder" style="cursor: pointer; color: blue;">Click to add comment...</span>
+                        {!! Form::textarea("products[{$id}][comment]", null, [
+                            'class' => 'form-control comment-textarea hide',
+                            'rows' => 2,
+                            'placeholder' => 'Comments...'
+                        ]) !!}
                     </td>
                 </tr>
             @endforeach
@@ -76,59 +81,63 @@
             </ul>
         </div>
         <div class="col-md-5">
-            {!! Form::textarea("comment", null, ['class' => 'form-control ', 'rows' => 3, 'placeholder' => 'Overall comments...']) !!}
+            {!! Form::textarea("comment", null, [
+                'class' => 'form-control',
+                'rows' => 3,
+                'placeholder' => 'Overall comments...'
+            ]) !!}
         </div>
     </div>
     
     {!! Form::submit('Save', [
-        'class' => 'btn btn-primary ',
-        'style' => 'display: block; width: 160px; height: 50px; margin: 0 auto; margin-top:10px; font-size: 18px;',
+        'class' => 'btn btn-primary',
+        'style' => 'display: block; width: 160px; height: 50px; margin: 0 auto; margin-top: 10px; font-size: 18px;',
     ]) !!}
     {!! Form::close() !!}
     @endcomponent
 </section>
+@endsection
 
+@section('javascript')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
         function updatePhysicalCountText(id, value) {
-            const textElement = document.querySelector(#physical_count_text_${id});
+            const textElement = $(`#physical_count_text_${id}`);
             if (value === 0) {
-                textElement.textContent = '0 (match)';
+                textElement.text('0 (match)');
             } else if (value < 0) {
-                textElement.textContent = ${value} (missing);
+                textElement.text(`${value} (missing)`);
             } else if (value > 0) {
-                textElement.textContent = +${value} (surplus);
-            }
-            else if (value == 0) {
-                textElement.textContent = ${value} (match);
+                textElement.text(`+${value} (surplus)`);
             }
         }
 
-        document.querySelectorAll('.quantity-down-int').forEach(button => {
-            button.addEventListener('click', function() {
-                const index = this.getAttribute('data-index');
-                const input = document.querySelector(#physical_count_${index});
-                let value = parseInt(input.value);
-                input.value = value - 1;
-                updatePhysicalCountText(index, input.value);
-            });
+        $('.quantity-down-int').on('click', function() {
+            const index = $(this).data('index');
+            const input = $(`#physical_count_${index}`);
+            let value = parseInt(input.val()) || 0; // Ensure value is an integer
+            input.val(value - 1);
+            updatePhysicalCountText(index, parseInt(input.val()));
         });
 
-        document.querySelectorAll('.quantity-up-int').forEach(button => {
-            button.addEventListener('click', function() {
-                const index = this.getAttribute('data-index');
-                const input = document.querySelector(#physical_count_${index});
-                let value = parseInt(input.value);
-                input.value = value + 1;
-                updatePhysicalCountText(index, input.value);
-            });
+        $('.quantity-up-int').on('click', function() {
+            const index = $(this).data('index');
+            const input = $(`#physical_count_${index}`);
+            let value = parseInt(input.val()) || 0; // Ensure value is an integer
+            input.val(value + 1);
+            updatePhysicalCountText(index, parseInt(input.val()));
         });
 
         // Initialize text elements
-        document.querySelectorAll('.input_number').forEach(input => {
-            const id = input.getAttribute('data-id');
-            const value = parseInt(input.value);
+        $('.input_number').each(function() {
+            const id = $(this).data('id');
+            const value = parseInt($(this).val()) || 0; // Ensure value is an integer
             updatePhysicalCountText(id, value);
+        });
+
+        $('.comment-placeholder').on('click', function() {
+            $(this).hide();
+            $(this).next('.comment-textarea').removeClass('hide').focus();
         });
     });
 </script>

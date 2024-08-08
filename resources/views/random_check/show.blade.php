@@ -1,28 +1,27 @@
 {{-- random_check/show.blade.php --}}
 <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
+    <div class="modal-content" id="printableArea">
         <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            <button type="button" class="close no-print" data-dismiss="modal" aria-label="Close"><span
                     aria-hidden="true">&times;</span></button>
-
+                    <h4 class="modal-title text-center">Random Check Details</h4>
         </div>
-        <div class="modal-body" id="printableArea">
-            <h4 class="modal-title text-center">Random Check Details</h4>
-            <br>
+        <div class="modal-body">
             <div class="">
                 <ul class="list-unstyled">
                     <li><strong>Check No:</strong> {{ $randomCheck->check_no }}</li>
+                    <li><strong>Location:</strong> {{ $location->name }}</li>
                     <li><strong>Checked By:</strong> {{ $randomCheck->checkedBy->first_name }}
                         {{ $randomCheck->checkedBy->last_name }}</li>
                     <li><strong>Checked At:</strong>
                         {{ \Carbon\Carbon::parse($randomCheck->created_at)->format('d F Y, g:i A') }}</li>
+                        <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
                 </ul>
-                <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
             </div>
             <!-- Random Check Details -->
             <div class="form-group">
                 <div class="table-responsive">
-                <table class="table table-bordered table-striped random-print-font">
+                <table class="table table-bordered table-striped print-font">
                     <thead>
                         <tr>
                             <th>Category</th>
@@ -39,7 +38,7 @@
                             <tr>
                                 <td>{{ $detail->product->category->name }}</td>
                                 <td>{{ $detail->product->name }}</td>
-                                <td>{{ $detail->product->sku }}</td>
+                                <td class="break-after-6">{{ $detail->product->sku }}</td>
                                 <td>{{ $detail->brand_name }}</td>
                                 <td>{{ $detail->current_stock }}</td>
                                 <td>

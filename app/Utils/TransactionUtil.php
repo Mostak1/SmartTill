@@ -4108,13 +4108,23 @@ class TransactionUtil extends Util
         if (empty($transaction_lines)) {
             return false;
         }
-
+        
         if (!empty($business['pos_settings']) && !is_array($business['pos_settings'])) {
             $business['pos_settings'] = json_decode($business['pos_settings'], true);
         }
-        $allow_overselling = !empty($business['pos_settings']['allow_overselling']) ?
+        if($mapping_type == 'stock_adjustment'){
+
+            if ($business['adjustment_sign']==='Plus') {
+                $allow_overselling =true;
+            }else{
+                $allow_overselling = !empty($business['pos_settings']['allow_overselling']) ?
+                true : false;
+            }
+        }else{
+            $allow_overselling = !empty($business['pos_settings']['allow_overselling']) ?
             true : false;
 
+        }
         //Set flag to check for expired items during SELLING only.
         $stop_selling_expired = false;
         if ($check_expiry) {
@@ -4124,7 +4134,7 @@ class TransactionUtil extends Util
                 }
             }
         }
-
+        
         $qty_selling = null;
         foreach ($transaction_lines as $line) {
             //Check if stock is not enabled then no need to assign purchase & sell
@@ -4132,10 +4142,11 @@ class TransactionUtil extends Util
             if (empty($product) || $product->enable_stock != 1) {
                 continue;
             }
-
+            
             $qty_sum_query = $this->get_pl_quantity_sum_string('PL');
+            // dd($qty_sum_query);
 
-            //Get purchase lines, only for products with enable stock.
+            //Get purchase lines, only for products with enable stock. "PL.quantity_sold 17 + PL.quantity_adjusted 0+ PL.quantity_returned 0+ PL.mfg_quantity_used 0" 30
             $query = Transaction::join('purchase_lines AS PL', 'transactions.id', '=', 'PL.transaction_id')
                 ->where('transactions.business_id', $business['id'])
                 ->where('transactions.location_id', $business['location_id'])
@@ -4191,7 +4202,6 @@ class TransactionUtil extends Util
             $qty_selling = $line->quantity;
             foreach ($rows as $k => $row) {
                 $qty_allocated = 0;
-
                 //Check if qty_available is more or equal
                 if ($qty_selling <= $row->quantity_available) {
                     $qty_allocated = $qty_selling;
@@ -4200,9 +4210,10 @@ class TransactionUtil extends Util
                     $qty_selling = $qty_selling - $row->quantity_available;
                     $qty_allocated = $row->quantity_available;
                 }
-
+                
                 //Check for sell mapping or stock adjsutment mapping
                 if ($mapping_type == 'stock_adjustment') {
+                    dd($row->purchase_lines_id);
                     //Mapping of stock adjustment
                     if ($qty_allocated != 0) {
                         $purchase_adjustment_map[] =
@@ -4215,8 +4226,13 @@ class TransactionUtil extends Util
                             ];
 
                         //Update purchase line
-                        PurchaseLine::where('id', $row->purchase_lines_id)
-                            ->update(['quantity_adjusted' => $row->quantity_adjusted + $qty_allocated]);
+                        if ($business['adjustment_sign']==='Plus') {
+                                PurchaseLine::where('id', $row->purchase_lines_id)
+                                    ->update(['quantity_adjusted' => $row->quantity_adjusted-$qty_allocated]);
+                                }else{
+                                PurchaseLine::where('id', $row->purchase_lines_id)
+                                    ->update(['quantity_adjusted' => $row->quantity_adjusted + $qty_allocated]);
+                            }
                     }
                 } elseif ($mapping_type == 'purchase') {
                     //Mapping of purchase

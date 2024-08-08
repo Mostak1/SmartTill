@@ -12,6 +12,7 @@ use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\BusinessLocationController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckController;
 use App\Http\Controllers\CombinedPurchaseReturnController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerGroupController;
@@ -107,7 +108,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('mark-as-available/{user_id}', [SellPosController::class, 'markAsAvailable']);
 
     Route::resource('purchase-requisition', PurchaseRequisitionController::class)->except(['edit', 'update']);
-    Route::post('/get-requisition-products', [PurchaseRequisitionController::class, 'getRequisitionProducts'])->name('get-requisition-products');
+    Route::get('/get-requisition-products', [PurchaseRequisitionController::class, 'getRequisitionProducts'])->name('get-requisition-products');
     Route::get('get-purchase-requisitions/{location_id}', [PurchaseRequisitionController::class, 'getPurchaseRequisitions']);
     Route::get('get-purchase-requisition-lines/{purchase_requisition_id}', [PurchaseRequisitionController::class, 'getPurchaseRequisitionLines']);
 
@@ -169,7 +170,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/products/add-selling-prices/{id}', [ProductController::class, 'addSellingPrices']);
     Route::post('/products/save-selling-prices', [ProductController::class, 'saveSellingPrices']);
     Route::get('/products/add-selling-prices-category', [ProductController::class, 'addSellingPricesCategory']);
-    Route::post('/products/save-selling-prices-category', [ProductController::class, 'saveSellingPricesCategory'] );
+    Route::post('/products/save-selling-prices-category', [ProductController::class, 'saveSellingPricesCategory']);
     Route::post('/products/save-selling-prices-many', [ProductController::class, 'saveSellingPricesMany']);
     Route::post('/products/mass-delete', [ProductController::class, 'massDestroy']);
     Route::get('/products/view/{id}', [ProductController::class, 'view']);
@@ -193,27 +194,30 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('/products/get-combo-product-entry-row', [ProductController::class, 'getComboProductEntryRow']);
     Route::post('/products/toggle-woocommerce-sync', [ProductController::class, 'toggleWooCommerceSync']);
 
-    
-// For Random Check of Product
-Route::get('/products/random-check-index', [ProductController::class, 'randomCheck'])->name('products.randomCheckIndex');
-Route::get('products/archived-random-check', [ProductController::class, 'archivedRandomCheck'])->name('products.archivedRandomCheck');
-Route::get('products/random-check-details', [ProductController::class, 'randomCheckDetails'])->name('products.randomCheckDetails');
-Route::get('/products/random-check', [ProductController::class, 'createRandomCheck'])->name('products.createRandomCheck');
-Route::post('/products/generate-random-product', [ProductController::class, 'generateRandom'])->name('products.generateRandom');
-Route::post('/products/random-check-confirm', [ProductController::class, 'checkConfirm'])->name('random_check.confirm');
-Route::post('/products/random-check-store', [ProductController::class, 'checkUpdate'])->name('random_check.store');
-Route::get('/products/random-check/edit/{id}', [ProductController::class, 'checkEdit'])->name('products.checkEdit');
-Route::post('/products/random-check/update/{id}', [ProductController::class, 'checkDetailUpdate'])->name('products.checkUpdate');
-Route::get('/random-checks/show/{id}', [ProductController::class, 'checkShow'])->name('random_checks.show');
-Route::get('/products/check-report', [ProductController::class, 'checkReport'])->name('products.checkReport');
-Route::get('/products/generate-report', [ProductController::class, 'generateReport'])->name('products.generateReport');
-Route::delete('/random-checks/{id}', [ProductController::class, 'checkDelete'])->name('checkDelete');
-Route::post('/products/random-check-restore/{id}', [ProductController::class, 'checkRestore'])->name('products.checkRestore');
-Route::delete('products/check-permanent-delete/{id}', [ProductController::class, 'checkPermanentDelete'])->name('products.checkPermanentDelete');
-Route::get('/random-check/print/a4/{id}', [ProductController::class, 'printA4'])->name('random_check.printA4');
-Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'])->name('random_check.printPOS');
-    
     Route::resource('products', ProductController::class);
+  // For Random Check of Product
+  Route::get('/random/random-check-index', [CheckController::class, 'randomCheck'])->name('random.randomCheckIndex');
+  Route::get('random/archived-random-check', [CheckController::class, 'archivedRandomCheck'])->name('random.archivedRandomCheck');
+  Route::get('random/random-check-details', [CheckController::class, 'randomCheckDetails'])->name('random.randomCheckDetails');
+  Route::get('/random/random-check', [CheckController::class, 'createRandomCheck'])->name('random.createRandomCheck');
+  Route::post('/random/generate-random-product', [CheckController::class, 'generateRandom'])->name('random.generateRandom');
+  Route::post('/random/random-check-confirm', [CheckController::class, 'checkConfirm'])->name('random_check.confirm');
+  Route::post('/random/random-check-store', [CheckController::class, 'checkUpdate'])->name('random_check.store');
+  Route::get('/random/random-check/edit/{id}', [CheckController::class, 'checkEdit'])->name('random.checkEdit');
+  Route::post('/random/random-check/update/{id}', [CheckController::class, 'checkDetailUpdate'])->name('random.checkUpdate');
+  Route::get('/random-checks/show/{id}', [CheckController::class, 'checkShow'])->name('random_checks.show');
+  Route::get('random/check-report-index', [CheckController::class, 'checkReportIndex'])->name('random.checkReportIndex');
+  Route::get('/random/check-report', [CheckController::class, 'checkReport'])->name('random.checkReport');
+  Route::get('/random/generate-report', [CheckController::class, 'generateReport'])->name('random.generateReport');
+  Route::post('/finalize-report', [CheckController::class, 'finalizeReport'])->name('random.finalizeReport');
+  Route::get('report-items/{id}', [CheckController::class, 'viewReportItem'])->name('report_items.show');
+  Route::delete('/random-checks/{id}', [CheckController::class, 'checkDelete'])->name('checkDelete');
+  Route::post('/random/random-check-restore/{id}', [CheckController::class, 'checkRestore'])->name('random.checkRestore');
+  Route::delete('random/check-permanent-delete/{id}', [CheckController::class, 'checkPermanentDelete'])->name('random.checkPermanentDelete');
+  Route::get('/random-check/print/a4/{id}', [CheckController::class, 'printA4'])->name('random_check.printA4');
+  Route::get('/random-check/print/pos/{id}', [CheckController::class, 'printPOS'])->name('random_check.printPOS');
+  
+
 
     Route::get('/toggle-subscription/{id}', 'SellPosController@toggleRecurringInvoices');
     Route::post('/sells/pos/get-types-of-service-details', 'SellPosController@getTypesOfServiceDetails');
@@ -247,7 +251,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::resource('sells', SellController::class)->except(['show']);
 
     Route::get('/sells/{sell}/draftEdit', [SellController::class, 'draftEdit'])->name('sells.draftEdit');
-    
+
     Route::get('/import-sales', [ImportSalesController::class, 'index']);
     Route::post('/import-sales/preview', [ImportSalesController::class, 'preview']);
     Route::post('/import-sales', [ImportSalesController::class, 'import']);
@@ -265,7 +269,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
 
     Route::resource('roles', RoleController::class);
     Route::resource('subcategories', SubCategoryController::class);
-    Route::get('indexjson', [SubCategoryController::class,'indexjson'])->name('subcategory.indexjson');
+    Route::get('indexjson', [SubCategoryController::class, 'indexjson'])->name('subcategory.indexjson');
 
     Route::resource('users', ManageUserController::class);
 
@@ -291,7 +295,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::get('/reports/purchase-report', [ReportController::class, 'purchaseReport']);
     Route::get('/reports/sale-report', [ReportController::class, 'saleReport']);
     Route::get('/reports/sell-return-details', [ReportController::class, 'getSellReturnDetails']);
-    
+
     Route::get('/reports/service-staff-report', [ReportController::class, 'getServiceStaffReport']);
     Route::get('/reports/service-staff-line-orders', [ReportController::class, 'serviceStaffLineOrders']);
     Route::get('/reports/table-report', [ReportController::class, 'getTableReport']);
@@ -320,7 +324,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::get('/reports/product-sell-grouped-by', [ReportController::class, 'productSellReportBy']);
     Route::get('/reports/product-sell-report', [ReportController::class, 'getproductSellReport']);
     Route::get('/reports/product-sell-report-with-purchase', [ReportController::class, 'getproductSellReportWithPurchase']);
-   
+
     Route::get('/reports/lot-report', [ReportController::class, 'getLotReport']);
     Route::get('/reports/purchase-payment-report', [ReportController::class, 'purchasePaymentReport']);
     Route::get('/reports/sell-payment-report', [ReportController::class, 'sellPaymentReport']);
@@ -331,11 +335,11 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::get('/reports/get-stock-value', [ReportController::class, 'getStockValue']);
     Route::get('/reports/procurement-report', [ReportController::class, 'showProcurementReportForm'])->name('procurement.report.form');
     Route::get('/reports/procurement-report/data', [ReportController::class, 'getProcurementReportData'])->name('procurement.report.data');
-    
+
     Route::get('/reports/product-sell-report-with-sellreturn', [ReportController::class, 'getproductSellReportWithReturn']);
     Route::get('/sell-details', [ReportController::class, 'sellDetails'])->name('sell.details');
     Route::get('/return-details', [ReportController::class, 'returnDetails'])->name('return.details');
-    
+
     Route::get('business-location/activate-deactivate/{location_id}', [BusinessLocationController::class, 'activateDeactivateLocation']);
     //Business Location Settings...
     Route::prefix('business-location/{location_id}')->name('location.')->group(function () {
@@ -421,7 +425,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::post('import-product-price', [SellingPriceGroupController::class, 'import']);
     Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
     Route::delete('/selling-price-group/{id}/remove-item/{item_id}', [SellingPriceGroupController::class, 'removeItem'])
-    ->name('selling-price-group.remove-item');
+        ->name('selling-price-group.remove-item');
     // Route::post('get-product-group-row', [SellingPriceGroupController::class, 'getProductRow']);
 
     Route::resource('selling-price-group', SellingPriceGroupController::class);
@@ -506,7 +510,7 @@ Route::get('/random-check/print/pos/{id}', [ProductController::class, 'printPOS'
     Route::resource('warranties', WarrantyController::class);
 
     Route::resource('dashboard-configurator', DashboardConfiguratorController::class)
-    ->only(['edit', 'update']);
+        ->only(['edit', 'update']);
 
     Route::get('view-media/{model_id}', [SellController::class, 'viewMedia']);
 
