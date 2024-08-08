@@ -207,7 +207,7 @@ class AdminSidebarMenu
                             ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'warranties']
                         );
                         $sub->url(
-                            action([\App\Http\Controllers\ProductController::class, 'randomCheck']),
+                            action([\App\Http\Controllers\CheckController::class, 'randomCheck']),
                             __('Stock Audit'),
                             ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'random-check-index']
                         );
