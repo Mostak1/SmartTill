@@ -196,6 +196,7 @@
                     }
                 };
             }
+            
 
             // Adding product row
             function stock_adjustment_product_row(variation_id) {

@@ -253,54 +253,52 @@ class SellingPriceGroupController extends Controller
             ->where('price_group_id', $id)
             ->select('variation_id', 'price_group_id', 'price_inc_tax', 'price_type');
         $products = $variationProducts->get();
-        if (request()->ajax()) {
+        // if (request()->ajax()) {
+        //     return Datatables::of($variationProducts)
+        //         ->addColumn('product', function ($row) {
+        //             return $row->variation->product->name . ' (' . $row->variation->name . ')';
+        //         })
+        //         ->addColumn('sku', function ($row) {
+        //             return $row->variation->sub_sku;
+        //         })
+        //         ->addColumn('selling_price', function ($row) {
+        //             return number_format($row->variation->sell_price_inc_tax, 0);
+        //         })
+        //         ->addColumn('price_group', function ($row) {
+        //             if ($row->price_type == 'percentage') {
+        //                 $price = 100 - $row->price_inc_tax . ' %';
+        //                 $html = $price . '%';
+        //             } elseif ($row->price_type == 'fixed') {
+        //                 $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
+        //                 $html = $price . 'Fixed';
+        //             }
+        //             return $price;
+        //         })
+        //         ->addColumn('price_group_price', function ($row) {
 
+        //             if ($row->price_type == 'percentage') {
+        //                 $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+        //                 $html = $price . '%';
+        //             } elseif ($row->price_type == 'fixed') {
+        //                 $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+        //                 $html = $price . 'Fixed';
+        //             }
+        //             return $price;
+        //         })
+        //         ->addColumn('profit_per', function ($row) {
 
-            return Datatables::of($variationProducts)
-                ->addColumn('product', function ($row) {
-                    return $row->variation->product->name . ' (' . $row->variation->name . ')';
-                })
-                ->addColumn('sku', function ($row) {
-                    return $row->variation->sub_sku;
-                })
-                ->addColumn('selling_price', function ($row) {
-                    return number_format($row->variation->sell_price_inc_tax, 0);
-                })
-                ->addColumn('price_group', function ($row) {
-                    if ($row->price_type == 'percentage') {
-                        $price = 100 - $row->price_inc_tax . ' %';
-                        $html = $price . '%';
-                    } elseif ($row->price_type == 'fixed') {
-                        $price = number_format($row->price_inc_tax, 0) . ' (Fixed)';
-                        $html = $price . 'Fixed';
-                    }
-                    return $price;
-                })
-                ->addColumn('price_group_price', function ($row) {
-
-                    if ($row->price_type == 'percentage') {
-                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
-                        $html = $price . '%';
-                    } elseif ($row->price_type == 'fixed') {
-                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
-                        $html = $price . 'Fixed';
-                    }
-                    return $price;
-                })
-                ->addColumn('profit_per', function ($row) {
-
-                    if ($row->price_type == 'percentage') {
-                        $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
-                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
-                    } elseif ($row->price_type == 'fixed') {
-                        $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
-                        $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
-                    }
-                    return number_format($profit, 2) . ' %';
-                })
-                ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price'])
-                ->make(true);
-        }
+        //             if ($row->price_type == 'percentage') {
+        //                 $price = ($row->variation->sell_price_inc_tax * $row->price_inc_tax) / 100;
+        //                 $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+        //             } elseif ($row->price_type == 'fixed') {
+        //                 $price = ($row->variation->sell_price_inc_tax - $row->price_inc_tax);
+        //                 $profit = ((($row->variation->sell_price_inc_tax - $price) * 100) / $price);
+        //             }
+        //             return number_format($profit, 2) . ' %';
+        //         })
+        //         ->rawColumns(['product', 'profit_per', 'sku', 'selling_price', 'price_group', 'price_group_price'])
+        //         ->make(true);
+        // }
         return view('selling_price_group.update_price_group')->with(compact('sellingPriceGroup', 'business_locations', 'price_groups', 'products'));
     }
     /**

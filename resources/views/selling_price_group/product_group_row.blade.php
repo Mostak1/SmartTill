@@ -54,7 +54,7 @@
                 @php
                     $price_type = !empty($variation_prices[$variation->id][$price_group->id]['price_type'])
                         ? $variation_prices[$variation->id][$price_group->id]['price_type']
-                        : 'fixed';
+                        : 'percentage';
                     $name = 'group_prices[' . $variation->id . '][price_type]';
                 @endphp
                 <select name={{ $name }} class="form-control group-price-type" data-variation-id="{{ $variation->id }}" data-price-group-id="{{ $price_group->id }}">
