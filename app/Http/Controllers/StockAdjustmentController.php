@@ -258,8 +258,9 @@ class StockAdjustmentController extends Controller
                     'location_id' => $input_data['location_id'],
                     'adjustment_sign'=>$request->adjustment_sign,
                 ];
+                // dd($stock_adjustment->stock_adjustment_lines);
                 if ($request->adjustment_sign == 'Plus') {
-                    $this->transactionUtil->mapPurchaseSell($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
+                    $this->transactionUtil->mapPurchaseSellPlus($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
                 } elseif ($request->adjustment_sign == 'Minus') {
                     $this->transactionUtil->mapPurchaseSell($business, $stock_adjustment->stock_adjustment_lines, 'stock_adjustment');
                 }
