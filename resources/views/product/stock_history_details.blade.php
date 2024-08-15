@@ -16,6 +16,14 @@
                 </td>
             </tr>
             <tr>
+                <th>@lang('report.total_stock_adjustment')(Surplus)</th>
+                <td>
+                    <span class="display_currency"
+                        data-is_quantity="true">{{ -$stock_details['total_adjusted_surplus'] }}</span>
+                    {{ $stock_details['unit'] }}
+                </td>
+            </tr>
+            <tr>
                 <th>@lang('lang_v1.opening_stock')</th>
                 <td>
                     <span class="display_currency"
@@ -52,7 +60,7 @@
                 </td>
             </tr>
             <tr>
-                <th>@lang('report.total_stock_adjustment')</th>
+                <th>@lang('report.total_stock_adjustment')(Damage)</th>
                 <td>
                     <span class="display_currency"
                         data-is_quantity="true">{{ $stock_details['total_adjusted'] }}</span>
