@@ -21,21 +21,8 @@
         </div>
         <div class="col-md-3">
             <div class="form-group">
-                {!! Form::label('pr_list_filter_status',  __('sale.status') . ':') !!}
-                {!! Form::select('pr_list_filter_status', $purchaseRequisitionStatuses, null, ['class' => 'form-control select2', 'style' => 'width:100%', 'placeholder' => __('lang_v1.all')]); !!}
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group">
                 {!! Form::label('po_list_filter_date_range', __('report.date_range') . ':') !!}
                 {!! Form::text('po_list_filter_date_range', null, ['placeholder' => __('lang_v1.select_a_date_range'), 'class' => 'form-control', 'readonly']); !!}
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="form-group">
-                {!! Form::label('pr_list_filter_required_by_date', __('lang_v1.required_by_date') . ':') !!}
-                {!! Form::text('pr_list_filter_required_by_date', null, ['placeholder' => __('lang_v1.select_a_date_range'), 'class' => 'form-control']); !!}
             </div>
         </div>
     @endcomponent
@@ -56,8 +43,6 @@
                     <th>@lang('messages.date')</th>
                     <th>@lang('purchase.ref_no')</th>
                     <th>@lang('purchase.location')</th>
-                    <th>@lang('sale.status')</th>
-                    <th>@lang('lang_v1.required_by_date')</th>
                     <th>@lang('lang_v1.added_by')</th>
                 </tr>
             </thead>
@@ -83,7 +68,6 @@
                     if ($('#pr_list_filter_location_id').length) {
                         d.location_id = $('#pr_list_filter_location_id').val();
                     }
-                    d.status = $('#pr_list_filter_status').val();
 
                     var start = '';
                     var end = '';
@@ -98,35 +82,21 @@
                     d.start_date = start;
                     d.end_date = end;
 
-                    if ($('#pr_list_filter_required_by_date').val()) {
-                        required_by_start = $('input#pr_list_filter_required_by_date')
-                            .data('daterangepicker')
-                            .startDate.format('YYYY-MM-DD');
-                        required_by_end = $('input#pr_list_filter_required_by_date')
-                            .data('daterangepicker')
-                            .endDate.format('YYYY-MM-DD');
-
-                        d.required_by_start = required_by_start;
-                        d.required_by_end = required_by_end;
-                    }
-
                     d = __datatable_ajax_callback(d);
                 },
             },
             columns: [
                 { data: 'action', name: 'action', orderable: false, searchable: false },
-                { data: 'transaction_date', name: 'transaction_date' },
-                { data: 'ref_no', name: 'ref_no' },
-                { data: 'location_name', name: 'BS.name' },
-                { data: 'status', name: 'status' },
-                { data: 'delivery_date', name: 'delivery_date' },
-                { data: 'added_by', name: 'u.first_name' },
+                { data: 'created_at', name: 'created_at', searchable: false },
+                { data: 'requisition_no', name: 'requisition_no' },
+                { data: 'location_name', name: 'BS.name', orderable: false, searchable: false },
+                { data: 'added_by', name: 'u.first_name', orderable: false, searchable: false }
             ]
         });
 
         $(document).on(
             'change',
-            '#pr_list_filter_location_id, #pr_list_filter_status',
+            '#pr_list_filter_location_id',
             function() {
                 purchase_requisition_table.ajax.reload();
             }
@@ -144,17 +114,6 @@
             purchase_requisition_table.ajax.reload();
         });
         dateRangeSettings.autoUpdateInput = false;
-        $('#pr_list_filter_required_by_date').daterangepicker(
-        dateRangeSettings,
-            function (start, end) {
-                $('#pr_list_filter_required_by_date').val(start.format(moment_date_format) + ' ~ ' + end.format(moment_date_format));
-               purchase_requisition_table.ajax.reload();
-            }
-        );
-        $('#pr_list_filter_required_by_date').on('cancel.daterangepicker', function(ev, picker) {
-            $('#pr_list_filter_required_by_date').val('');
-            purchase_requisition_table.ajax.reload();
-        });
 
         $(document).on('click', 'a.delete-purchase-requisition', function(e) {
             e.preventDefault();

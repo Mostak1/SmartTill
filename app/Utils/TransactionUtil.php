@@ -1077,11 +1077,11 @@ class TransactionUtil extends Util
         //Shop Contact Info
         $output['contact'] = '';
         if ($il->show_mobile_number == 1 && !empty($location_details->mobile)) {
-            $output['contact'] .= '<b> Mobile:</b> ' . $location_details->mobile;
+            $output['contact'] .= '<b> Ph:</b> ' . $location_details->mobile;
         }
         if ($il->show_alternate_number == 1 && !empty($location_details->alternate_number)) {
             if (empty($output['contact'])) {
-                $output['contact'] .= 'Mobile: ' . $location_details->alternate_number;
+                $output['contact'] .= 'Ph: ' . $location_details->alternate_number;
             } else {
                 $output['contact'] .= ', ' . $location_details->alternate_number;
             }

@@ -106,6 +106,10 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::get('service-staff-availability', [SellPosController::class, 'showServiceStaffAvailibility']);
     Route::get('pause-resume-service-staff-timer/{user_id}', [SellPosController::class, 'pauseResumeServiceStaffTimer']);
     Route::get('mark-as-available/{user_id}', [SellPosController::class, 'markAsAvailable']);
+    
+    Route::get('purchase-requisition/order', [PurchaseRequisitionController::class, 'order'])->name('purchase_requisition.order');
+    Route::get('/purchase-requisition/get-product-requisition-details', [PurchaseRequisitionController::class, 'getProductRequisitionDetails'])->name('purchase_requisition.getProductRequisitionDetails');
+    Route::get('/purchase-requisition/get-product-entry-row', [PurchaseRequisitionController::class, 'getProductEntryRow'])->name('purchase_requisition.getProductEntryRow');
 
     Route::resource('purchase-requisition', PurchaseRequisitionController::class)->except(['edit', 'update']);
     Route::get('/get-requisition-products', [PurchaseRequisitionController::class, 'getRequisitionProducts'])->name('get-requisition-products');

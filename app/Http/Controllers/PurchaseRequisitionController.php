@@ -5,13 +5,18 @@ namespace App\Http\Controllers;
 use App\Brands;
 use App\BusinessLocation;
 use App\Category;
+use App\Contact;
 use App\PurchaseLine;
+use App\PurchaseRequisition;
 use App\TaxRate;
 use App\Transaction;
 use App\TransactionSellLine;
 use App\Utils\TransactionUtil;
 use App\Utils\Util;
+use App\Variation;
 use App\VariationLocationDetails;
+use Carbon\Carbon;
+use App\Utils\ProductUtil;
 use DB;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -22,16 +27,19 @@ class PurchaseRequisitionController extends Controller
 
     protected $transactionUtil;
 
+    protected $productUtil;
     /**
      * Constructor
      *
      * @param  Util  $commonUtil
      * @return void
      */
-    public function __construct(Util $commonUtil, TransactionUtil $transactionUtil)
+
+    public function __construct(Util $commonUtil, TransactionUtil $transactionUtil, ProductUtil $productUtil)
     {
         $this->commonUtil = $commonUtil;
         $this->transactionUtil = $transactionUtil;
+        $this->productUtil = $productUtil;
 
         $this->purchaseRequisitionStatuses = [
             'ordered' => [
@@ -63,59 +71,40 @@ class PurchaseRequisitionController extends Controller
         $business_id = request()->session()->get('user.business_id');
 
         if (request()->ajax()) {
-            $purchase_requisitions = Transaction::join(
+            $purchase_requisitions = PurchaseRequisition::join(
                 'business_locations AS BS',
-                'transactions.location_id',
+                'purchase_requisitions.location_id',
                 '=',
                 'BS.id'
             )
-                ->join('users as u', 'transactions.created_by', '=', 'u.id')
-                ->where('transactions.business_id', $business_id)
-                ->where('transactions.type', 'purchase_requisition')
-                ->select(
-                    'transactions.id',
-                    'transactions.delivery_date',
-                    'transactions.ref_no',
-                    'transactions.status',
-                    'BS.name as location_name',
-                    'transactions.transaction_date',
-                    DB::raw("CONCAT(COALESCE(u.surname, ''),' ',COALESCE(u.first_name, ''),' ',COALESCE(u.last_name,'')) as added_by")
-                )
-                ->groupBy('transactions.id');
+            ->join('users as u', 'purchase_requisitions.requisition_by', '=', 'u.id')
+            ->select(
+                'purchase_requisitions.id',
+                'purchase_requisitions.requisition_no',
+                'BS.name as location_name',
+                'purchase_requisitions.created_at',
+                DB::raw("CONCAT(COALESCE(u.surname, ''),' ',COALESCE(u.first_name, ''),' ',COALESCE(u.last_name,'')) as added_by")
+            )
+            ->groupBy('purchase_requisitions.id');
 
             $permitted_locations = auth()->user()->permitted_locations();
             if ($permitted_locations != 'all') {
-                $purchase_requisitions->whereIn('transactions.location_id', $permitted_locations);
+                $purchase_requisitions->whereIn('purchase_requisitions.location_id', $permitted_locations);
             }
 
             if (!empty(request()->location_id)) {
-                $purchase_requisitions->where('transactions.location_id', request()->location_id);
-            }
-
-            if (!empty(request()->status)) {
-                $purchase_requisitions->where('transactions.status', request()->status);
+                $purchase_requisitions->where('purchase_requisitions.location_id', request()->location_id);
             }
 
             if (!empty(request()->start_date) && !empty(request()->end_date)) {
                 $start = request()->start_date;
                 $end = request()->end_date;
-                $purchase_requisitions->whereDate('transactions.transaction_date', '>=', $start)
-                    ->whereDate('transactions.transaction_date', '<=', $end);
-            }
-
-            if (!empty(request()->required_by_start) && !empty(request()->required_by_end)) {
-                $start = request()->required_by_start;
-                $end = request()->required_by_end;
-                $purchase_requisitions->whereDate('transactions.delivery_date', '>=', $start)
-                    ->whereDate('transactions.delivery_date', '<=', $end);
+                $purchase_requisitions->whereDate('purchase_requisitions.created_at', '>=', $start)
+                    ->whereDate('purchase_requisitions.created_at', '<=', $end);
             }
 
             if (!auth()->user()->can('purchase_requisition.view_all') && auth()->user()->can('purchase_requisition.view_own')) {
-                $purchase_requisitions->where('transactions.created_by', request()->session()->get('user.id'));
-            }
-
-            if (!empty(request()->from_dashboard)) {
-                $purchase_requisitions->where('transactions.status', '!=', 'completed');
+                $purchase_requisitions->where('purchase_requisitions.requisition_by', request()->session()->get('user.id'));
             }
 
             return Datatables::of($purchase_requisitions)
@@ -139,35 +128,19 @@ class PurchaseRequisitionController extends Controller
                     return $html;
                 })
                 ->removeColumn('id')
-                ->editColumn('delivery_date', '@if(!empty($delivery_date)){{@format_datetime($delivery_date)}}@endif')
-                ->editColumn('transaction_date', '{{@format_datetime($transaction_date)}}')
-                ->editColumn('status', function ($row) {
-                    $status = '';
-                    $order_statuses = $this->purchaseRequisitionStatuses;
-                    if (array_key_exists($row->status, $order_statuses)) {
-                        $status = '<span class="label ' . $order_statuses[$row->status]['class']
-                            . '" >' . $order_statuses[$row->status]['label'] . '</span>';
-                    }
-
-                    return $status;
-                })
+                ->editColumn('created_at', '{{@format_datetime($created_at)}}')
                 ->setRowAttr([
                     'data-href' => function ($row) {
                         return  action([\App\Http\Controllers\PurchaseRequisitionController::class, 'show'], [$row->id]);
                     },
                 ])
-                ->rawColumns(['status', 'action'])
+                ->rawColumns(['action'])
                 ->make(true);
         }
 
         $business_locations = BusinessLocation::forDropdown($business_id);
 
-        $purchaseRequisitionStatuses = [];
-        foreach ($this->purchaseRequisitionStatuses as $key => $value) {
-            $purchaseRequisitionStatuses[$key] = $value['label'];
-        }
-
-        return view('purchase_requisition.index')->with(compact('business_locations', 'purchaseRequisitionStatuses'));
+        return view('purchase_requisition.index')->with(compact('business_locations'));
     }
 
     /**
@@ -204,67 +177,105 @@ class PurchaseRequisitionController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        $business_id = auth()->user()->business_id;
+        $created_by = auth()->user()->id;
+        $transaction_date = \Carbon\Carbon::now()->toDateTimeString();
+        $delivery_date = !empty($request->input('delivery_date')) ? $this->commonUtil->uf_date($request->input('delivery_date'), true) : \Carbon\Carbon::now()->toDateTimeString();
+
+        // Initialize the array to group purchases by supplier_id
+        $purchases_by_supplier = [];
+
+        // Log the entire request data for debugging
+        \Log::info('Request Data:', $request->all());
+
+        $purchases = $request->input('purchases', []);
+
+        // Ensure purchases is an array
+        if (!is_array($purchases)) {
+            return response()->json(['error' => 'Invalid purchases data'], 400);
+        }
+
+        // Group purchase lines by supplier_id
+        foreach ($purchases as $purchase_line) {
+            $supplier_id = $purchase_line['supplier_id']; // Assuming supplier_id is passed with each purchase line
+            if (!isset($purchases_by_supplier[$supplier_id])) {
+                $purchases_by_supplier[$supplier_id] = [];
+            }
+            $purchases_by_supplier[$supplier_id][] = $purchase_line;
+        }
+
+        DB::beginTransaction();
+
         try {
-            $business_id = request()->session()->get('user.business_id');
+             // Generate requisition_no
+             $last_requisition = PurchaseRequisition::latest('id')->first();
+             $next_id = $last_requisition ? $last_requisition->id + 1 : 1;
+             $requisition_no = 'Requisition-' . $next_id;
 
-            $transaction_data = [
-                'business_id' => $business_id,
-                'location_id' => $request->input('location_id'),
-                'type' => 'purchase_requisition',
-                'status' => 'ordered',
-                'created_by' => auth()->user()->id,
-                'transaction_date' => \Carbon::now()->toDateTimeString(),
-            ];
+             // Add the purchase requisition
+             $purchase_requisition = PurchaseRequisition::create([
+                 'requisition_no' => $requisition_no,
+                 'requisition_by' => $created_by,
+                 'updated_by' => $request->input('updated_by', $created_by),
+                 'location_id' => $request->input('location_id'),
+                 'notes' => $request->input('notes'),
+             ]);
 
-            $transaction_data['delivery_date'] = !empty($request->input('delivery_date')) ? $this->commonUtil->uf_date($request->input('delivery_date'), true) : null;
+            // Create a transaction for each supplier_id
+            foreach ($purchases_by_supplier as $supplier_id => $purchase_lines) {
+                $transaction_data = [
+                    'business_id' => $business_id,
+                    'location_id' => $request->input('location_id'),
+                    'type' => 'purchase_order',
+                    'sub_type' => 'purchase_requisition',
+                    'status' => 'ordered',
+                    'created_by' => $created_by,
+                    'transaction_date' => $transaction_date,
+                    'contact_id' => $supplier_id,
+                    'delivery_date' => $delivery_date,
+                ];
 
-            $purchase_lines = [];
-            foreach ($request->input('purchases') as $purchase_line) {
-                $quantity = isset($purchase_line['quantity']) ? $this->commonUtil->num_uf($purchase_line['quantity']) : 0;
-                $secondary_unit_quantity = isset($purchase_line['secondary_unit_quantity']) ? $this->commonUtil->num_uf($purchase_line['secondary_unit_quantity']) : 0;
+                // Update reference count
+                $ref_count = $this->productUtil->setAndGetReferenceCount($transaction_data['type']);
+                // Generate reference number
+                if (empty($transaction_data['ref_no'])) {
+                    $transaction_data['ref_no'] = $this->productUtil->generateReferenceNumber($transaction_data['type'], $ref_count);
+                }
 
-                if (!empty($quantity) || !empty($secondary_unit_quantity)) {
-                    $purchase_lines[] = [
-                        'variation_id' => $purchase_line['variation_id'],
-                        'product_id' => $purchase_line['product_id'],
-                        'quantity' => $quantity,
-                        'purchase_price_inc_tax' => 0,
-                        'item_tax' => 0,
-                        'secondary_unit_quantity' => $secondary_unit_quantity,
-                    ];
+                // Create the transaction
+                $transaction = Transaction::create($transaction_data);
+
+                // Add the purchase lines to the transaction
+                foreach ($purchase_lines as $purchase_line) {
+                    $quantity = isset($purchase_line['quantity']) ? $this->commonUtil->num_uf($purchase_line['quantity']) : 0;
+                    $secondary_unit_quantity = isset($purchase_line['secondary_unit_quantity']) ? $this->commonUtil->num_uf($purchase_line['secondary_unit_quantity']) : 0;
+
+                    if (!empty($quantity) || !empty($secondary_unit_quantity)) {
+                        // Fetch the purchase price from the variations table
+                        $variation = Variation::findOrFail($purchase_line['variation_id']);
+                        $purchase_price = $variation->default_purchase_price;
+
+                        // Create the purchase line
+                        $transaction->purchase_lines()->create([
+                            'product_id' => $purchase_line['product_id'],
+                            'variation_id' => $purchase_line['variation_id'],
+                            'quantity' => $quantity,
+                            'secondary_unit_quantity' => $secondary_unit_quantity,
+                            'purchase_price' => $purchase_price, // Set purchase price from variations table
+                            'purchase_requisition_line_id' => $purchase_requisition->id,
+                        ]);
+                    }
                 }
             }
 
-            DB::beginTransaction();
-
-            //Update reference count
-            $ref_count = $this->commonUtil->setAndGetReferenceCount($transaction_data['type']);
-            //Generate reference number
-            if (empty($transaction_data['ref_no'])) {
-                $transaction_data['ref_no'] = $this->commonUtil->generateReferenceNumber($transaction_data['type'], $ref_count);
-            }
-
-            $purchase_requisition = Transaction::create($transaction_data);
-            $purchase_requisition->purchase_lines()->createMany($purchase_lines);
-
             DB::commit();
 
-            $output = [
-                'success' => 1,
-                'msg' => __('lang_v1.added_success'),
-            ];
+            return response()->json(['success' => true, 'msg' => 'Purchase Requisition created successfully.', 'url' => route('purchase-requisition.index')]);
         } catch (\Exception $e) {
             DB::rollBack();
-
-            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
-
-            $output = [
-                'success' => 0,
-                'msg' => __('messages.something_went_wrong'),
-            ];
+            \Log::error('Error occurred while creating purchase requisition: ' . $e->getMessage());
+            return response()->json(['success' => false, 'msg' => 'An error occurred while creating the purchase requisition.'], 500);
         }
-
-        return redirect()->action([\App\Http\Controllers\PurchaseRequisitionController::class, 'index'])->with('status', $output);
     }
 
     /**
@@ -281,25 +292,54 @@ class PurchaseRequisitionController extends Controller
 
         $business_id = request()->session()->get('user.business_id');
 
-        $query = Transaction::where('business_id', $business_id)
-            ->where('type', 'purchase_requisition')
-            ->where('id', $id)
-            ->with(
-                'purchase_lines',
-                'purchase_lines.product',
-                'purchase_lines.product.unit',
-                'purchase_lines.product.second_unit',
-                'purchase_lines.variations',
-                'purchase_lines.variations.product_variation',
-                'location',
-                'sales_person'
-            );
+        // Fetch the purchase requisition details
+        $purchaseRequisition = PurchaseRequisition::with('location', 'requisitionBy')->findOrFail($id);
+        $location_name = $purchaseRequisition->location->name;
+        $requisition_date = $purchaseRequisition->created_at;
+        $requisition_by_name = $purchaseRequisition->requisitionBy->first_name . ' ' . $purchaseRequisition->requisitionBy->last_name;
 
-        $purchase = $query->firstOrFail();
+        // Fetch the purchase requisition lines associated with the given ID
+        $purchaseLines = PurchaseLine::where('purchase_requisition_line_id', $id)
+            ->with(['product', 'variations.product_variation', 'sub_unit'])
+            ->get();
+
+        $last30DaysStart = now()->subDays(30)->startOfDay();
+        $last30DaysEnd = now()->endOfDay();
+
+        // Fetch current stock, sold quantity, and last supplier for each purchase line
+        foreach ($purchaseLines as $line) {
+            // Get current stock
+            $line->current_stock = VariationLocationDetails::where('variation_id', $line->variation_id)
+                ->where('location_id', $purchaseRequisition->location_id)
+                ->sum('qty_available');
+
+            // Get the quantity of products sold in the last 30 days
+            $line->products_sold = TransactionSellLine::join('transactions as t', 'transaction_sell_lines.transaction_id', '=', 't.id')
+                ->where('t.business_id', $business_id)
+                ->where('t.location_id', $purchaseRequisition->location_id)
+                ->where('t.type', 'sell')
+                ->where('t.status', 'final')
+                ->where('transaction_sell_lines.variation_id', $line->variation_id)
+                ->whereBetween('t.transaction_date', [$last30DaysStart, $last30DaysEnd])
+                ->sum('transaction_sell_lines.quantity');
+
+            // Get last supplier
+            $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
+                ->join('contacts as c', 't.contact_id', '=', 'c.id')
+                ->where('purchase_lines.variation_id', $line->variation_id)
+                ->where('t.location_id', $purchaseRequisition->location_id)
+                ->where('t.type', 'purchase')
+                ->orderBy('t.transaction_date', 'desc')
+                ->select('c.id as supplier_id', 'c.supplier_business_name as supplier_name')
+                ->first();
+
+            $line->last_supplier = $lastSupplier ? $lastSupplier->supplier_name : 'N/A';
+        }
 
         return view('purchase_requisition.show')
-            ->with(compact('purchase'));
+            ->with(compact('purchaseRequisition', 'purchaseLines', 'location_name', 'requisition_by_name', 'requisition_date'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -338,18 +378,10 @@ class PurchaseRequisitionController extends Controller
 
         try {
             if (request()->ajax()) {
-                $business_id = request()->session()->get('user.business_id');
 
-                $transaction = Transaction::where('business_id', $business_id)
-                    ->where('type', 'purchase_requisition')
-                    ->with(['purchase_lines'])
-                    ->find($id);
+                $purchaseRequisition = PurchaseRequisition::findOrFail($id);
 
-                //unset purchase_order_line_id if set
-                PurchaseLine::whereIn('purchase_requisition_line_id', $transaction->purchase_lines->pluck('id'))
-                    ->update(['purchase_requisition_line_id' => null]);
-
-                $transaction->delete();
+                $purchaseRequisition->delete();
 
                 $output = [
                     'success' => true,
@@ -558,4 +590,170 @@ class PurchaseRequisitionController extends Controller
             'html' => $html,
         ];
     }
+
+    protected function getProductRequisitionDetails(Request $request)
+    {
+        $business_id = auth()->user()->business_id;
+        $location_id = request('business_location_id') ?? 1;
+        $start_date = Carbon::parse(request('start_date'))->startOfDay();
+        $end_date = Carbon::parse(request('end_date'))->endOfDay();
+        $category_ids = request('category_id', []);
+        $brand_ids = request('brand_id', []);
+        $last30DaysStart = now()->subDays(30)->startOfDay();
+        $last30DaysEnd = now()->endOfDay();
+
+        // Step 1: Get all products sold in the specified date range
+        $productsSold = TransactionSellLine::join('transactions as t', 'transaction_sell_lines.transaction_id', '=', 't.id')
+                        ->join('variations as v', 'transaction_sell_lines.variation_id', '=', 'v.id')
+                        ->join('products as p', 'v.product_id', '=', 'p.id')
+                        ->leftJoin('categories as cat', 'p.category_id', '=', 'cat.id')
+                        ->leftJoin('brands as b', 'p.brand_id', '=', 'b.id')
+                        ->where('t.business_id', $business_id)
+                        ->where('t.location_id', $location_id)
+                        ->where('t.type', 'sell')
+                        ->where('t.status', 'final')
+                        ->whereBetween('t.transaction_date', [$last30DaysStart, $last30DaysEnd]);
+
+        if (!empty($category_ids)) {
+            $productsSold->whereIn('p.category_id', $category_ids);
+        }
+
+        if (!empty($brand_ids)) {
+            $productsSold->whereIn('p.brand_id', $brand_ids);
+        }
+
+        $productsSold = $productsSold->select(
+                            'p.id as product_id',
+                            'p.name as product_name',
+                            'p.sku',
+                            'b.name as brand_name',
+                            'cat.name as category_name',
+                            'v.id as variation_id',
+                            DB::raw('SUM(transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) as total_qty_sold')
+                        )
+                        ->groupBy('v.id', 'p.name', 'p.sku', 'b.name', 'cat.name')
+                        ->havingRaw('SUM(transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) > 0')
+                        ->orderBy('cat.name')
+                        ->orderBy('p.name')
+                        ->get();
+
+        $requisitionDetails = [];
+
+        foreach ($productsSold as $product) {
+            $currentStock = VariationLocationDetails::where('variation_id', $product->variation_id)
+                            ->where('location_id', $location_id)
+                            ->sum('qty_available');
+
+            $totalUnitsSoldLast30Days = TransactionSellLine::join('transactions as t', 'transaction_sell_lines.transaction_id', '=', 't.id')
+                                    ->where('t.business_id', $business_id)
+                                    ->where('t.location_id', $location_id)
+                                    ->where('t.type', 'sell')
+                                    ->where('t.status', 'final')
+                                    ->whereBetween('t.transaction_date', [$last30DaysStart, $last30DaysEnd])
+                                    ->where('transaction_sell_lines.variation_id', $product->variation_id)
+                                    ->select(DB::raw('SUM(transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned) as total_qty_sold'))
+                                    ->pluck('total_qty_sold')
+                                    ->first();
+
+            $daysInRange = $start_date->diffInDays($end_date) + 1;
+            $suggestedOrder = ceil(($product->total_qty_sold / 30) * $daysInRange);
+            $suggestedOrder = max(6, ceil($suggestedOrder / 6) * 6);
+
+            if ($currentStock < $suggestedOrder) {
+                $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
+                                ->join('contacts as c', 't.contact_id', '=', 'c.id')
+                                ->where('purchase_lines.variation_id', $product->variation_id)
+                                ->where('t.location_id', $location_id)
+                                ->where('t.type', 'purchase')
+                                ->orderBy('t.transaction_date', 'desc')
+                                ->select('c.id as supplier_id', 'c.supplier_business_name as supplier_name')
+                                ->first();
+
+                $suggestedSupplierId = $lastSupplier ? $lastSupplier->supplier_id : null;
+                $suggestedSupplierName = $lastSupplier ? $lastSupplier->supplier_name : 'No Supplier';
+
+                $requisitionDetails[] = (object) [
+                    'product_id' => $product->product_id,
+                    'product_name' => $product->product_name,
+                    'sku' => $product->sku,
+                    'brand' => $product->brand_name,
+                    'category' => $product->category_name,
+                    'current_stock' => $currentStock,
+                    'total_units_sold_last_30_days' => $totalUnitsSoldLast30Days,
+                    'suggested_order' => $suggestedOrder,
+                    'suggested_supplier_id' => $suggestedSupplierId,
+                    'suggested_supplier_name' => $suggestedSupplierName,
+                    'variation_id' => $product->variation_id // Include variation_id
+                ];
+            }
+        }
+
+        $location = BusinessLocation::findOrFail($location_id);
+        $suppliers = Contact::where('business_id', $business_id)->where('type', 'supplier')->pluck('supplier_business_name', 'id')->toArray();
+
+        $content = view('purchase_requisition.order_content', compact('requisitionDetails', 'suppliers', 'start_date', 'end_date', 'location'))->render();
+
+        return response()->json(['content' => $content]);
+    }
+    public function getProductEntryRow()
+    {
+        $search_term = request()->input('term', '');
+        $location_id = request()->input('location_id', null);
+        $business_id = auth()->user()->business_id;
+
+        $products = $this->productUtil->filterProduct($business_id, $search_term, $location_id, false, null, [], ['name', 'sku']);
+
+        $requisitionDetails = [];
+        foreach ($products as $product) {
+            $currentStock = VariationLocationDetails::where('variation_id', $product->variation_id)
+                                ->where('location_id', $location_id)
+                                ->sum('qty_available');
+
+            $totalUnitsSoldLast30Days = TransactionSellLine::join('transactions as t', 'transaction_sell_lines.transaction_id', '=', 't.id')
+                                        ->where('t.business_id', $business_id)
+                                        ->where('t.location_id', $location_id)
+                                        ->where('t.type', 'sell')
+                                        ->where('t.status', 'final')
+                                        ->whereBetween('t.transaction_date', [now()->subDays(30)->startOfDay(), now()->endOfDay()])
+                                        ->where('transaction_sell_lines.variation_id', $product->variation_id)
+                                        ->sum(DB::raw('transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned'));
+
+            $suggestedOrder = ceil(($totalUnitsSoldLast30Days / 30) * 30);
+            $suggestedOrder = max(6, ceil($suggestedOrder / 6) * 6);
+
+            $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
+                                    ->join('contacts as c', 't.contact_id', '=', 'c.id')
+                                    ->where('purchase_lines.variation_id', $product->variation_id)
+                                    ->where('t.location_id', $location_id)
+                                    ->where('t.type', 'purchase')
+                                    ->orderBy('t.transaction_date', 'desc')
+                                    ->select('c.id as supplier_id', 'c.supplier_business_name as supplier_name')
+                                    ->first();
+
+            $suggestedSupplierId = $lastSupplier ? $lastSupplier->supplier_id : null;
+            $suggestedSupplierName = $lastSupplier ? $lastSupplier->supplier_name : 'No Supplier';
+
+            $requisitionDetails[] = (object) [
+                'product_id' => $product->product_id,
+                'product_name' => $product->name,
+                'sku' => $product->sku,
+                'brand' => $product->brand ? $product->brand->name : 'No Brand',
+                'category' => $product->category ? $product->category->name : 'No Category',
+                'current_stock' => $currentStock,
+                'total_units_sold_last_30_days' => $totalUnitsSoldLast30Days,
+                'suggested_order' => $suggestedOrder,
+                'suggested_supplier_id' => $suggestedSupplierId,
+                'suggested_supplier_name' => $suggestedSupplierName,
+                'variation_id' => $product->variation_id // Include variation_id
+            ];
+        }
+
+        $suppliers = Contact::where('business_id', $business_id)->where('type', 'supplier')->pluck('supplier_business_name', 'id')->toArray();
+
+        $content = view('purchase_requisition.product_entry_row', compact('requisitionDetails', 'suppliers'))->render();
+
+        return response()->json(['content' => $content]);
+    }
+
+
 }

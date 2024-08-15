@@ -66,13 +66,23 @@
 						                </td>
 						            @endif
 									<td>
+										@if ($stock_adjustment->adjustment_sign==='Plus')
+										{{@format_quantity(-$stock_adjustment_line->quantity)}}
+										@else
 										{{@format_quantity($stock_adjustment_line->quantity)}}
+										@endif
 									</td>
 									<td>
 										{{@num_format($stock_adjustment_line->unit_price)}}
 									</td>
 									<td>
+										@if ($stock_adjustment->adjustment_sign==='Plus')
+											
+										{{@num_format(-$stock_adjustment_line->unit_price * $stock_adjustment_line->quantity)}}
+										@else
+											
 										{{@num_format($stock_adjustment_line->unit_price * $stock_adjustment_line->quantity)}}
+										@endif
 									</td>
 								</tr>
 							@endforeach

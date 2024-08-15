@@ -8,6 +8,14 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <!-- <link rel="stylesheet" href="style.css"> -->
     <title>Receipt-{{ $receipt_details->invoice_no }}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@700&display=swap" rel="stylesheet">
+
+
     <style>
         @media print {
             @page {
@@ -20,10 +28,12 @@
 
             body {
                 margin: 2px;
+                /font-family: 'Roboto Condensed', sans-serif;/           
+                font-family: 'Source Sans Pro', sans-serif;
                 /* Adjust or remove as needed */
             }
         }
-
+        
         .watermark-container {
             position: relative;
             width: 100%;
@@ -41,7 +51,7 @@
             bottom: 60%;
             left: 20%;
             font-size: 50px;
-            color: rgba(80, 74, 74, 0.65) !important;
+            color: rgba(19, 16, 16, 0.75) !important;
             /* Adjust the opacity as needed */
             transform: rotate(-45deg);
             transform-origin: bottom right;
@@ -49,13 +59,13 @@
             z-index: 10;
             /* Prevent text from wrapping */
         }
-
+        
         .watermark_due {
             position: absolute;
             bottom: 60%;
             left: 25%;
             font-size: 80px;
-            color: rgba(80, 74, 74, 0.318) !important;
+            color: rgba(19, 16, 16, 0.75) !important;
             /* Adjust the opacity as needed */
             transform: rotate(-45deg);
             transform-origin: bottom right;
@@ -63,25 +73,44 @@
             z-index: 10;
             /* Prevent text from wrapping */
         }
+        h2, h3 {
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+
+        p, span, strong{
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+        th, td{
+            font-family: 'Roboto Condensed', sans-serif;
+        }
+        .brand-name{
+            font-family: 'Montserrat', sans-serif;
+            /* font-family: 'Playfair Display', serif; */
+            /* font-family: 'Oswald', sans-serif; */
+            /* font-family: 'Lora', serif; */
+            /* font-family: 'Fira Sans', sans-serif; */
+            font-weight: 900;
+                    
+        }
     </style>
 </head>
 
-<body>
+<body >
     <div class="watermark-container">
         <div class="ticket">
             @if (empty($receipt_details->letter_head))
                 @if (!empty($receipt_details->logo))
                     <div class="text-box centered">
-                        <img style="max-height: 100px; width: auto;" src="{{ $receipt_details->logo }}" alt="Logo">
+                        {{-- <img style="max-height: 100px; width: auto;" src="{{ $receipt_details->logo }}" alt="Logo"> --}}
+                        <h1 class="brand-name mt-0 mb-0">NatureMart</h1>
                     </div>
                 @endif
                 <div class="text-box">
                     <!-- Logo -->
-                    <p class="centered">
+                    <p class="centered mb-0">
                         <!-- Header text -->
                         @if (!empty($receipt_details->header_text))
                             <span class="headings">{!! $receipt_details->header_text !!}</span>
-                            <br />
                         @endif
 
                         <!-- business information here -->
@@ -89,17 +118,33 @@
                             <span class="headings">
                                 {{ $receipt_details->display_name }}
                             </span>
-                            <br />
+                            <br>
+                        @endif
+                        {{-- @if (!empty($receipt_details->address) || !empty($receipt_details->contact))
+                        {!! $receipt_details->address !!}
+                        
+                        {!! !empty($receipt_details->address) && !empty($receipt_details->contact) ? ', ' : '' !!}
+                        {!! $receipt_details->contact !!}
+                        @endif --}}
+                        @php
+                            $addressParts = explode(',', $receipt_details->address);                        
+                            if (count($addressParts) > 1){
+                                $firstLine = implode(',', array_slice($addressParts, 0, -2));
+                                $lastTwoParts = implode(',', array_slice($addressParts, -2));
+                                $secondLine = str_replace(',', '-', $lastTwoParts);
+                                $formattedAddress = $firstLine . '<br>' . $secondLine . ', ' . $receipt_details->contact;
+                            } else {
+                                // If address doesn't have a comma, use it as is and append the contact
+                                $formattedAddress = $receipt_details->address . ' ' . $receipt_details->contact;
+                            }
+                        @endphp
+
+                        @if (!empty($formattedAddress))
+                            {!! $formattedAddress !!}
                         @endif
 
-                        @if (!empty($receipt_details->address))
-                            {!! $receipt_details->address !!}
-                            <br />
-                        @endif
-
-                        @if (!empty($receipt_details->contact))
-                            {!! $receipt_details->contact !!}
-                        @endif
+                    
+                    
                         @if (!empty($receipt_details->contact) && !empty($receipt_details->website))
                             ,
                         @endif
@@ -136,9 +181,9 @@
             @endif
             <br>
             <!-- Title of receipt -->
-            @if (!empty($receipt_details->invoice_heading))
+            {{-- @if (!empty($receipt_details->invoice_heading))
                 <br /><span class="sub-headings">{!! $receipt_details->invoice_heading !!}</span>
-            @endif
+            @endif --}}
             </p>
         </div>
         @if (!empty($receipt_details->letter_head))
@@ -444,15 +489,16 @@
             </div>
         @endif
         <table style="margin-top: 25px !important" class="border-bottom width-100 table-f-12 mb-10">
-            <thead class="border-bottom-dotted">
+            <thead class="border-bottom-dotted border-top">
                 <tr>
                     <th class="serial_number">#</th>
-                    <th class="description" width="30%">
-                        {{ $receipt_details->table_product_label }}
-                    </th>
-                    <th class="quantity text-right">
+                    <th class="quantity text-center">
                         {{ $receipt_details->table_qty_label }}
                     </th>
+                    <th class="description text-center"  width="48%">
+                        {{ $receipt_details->table_product_label }}
+                    </th>
+                    
                     @if (empty($receipt_details->hide_price))
                         <th class="unit_price text-right">
                             {{ $receipt_details->table_unit_price_label }}
@@ -472,10 +518,17 @@
             <tbody>
                 @forelse($receipt_details->lines as $line)
                     <tr class="border-bottom-dotted">
-                        <td class="serial_number" style="vertical-align: top;">
-                            {{ $loop->iteration }}
+                        <td class="serial_number" style="vertical-align: middle;">
+                            {{-- {{ $loop->iteration }} --}} -
                         </td>
-                        <td class="description">
+                        <td class="quantity text-center">{{ number_format($line['quantity']) }} ‍ @if ($receipt_details->show_base_unit_details && $line['quantity'] && $line['base_unit_multiplier'] !== 1)
+                            <br><small>
+                                {{ $line['quantity'] }} x {{ $line['base_unit_multiplier'] }} =
+                                {{ $line['orig_quantity'] }} {{ $line['base_unit_name'] }}
+                            </small>
+                        @endif
+                    </td>
+                        <td class="description" style="font-size: 9px">
                             {{ $line['name'] }} {{ $line['product_variation'] }} {{ $line['variation'] }}
                             @if (!empty($line['sub_sku']))
                                 , {{ $line['sub_sku'] }}
@@ -528,13 +581,7 @@
                                         </small>
                                     @endif
                         </td>
-                        <td class="quantity text-right">{{ number_format($line['quantity']) }} ‍ @if ($receipt_details->show_base_unit_details && $line['quantity'] && $line['base_unit_multiplier'] !== 1)
-                                <br><small>
-                                    {{ $line['quantity'] }} x {{ $line['base_unit_multiplier'] }} =
-                                    {{ $line['orig_quantity'] }} {{ $line['base_unit_name'] }}
-                                </small>
-                            @endif
-                        </td>
+                        
                         @if (empty($receipt_details->hide_price))
                             <td class="unit_price text-right">{{ number_format($line['unit_price_before_discount']) }}
                             </td>
@@ -562,6 +609,7 @@
                                 <td>
                                     &nbsp;
                                 </td>
+                                <td class="text-right">{{ $modifier['quantity'] }} {{ $modifier['units'] }} </td>
                                 <td>
                                     {{ $modifier['name'] }} {{ $modifier['variation'] }}
                                     @if (!empty($modifier['sub_sku']))
@@ -573,7 +621,7 @@
                                             ({!! $modifier['sell_line_note'] !!})
                                         @endif
                                 </td>
-                                <td class="text-right">{{ $modifier['quantity'] }} {{ $modifier['units'] }} </td>
+                                
                                 @if (empty($receipt_details->hide_price))
                                     <td class="text-right">{{ $modifier['unit_price_inc_tax'] }}</td>
                                     @if (!empty($receipt_details->discounted_unit_price_label))
@@ -827,7 +875,7 @@
         @endif
 
         @if (!empty($receipt_details->footer_text))
-            <p class="centered">
+            <p class="centered infoot" >
                 {!! $receipt_details->footer_text !!}
             </p>
         @endif
@@ -848,7 +896,7 @@
     body {
         color: #000000;
     }
-
+   
     @media print {
         * {
             font-size: 12px;
@@ -873,7 +921,7 @@
         }
 
         .border-top {
-            border-top: 1px solid #242424;
+            border-top: 1px dashed #242424;
         }
 
         .border-bottom {
@@ -881,7 +929,7 @@
         }
 
         .border-bottom-dotted {
-            border-bottom: 1px dotted darkgray;
+            border-bottom: 1px dashed #242424;
         }
 
         td.serial_number,
@@ -892,14 +940,14 @@
 
         td.description,
         th.description {
-            width: 35%;
-            max-width: 35%;
+            width: 45%;
+            max-width: 45%;
         }
 
         td.quantity,
         th.quantity {
-            width: 15%;
-            max-width: 15%;
+            width: 9%;
+            max-width: 9%;
             word-break: break-all;
         }
 
@@ -921,7 +969,7 @@
             text-align: center;
             align-content: center;
         }
-
+        
         .ticket {
             width: 100%;
             max-width: 100%;

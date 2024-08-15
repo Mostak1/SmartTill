@@ -388,8 +388,6 @@
                                             <th>@lang('messages.date')</th>
                                             <th>@lang('purchase.ref_no')</th>
                                             <th>@lang('purchase.location')</th>
-                                            <th>@lang('sale.status')</th>
-                                            <th>@lang('lang_v1.required_by_date')</th>
                                             <th>@lang('lang_v1.added_by')</th>
                                           </tr>
                                       </thead>
@@ -701,13 +699,11 @@
                   },
               },
               columns: [
-                    { data: 'action', name: 'action', orderable: false, searchable: false },
-                    { data: 'transaction_date', name: 'transaction_date' },
-                    { data: 'ref_no', name: 'ref_no' },
-                    { data: 'location_name', name: 'BS.name' },
-                    { data: 'status', name: 'status' },
-                    { data: 'delivery_date', name: 'delivery_date' },
-                    { data: 'added_by', name: 'u.first_name' },
+                { data: 'action', name: 'action', orderable: false, searchable: false },
+                { data: 'created_at', name: 'created_at', searchable: false },
+                { data: 'requisition_no', name: 'requisition_no' },
+                { data: 'location_name', name: 'BS.name', orderable: false, searchable: false },
+                { data: 'added_by', name: 'u.first_name', orderable: false, searchable: false }
               ]
             })
 

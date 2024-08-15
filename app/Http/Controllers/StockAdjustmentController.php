@@ -431,7 +431,7 @@ class StockAdjustmentController extends Controller
             $product->sign = $request->input('sign');
             $type = !empty($request->input('type')) ? $request->input('type') : 'stock_adjustment';
 
-            //Get lot number dropdown if enabled
+            //Get lot number dropdown if enabled 
             $lot_numbers = [];
             if (request()->session()->get('business.enable_lot_number') == 1 || request()->session()->get('business.enable_product_expiry') == 1) {
                 $lot_number_obj = $this->transactionUtil->getLotNumbersFromVariation($variation_id, $business_id, $location_id, true);

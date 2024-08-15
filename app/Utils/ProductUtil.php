@@ -582,7 +582,7 @@ class ProductUtil extends Util
     {
         $query = Variation::join('products AS p', 'variations.product_id', '=', 'p.id')
                 ->join('product_variations AS pv', 'variations.product_variation_id', '=', 'pv.id')
-                ->leftjoin('variation_location_details AS vld', 'variations.id', '=', 'vld.variation_id')
+                ->leftjoin('variation_location_details AS vld', 'variations.id', '=', 'vld.variation_id')->leftjoin('business_locations as l', 'vld.location_id', '=', 'l.id')
                 ->leftjoin('units', 'p.unit_id', '=', 'units.id')
                 ->leftjoin('units as u', 'p.secondary_unit_id', '=', 'u.id')
                 ->leftjoin('categories as cat', 'p.category_id', '=', 'cat.id')
@@ -591,6 +591,7 @@ class ProductUtil extends Util
                         ->whereNull('brands.deleted_at');
                 })
                 ->where('p.business_id', $business_id)
+                ->where('vld.location_id', $location_id)
                 ->where('variations.id', $variation_id);
 
         //Add condition for check of quantity. (if stock is not enabled or qty_available > 0)
@@ -656,7 +657,8 @@ class ProductUtil extends Util
             'units.allow_decimal as unit_allow_decimal',
             'u.short_name as second_unit',
             'brands.name as brand',
-            'cat.name as category_name', 
+            'cat.name as category_name',
+            'l.id as location_id', 
             DB::raw('(SELECT purchase_price_inc_tax FROM purchase_lines WHERE 
                         variation_id=variations.id ORDER BY id DESC LIMIT 1) as last_purchased_price')
         )
@@ -1892,6 +1894,8 @@ class ProductUtil extends Util
                 'products.name',
                 'products.type',
                 'products.enable_stock',
+                'products.sku',
+                'products.category_id',
                 'variations.id as variation_id',
                 'variations.name as variation',
                 'VLD.qty_available',
