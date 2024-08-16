@@ -277,26 +277,47 @@ class StockTransferController extends Controller
                     $sell_lines[] = $sell_line_arr;
                     $purchase_lines[] = $purchase_line_arr;
 
-                    //Add product locations
+                    // Add product locations
                     $product1 = Product::where('business_id', $business_id)
-                        ->where('id', $product['product_id'])
-                        ->with(['product_variations'])
-                        ->first();
-                    $product_locations = !empty($request->input('transfer_location_id')) ?
-                        $request->input('transfer_location_id') : [];
+                    ->where('id', $product['product_id'])
+                    ->with(['product_variations', 'product_locations']) // Include existing locations in the query
+                    ->first();
+
+                    $product_locations = !empty($request->input('transfer_location_id')) ? 
+                    $request->input('transfer_location_id') : [];
+
+                    // Ensure $product_locations is an array
+                    $product_locations = is_array($product_locations) ? $product_locations : [$product_locations];
 
                     $permitted_locations = auth()->user()->permitted_locations();
-                    //If not assigned location exists don't remove it
-                    if ($permitted_locations != 'all') {
-                        $existing_product_locations = $product1->product_locations()->pluck('id');
 
-                        foreach ($existing_product_locations as $pl) {
-                            if (!in_array($pl, $permitted_locations)) {
-                                $product_locations[] = $pl;
+                    // If not assigned location exists, don't remove it
+                    if ($permitted_locations != 'all') {
+                    $existing_product_locations = $product1->product_locations()->pluck('id')->toArray();
+
+                    foreach ($product_locations as $location_id) {
+                        if (!in_array($location_id, $existing_product_locations)) {
+                            // Add only if the location is not already associated
+                            if (in_array($location_id, $permitted_locations)) {
+                                $product1->product_locations()->attach($location_id);
                             }
                         }
                     }
-                    $product1->product_locations()->attach($product_locations);
+                    } else {
+                    // If all locations are permitted, attach the ones that don't already exist
+                    $existing_product_locations = $product1->product_locations()->pluck('id')->toArray();
+
+                    // Ensure $existing_product_locations is an array
+                    $existing_product_locations = is_array($existing_product_locations) ? $existing_product_locations : [$existing_product_locations];
+
+                    $new_locations = array_diff($product_locations, $existing_product_locations);
+
+                    if (!empty($new_locations)) {
+                        $product1->product_locations()->attach($new_locations);
+                    }
+                    }
+
+
                 }
             }
 
