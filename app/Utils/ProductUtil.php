@@ -2046,6 +2046,8 @@ class ProductUtil extends Util
                 'products.name',
                 'products.type',
                 'products.brand_id',
+                'products.sku',
+                'products.category_id',
                 'l.id as location_id',
                 'l.name as location',
                 'products.enable_stock',
