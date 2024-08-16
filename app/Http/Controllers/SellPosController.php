@@ -1989,7 +1989,7 @@ class SellPosController extends Controller
             $location_id = $request->get('location_id');
             $term = $request->get('term');
 
-            $check_qty = false;
+            $check_qty = true;
             $business_id = $request->session()->get('user.business_id');
             $business = $request->session()->get('business');
             $pos_settings = empty($business->pos_settings) ? $this->businessUtil->defaultPosSettings() : json_decode($business->pos_settings, true);

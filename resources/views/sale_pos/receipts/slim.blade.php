@@ -120,13 +120,13 @@
                             </span>
                             <br>
                         @endif
-                        {{-- @if (!empty($receipt_details->address) || !empty($receipt_details->contact))
+                        @if (!empty($receipt_details->address) || !empty($receipt_details->contact))
                         {!! $receipt_details->address !!}
                         
                         {!! !empty($receipt_details->address) && !empty($receipt_details->contact) ? ', ' : '' !!}
                         {!! $receipt_details->contact !!}
-                        @endif --}}
-                        @php
+                        @endif
+                        {{-- @php
                             $addressParts = explode(',', $receipt_details->address);                        
                             if (count($addressParts) > 1){
                                 $firstLine = implode(',', array_slice($addressParts, 0, -2));
@@ -141,7 +141,7 @@
 
                         @if (!empty($formattedAddress))
                             {!! $formattedAddress !!}
-                        @endif
+                        @endif --}}
 
                     
                     
@@ -528,7 +528,7 @@
                             </small>
                         @endif
                     </td>
-                        <td class="description" style="font-size: 9px">
+                        <td class="description" style="font-size: 9px" width="48%">
                             {{ $line['name'] }} {{ $line['product_variation'] }} {{ $line['variation'] }}
                             @if (!empty($line['sub_sku']))
                                 , {{ $line['sub_sku'] }}
@@ -600,7 +600,7 @@
                                     @endif
                                 </td>
                             @endif
-                            <td class="price text-right">{{ number_format($line['line_total']) }}</td>
+                            <td class="price text-right">{{ number_format($line['unit_price_before_discount'] * $line['quantity']) }}</td>
                         @endif
                     </tr>
                     @if (!empty($line['modifiers']))
@@ -636,12 +636,12 @@
                         @endforeach
                     @endif
                 @endforeach
-                <tr>
+                {{-- <tr>
                     <td @if (!empty($receipt_details->item_discount_label)) colspan="6" @else colspan="5" @endif>&nbsp;</td>
                     @if (!empty($receipt_details->discounted_unit_price_label))
                         <td></td>
                     @endif
-                </tr>
+                </tr> --}}
             </tbody>
         </table>
         @if (!empty($receipt_details->total_quantity_label))
@@ -665,16 +665,16 @@
             </div>
         @endif
         @if (empty($receipt_details->hide_price))
-            @if (number_format($receipt_details->total) !== number_format($receipt_details->subtotal))
+            
                 <div class="flex-box">
                     <p class="width-70 left text-right sub-headings">
                         {!! $receipt_details->subtotal_label !!}
                     </p>
                     <p class="width-30 text-right sub-headings">
-                        ৳ {{ number_format($receipt_details->subtotal) }}
+                        ৳ {{ number_format($receipt_details->subtotal + $receipt_details->total_line_discount) }}
                     </p>
                 </div>
-            @endif
+            
             <!-- Shipping Charges -->
             @if (!empty($receipt_details->shipping_charges))
                 <div class="flex-box">
@@ -697,12 +697,24 @@
                     </p>
                 </div>
             @endif
+            @if (!empty($receipt_details->total_line_discount))
+            <div class="flex-box">
+                <p class="width-70 text-right">
+                    {{-- {!! $receipt_details->line_discount_label !!} --}}
+                    Campain Discount:
+                </p>
 
+                <p class="width-30 text-right">
+                    (-) {{ $receipt_details->total_line_discount }}
+                </p>
+            </div>
+        @endif
             <!-- Discount -->
             @if (!empty($receipt_details->discount))
                 <div class="flex-box">
                     <p class="width-70 text-right">
-                        {!! $receipt_details->discount_label !!}
+                        Special Discount {!! $receipt_details->discount_label !!}
+                        {{-- Special Discount: --}}
                     </p>
 
                     <p class="width-30 text-right">
@@ -711,17 +723,7 @@
                 </div>
             @endif
 
-            @if (!empty($receipt_details->total_line_discount))
-                <div class="flex-box">
-                    <p class="width-70 text-right">
-                        {!! $receipt_details->line_discount_label !!}
-                    </p>
-
-                    <p class="width-30 text-right">
-                        (-) {{ $receipt_details->total_line_discount }}
-                    </p>
-                </div>
-            @endif
+            
 
             @if (!empty($receipt_details->additional_expenses))
                 @foreach ($receipt_details->additional_expenses as $key => $val)
@@ -761,7 +763,7 @@
                 </div>
             @endif
 
-            @if ($receipt_details->round_off_amount > 0)
+            {{-- @if ($receipt_details->round_off_amount > 0)
                 <div class="flex-box">
                     <p class="width-70 text-right">
                         {!! $receipt_details->round_off_label !!}
@@ -770,7 +772,7 @@
                         {{ $receipt_details->round_off }}
                     </p>
                 </div>
-            @endif
+            @endif --}}
 
             <div class="flex-box">
                 <p class="width-70 text-right sub-headings">
@@ -940,8 +942,8 @@
 
         td.description,
         th.description {
-            width: 45%;
-            max-width: 45%;
+            width: 48%;
+            max-width: 48%;
         }
 
         td.quantity,
@@ -953,8 +955,8 @@
 
         td.unit_price,
         th.unit_price {
-            width: 25%;
-            max-width: 25%;
+            width: 22%;
+            max-width: 22%;
             word-break: break-all;
         }
 
@@ -1047,4 +1049,5 @@
     .bw {
         word-break: break-word;
     }
+    
 </style>

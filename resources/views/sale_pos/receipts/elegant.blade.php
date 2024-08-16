@@ -571,7 +571,7 @@
                                             </td>
                                         @endif
                                         <td class="text-right">
-                                            {{ $line['line_total_exc_tax'] }}
+                                            {{ $line['unit_price_before_discount']* $line['quantity']}}
                                         </td>
                                     </tr>
                                     @if (!empty($line['modifiers']))
@@ -691,7 +691,7 @@
                                         {!! $receipt_details->subtotal_label !!}
                                     </td>
                                     <td class="text-right">
-                                        {{ $receipt_details->subtotal_exc_tax }}
+                                        ৳ {{ number_format($receipt_details->subtotal + $receipt_details->total_line_discount) }}
                                     </td>
                                 </tr>
 
@@ -727,12 +727,22 @@
                                         </tr>
                                     @endforeach
                                 @endif
+                                @if (!empty($receipt_details->total_line_discount))
+                                <tr>
+                                    <td>
+                                        {{-- {!! $receipt_details->line_discount_label !!} --}} Campain Discount:
+                                    </td>
 
+                                    <td class="text-right">
+                                        (-) {{ $receipt_details->total_line_discount }}
+                                    </td>
+                                </tr>
+                                @endif
                                 <!-- Discount -->
                                 @if (!empty($receipt_details->discount))
                                     <tr>
                                         <td>
-                                            {!! $receipt_details->discount_label !!}
+                                            Special Discount {!! $receipt_details->discount_label !!}
                                         </td>
 
                                         <td class="text-right">
@@ -741,17 +751,7 @@
                                     </tr>
                                 @endif
 
-                                @if (!empty($receipt_details->total_line_discount))
-                                    <tr>
-                                        <td>
-                                            {!! $receipt_details->line_discount_label !!}
-                                        </td>
-
-                                        <td class="text-right">
-                                            (-) {{ $receipt_details->total_line_discount }}
-                                        </td>
-                                    </tr>
-                                @endif
+                                
 
                                 @if (!empty($receipt_details->additional_expenses))
                                     @foreach ($receipt_details->additional_expenses as $key => $val)
@@ -805,7 +805,7 @@
                                     @endif
                                 @endif
 
-                                @if ($receipt_details->round_off_amount > 0)
+                                {{-- @if ($receipt_details->round_off_amount > 0)
                                     <tr>
                                         <td>
                                             {!! $receipt_details->round_off_label !!}
@@ -814,7 +814,7 @@
                                             {{ number_format($receipt_details->round_off, 2) }}
                                         </td>
                                     </tr>
-                                @endif
+                                @endif --}}
 
                                 <!-- Total -->
                                 <tr>
