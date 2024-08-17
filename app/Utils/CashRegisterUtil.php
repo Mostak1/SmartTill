@@ -338,6 +338,23 @@ class CashRegisterUtil extends Util
                 ->orderByRaw('CASE WHEN brand_name IS NULL THEN 2 ELSE 1 END, brand_name')
                 ->get();
 
+        $product_details_by_category = Transaction::where('transactions.created_by', $user_id)
+                ->whereBetween('transactions.created_at', [$open_time, $close_time])
+                ->where('transactions.type', 'sell')
+                ->where('transactions.status', 'final')
+                ->where('transactions.is_direct_sale', 0)
+                ->join('transaction_sell_lines AS TSL', 'transactions.id', '=', 'TSL.transaction_id')
+                ->join('products AS P', 'TSL.product_id', '=', 'P.id')
+                ->where('TSL.children_type', '!=', 'combo')
+                ->leftjoin('categories AS c', 'P.category_id', '=', 'c.id')
+                ->groupBy('c.id')
+                ->select(
+                    'c.name as category_name',
+                    DB::raw('SUM(TSL.quantity) as total_quantity'),
+                    DB::raw('SUM(TSL.unit_price_inc_tax*TSL.quantity) as total_amount')
+                )
+                ->get();
+
         $product_details = Transaction::where('transactions.created_by', $user_id)
                 ->whereBetween('transactions.created_at', [$open_time, $close_time])
                 ->where('transactions.type', 'sell')
@@ -351,6 +368,30 @@ class CashRegisterUtil extends Util
                 ->groupBy('v.id')
                 ->select(
                     'p.name as product_name',
+                    'p.type as product_type',
+                    'v.name as variation_name',
+                    'pv.name as product_variation_name',
+                    'v.sub_sku as sku',
+                    DB::raw('SUM(TSL.quantity) as total_quantity'),
+                    DB::raw('SUM(TSL.unit_price_inc_tax*TSL.quantity) as total_amount')
+                )
+                ->get();
+        
+        $product_details_by_customer = Transaction::where('transactions.created_by', $user_id)
+                ->whereBetween('transactions.created_at', [$open_time, $close_time])
+                ->where('transactions.type', 'sell')
+                ->where('transactions.status', 'final')
+                ->where('transactions.is_direct_sale', 0)
+                ->join('transaction_sell_lines AS TSL', 'transactions.id', '=', 'TSL.transaction_id')
+                ->join('variations AS v', 'TSL.variation_id', '=', 'v.id')
+                ->join('product_variations AS pv', 'v.product_variation_id', '=', 'pv.id')
+                ->join('products AS p', 'v.product_id', '=', 'p.id')
+                ->join('contacts AS c', 'c.id', '=', 'transactions.contact_id')
+                ->where('TSL.children_type', '!=', 'combo')
+                ->groupBy('c.id')
+                ->select(
+                    'p.name as product_name',
+                    'c.name as contact_name',
                     'p.type as product_type',
                     'v.name as variation_name',
                     'pv.name as product_variation_name',
@@ -394,6 +435,8 @@ class CashRegisterUtil extends Util
         return ['product_details_by_brand' => $product_details_by_brand,
             'transaction_details' => $transaction_details,
             'types_of_service_details' => $types_of_service_details,
+            'product_details_by_customer' => $product_details_by_customer,
+            'product_details_by_category' => $product_details_by_category,
             'product_details' => $product_details,
         ];
     }

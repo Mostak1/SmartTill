@@ -148,7 +148,15 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col-md-3 col-md-offset-9">
+			<div class="col-md-6">
+				<div class="form-group">
+					{!! Form::label('additional_notes', __('Additional Notes').':') !!}
+					<div class="input-group">
+						{!! Form::textarea('additional_notes', $production_purchase->additional_notes, ['class' => 'form-control', 'rows' => 3]); !!}
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3 col-md-offset-3">
 				{!! Form::hidden('final_total', @num_format($production_purchase->final_total), ['id' => 'final_total']); !!}
 				<strong>
 					{{__('manufacturing::lang.total_cost')}}:

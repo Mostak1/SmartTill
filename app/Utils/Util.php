@@ -1207,7 +1207,7 @@ class Util
     public function get_pl_quantity_sum_string($table_name = '')
     {
         $table_name = ! empty($table_name) ? $table_name.'.' : '';
-        $string = $table_name.'quantity_sold + '.$table_name.'quantity_adjusted + '.$table_name.'quantity_returned + '.$table_name.'mfg_quantity_used+ '.$table_name.'quantity_adjusted_surplus';
+        $string = $table_name.'quantity_sold + '.$table_name.'quantity_adjusted + '.$table_name.'quantity_returned + '.$table_name.'mfg_quantity_used';
 
         return $string;
     }

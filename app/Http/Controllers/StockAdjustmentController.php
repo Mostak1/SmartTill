@@ -13,6 +13,7 @@ use DB;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
 use App\Events\StockAdjustmentCreatedOrModified;
+use Illuminate\Support\Facades\Log;
 
 class StockAdjustmentController extends Controller
 {
@@ -368,6 +369,7 @@ class StockAdjustmentController extends Controller
                     ->where('type', 'stock_adjustment')
                     ->with(['stock_adjustment_lines'])
                     ->first();
+                $sign =$stock_adjustment->adjustment_sign;
 
                 //Add deleted product quantity to available quantity
                 $stock_adjustment_lines = $stock_adjustment->stock_adjustment_lines;
@@ -383,7 +385,7 @@ class StockAdjustmentController extends Controller
                         $line_ids[] = $stock_adjustment_line->id;
                     }
 
-                    $this->transactionUtil->mapPurchaseQuantityForDeleteStockAdjustment($line_ids);
+                    $this->transactionUtil->mapPurchaseQuantityForDeleteStockAdjustment($line_ids,$sign);
                 }
                 $stock_adjustment->delete();
 
@@ -420,38 +422,63 @@ class StockAdjustmentController extends Controller
      */
     public function getProductRow(Request $request)
     {
-        if (request()->ajax()) {
-            $row_index = $request->input('row_index');
-            $variation_id = $request->input('variation_id');
-            $location_id = $request->input('location_id');
-
-            $business_id = $request->session()->get('user.business_id');
-            $product = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id, $check_qty = false);
-            $product->formatted_qty_available = $this->productUtil->num_f($product->qty_available);
-            $product->sign = $request->input('sign');
-            $type = !empty($request->input('type')) ? $request->input('type') : 'stock_adjustment';
-
-            //Get lot number dropdown if enabled 
-            $lot_numbers = [];
-            if (request()->session()->get('business.enable_lot_number') == 1 || request()->session()->get('business.enable_product_expiry') == 1) {
-                $lot_number_obj = $this->transactionUtil->getLotNumbersFromVariation($variation_id, $business_id, $location_id, true);
-                foreach ($lot_number_obj as $lot_number) {
-                    $lot_number->qty_formated = $this->productUtil->num_f($lot_number->qty_available);
-                    $lot_numbers[] = $lot_number;
+        if ($request->ajax()) {
+            try {
+                $row_index = $request->input('row_index');
+                $variation_id = $request->input('variation_id');
+                $location_id = $request->input('location_id');
+    
+                $business_id = $request->session()->get('user.business_id');
+                $product = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id, $check_qty = false);
+                $product->formatted_qty_available = $this->productUtil->num_f($product->qty_available);
+                $product->sign = $request->input('sign');
+                $type = !empty($request->input('type')) ? $request->input('type') : 'stock_adjustment';
+    
+                // Get lot number dropdown if enabled 
+                $lot_numbers = [];
+                if ($request->session()->get('business.enable_lot_number') == 1 || $request->session()->get('business.enable_product_expiry') == 1) {
+                    $lot_number_obj = $this->transactionUtil->getLotNumbersFromVariation($variation_id, $business_id, $location_id, true);
+                    foreach ($lot_number_obj as $lot_number) {
+                        $lot_number->qty_formated = $this->productUtil->num_f($lot_number->qty_available);
+                        $lot_numbers[] = $lot_number;
+                    }
                 }
-            }
-            $product->lot_numbers = $lot_numbers;
-
-            $sub_units = $this->productUtil->getSubUnits($business_id, $product->unit_id, false, $product->id);
-            if ($type == 'stock_transfer') {
-                return view('stock_transfer.partials.product_table_row')
-                    ->with(compact('product', 'row_index', 'sub_units'));
-            } else {
-                return view('stock_adjustment.partials.product_table_row')
-                    ->with(compact('product', 'row_index', 'sub_units'));
+                $product->lot_numbers = $lot_numbers;
+                Log::error('Error in getProductRow: ', [
+                    'Product' => $product,
+                    'row_index' => $request->input('row_index'),
+                    'variation_id' => $request->input('variation_id'),
+                    'location_id' => $request->input('location_id'),
+                    'business_id' => $request->session()->get('user.business_id'),
+                ]);
+                $sub_units = $this->productUtil->getSubUnits($business_id, $product->unit_id, false, $product->id);
+                if ($type == 'stock_transfer') {
+                    return view('stock_transfer.partials.product_table_row')
+                        ->with(compact('product', 'row_index', 'sub_units'));
+                } else {
+                    return view('stock_adjustment.partials.product_table_row')
+                        ->with(compact('product', 'row_index', 'sub_units'));
+                }
+            } catch (\Exception $e) {
+                // Log the error
+                \Log::error('Error in getProductRow: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'row_index' => $request->input('row_index'),
+                    'variation_id' => $request->input('variation_id'),
+                    'location_id' => $request->input('location_id'),
+                    'business_id' => $request->session()->get('user.business_id'),
+                ]);
+    
+                // Return error response
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while processing your request.',
+                    'error' => $e->getMessage(),
+                ], 500);
             }
         }
     }
+    
 
     /**
      * Sets expired purchase line as stock adjustmnet

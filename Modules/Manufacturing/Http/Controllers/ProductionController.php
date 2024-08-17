@@ -745,6 +745,7 @@ class ProductionController extends Controller
                 'status' => $is_final ? 'final' : 'draft',
                 'payment_status' => 'due',
                 'final_total' => $transaction->final_total,
+                'additional_notes' => $request->input('additional_notes')
             ];
 
             //Create Sell Transfer transaction

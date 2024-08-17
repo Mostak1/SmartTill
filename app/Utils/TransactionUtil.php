@@ -4217,7 +4217,7 @@ class TransactionUtil extends Util
 
                         //Update purchase line
                         PurchaseLine::where('id', $row->purchase_lines_id)
-                            ->update(['quantity_adjusted' => $row->quantity_adjusted + $qty_allocated]);
+                            ->update(['quantity_adjusted' => $row->quantity_adjusted + $qty_allocated,'quantity_adjusted_damage'=>$row->quantity_adjusted_damage+$qty_allocated]);
                     }
                 } elseif ($mapping_type == 'purchase') {
                     //Mapping of purchase
@@ -4402,11 +4402,26 @@ class TransactionUtil extends Util
                 'PL.mfg_quantity_used as mfg_quantity_used',
                 'transactions.invoice_no'
             )->get();
-
             $purchase_sell_map = [];
 
             //Iterate over the rows, assign the purchase line to sell lines.
             $qty_selling = $line->quantity;
+            // if ($rows->isEmpty()) {
+            //     // dd($purchaseId);
+            //     if ($qty_selling != 0) {
+            //         $purchase_adjustment_map[] =
+            //             [
+            //                 'stock_adjustment_line_id' => $line->id,
+            //                 'purchase_line_id' => $purchaseId,
+            //                 'quantity' => $qty_selling,
+            //                 'created_at' => \Carbon::now(),
+            //                 'updated_at' => \Carbon::now(),
+            //             ];
+            //         //Update purchase line
+            //         PurchaseLine::where('id', $purchaseId)
+            //             ->update(['quantity_adjusted_surplus' => $purchase_id->quantity_adjusted_surplus + $qty_selling, 'quantity_adjusted' => $purchase_id->quantity_adjusted+ $qty_selling]);
+            //     }
+            // }
             foreach ($rows as $k => $row) {
                 $qty_allocated = 0;
                 //Check if qty_available is more or equal
@@ -4434,7 +4449,7 @@ class TransactionUtil extends Util
 
                         //Update purchase line
                         PurchaseLine::where('id', $purchaseId)
-                            ->update(['quantity_adjusted_surplus' => $row->quantity_adjusted_surplus + $qty_allocated]);
+                            ->update(['quantity_adjusted_surplus' => $row->quantity_adjusted_surplus + $qty_allocated, 'quantity_adjusted' => $row->quantity_adjusted+ $qty_allocated]);
                     }
                 } elseif ($mapping_type == 'purchase') {
                     //Mapping of purchase
@@ -4693,7 +4708,7 @@ class TransactionUtil extends Util
      * @param  array  $line_ids
      * @return bool
      */
-    public function mapPurchaseQuantityForDeleteStockAdjustment($line_ids)
+    public function mapPurchaseQuantityForDeleteStockAdjustment($line_ids,$sign)
     {
         if (empty($line_ids)) {
             return true;
@@ -4704,8 +4719,15 @@ class TransactionUtil extends Util
             ->get();
 
         foreach ($map_line as $row) {
-            PurchaseLine::where('id', $row->purchase_line_id)
-                ->decrement('quantity_adjusted', $row->quantity);
+            if($sign == 'Plus'){
+                PurchaseLine::where('id', $row->purchase_line_id)
+                    ->increment('quantity_adjusted', $row->quantity)
+                    ->increment('quantity_adjusted_surplus', $row->quantity);
+            }else{
+                PurchaseLine::where('id', $row->purchase_line_id)
+                ->decrement('quantity_adjusted', $row->quantity)
+                ->decrement('quantity_adjusted_damage', $row->quantity);
+            }
         }
 
         //Delete the tslp line.

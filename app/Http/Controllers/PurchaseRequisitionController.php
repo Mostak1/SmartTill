@@ -253,7 +253,6 @@ class PurchaseRequisitionController extends Controller
                     if (!empty($quantity) || !empty($secondary_unit_quantity)) {
                         // Fetch the purchase price from the variations table
                         $variation = Variation::findOrFail($purchase_line['variation_id']);
-                        $purchase_price = $variation->default_purchase_price;
 
                         // Create the purchase line
                         $transaction->purchase_lines()->create([
@@ -261,7 +260,9 @@ class PurchaseRequisitionController extends Controller
                             'variation_id' => $purchase_line['variation_id'],
                             'quantity' => $quantity,
                             'secondary_unit_quantity' => $secondary_unit_quantity,
-                            'purchase_price' => $purchase_price, // Set purchase price from variations table
+                            'pp_without_discount' => $variation->default_purchase_price,
+                            'purchase_price' => $variation->default_purchase_price,
+                            'purchase_price_inc_tax' => $variation->dpp_inc_tax,
                             'purchase_requisition_line_id' => $purchase_requisition->id,
                         ]);
                     }
@@ -656,10 +657,10 @@ class PurchaseRequisitionController extends Controller
                                     ->first();
 
             $daysInRange = $start_date->diffInDays($end_date) + 1;
-            $suggestedOrder = ceil(($product->total_qty_sold / 30) * $daysInRange);
+            $suggestedOrder = ceil(($product->total_qty_sold / 30) * $daysInRange) - $currentStock;
             $suggestedOrder = max(6, ceil($suggestedOrder / 6) * 6);
 
-            if ($currentStock < $suggestedOrder) {
+            if ($currentStock < $suggestedOrder && $currentStock > 0){
                 $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
                                 ->join('contacts as c', 't.contact_id', '=', 'c.id')
                                 ->where('purchase_lines.variation_id', $product->variation_id)
@@ -695,6 +696,11 @@ class PurchaseRequisitionController extends Controller
 
         return response()->json(['content' => $content]);
     }
+
+
+
+
+
     public function getProductEntryRow()
     {
         $search_term = request()->input('term', '');
@@ -718,8 +724,7 @@ class PurchaseRequisitionController extends Controller
                                         ->where('transaction_sell_lines.variation_id', $product->variation_id)
                                         ->sum(DB::raw('transaction_sell_lines.quantity - transaction_sell_lines.quantity_returned'));
 
-            $suggestedOrder = ceil(($totalUnitsSoldLast30Days / 30) * 30);
-            $suggestedOrder = max(6, ceil($suggestedOrder / 6) * 6);
+            $suggestedOrder = max(6, ceil($totalUnitsSoldLast30Days / 6) * 6);
 
             $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
                                     ->join('contacts as c', 't.contact_id', '=', 'c.id')
