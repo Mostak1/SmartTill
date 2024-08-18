@@ -272,9 +272,9 @@ $(document).ready(function() {
                     selling_price +
                     ' (Out of stock)';
                     if (item.total_quantity>0) {
-                        string += '</span></li><b> Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</b>';
+                        string += '</span></li><b> Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</b><hr/>';
                     } else {
-                        string += '| Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</span></li>';
+                        string += '| Store:'+parseFloat(item.total_quantity-item.qty_available).toFixed(2)+'</span></li><hr/>';
                     }
                 return $(string).appendTo(ul);
             } else {
@@ -284,21 +284,21 @@ $(document).ready(function() {
                 if (item.type == 'variable') {
                     string += '-' + item.variation;
                 }
-
+                if(item.brand_id){
+                    string += ' | Brand: ' + item.brand.name;
+                }
                 var selling_price = parseFloat(item.selling_price).toFixed(2);
                 if (item.variation_group_price) {
                     selling_price = parseFloat(item.variation_group_price).toFixed(2);
                 }
 
-                string += ' (' + item.sub_sku + ')' + '<br> Price: ' + selling_price;
+                string += ' (' + item.sub_sku + ')' + '<br> ৳' + selling_price;
                 if (item.enable_stock == 1) {
                     console.log(item);
                     var qty_available = __currency_trans_from_en(item.qty_available, false, false, __currency_precision, true);
-                    string += ' - ' + qty_available + item.unit;
+                    string += ' - Current Stock: ' + qty_available + item.unit;
                 }
-                if(item.brand_id){
-                    string += '</br>Brand: ' + item.brand.name;
-                }
+               
                 return $('<li>')
                     .append(string)
                     .appendTo(ul);
