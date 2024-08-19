@@ -78,11 +78,15 @@
         }
 
         p, span, strong{
-            font-family: 'Roboto Condensed', sans-serif;
+            font-family: 'Roboto Condensed', sans-serif ;
         }
         th, td{
             font-family: 'Roboto Condensed', sans-serif;
         }
+        .font-family-1 {
+            font-family: 'Times New Roman', serif !important;
+        } 
+
         .brand-name{
             font-family: 'Montserrat', sans-serif;
             /* font-family: 'Playfair Display', serif; */
@@ -121,29 +125,17 @@
                             <br>
                         @endif
                         @if (!empty($receipt_details->address) || !empty($receipt_details->contact))
-                        {!! $receipt_details->address !!}
+                        <span>
+                            {!! $receipt_details->address !!}
+                        </span>
                         
                         {!! !empty($receipt_details->address) && !empty($receipt_details->contact) ? ', ' : '' !!}
-                        {!! $receipt_details->contact !!}
+                        <span>
+                            {!! $receipt_details->contact !!}
+
+                        </span>
                         @endif
-                        {{-- @php
-                            $addressParts = explode(',', $receipt_details->address);                        
-                            if (count($addressParts) > 1){
-                                $firstLine = implode(',', array_slice($addressParts, 0, -2));
-                                $lastTwoParts = implode(',', array_slice($addressParts, -2));
-                                $secondLine = str_replace(',', '-', $lastTwoParts);
-                                $formattedAddress = $firstLine . '<br>' . $secondLine . ', ' . $receipt_details->contact;
-                            } else {
-                                // If address doesn't have a comma, use it as is and append the contact
-                                $formattedAddress = $receipt_details->address . ' ' . $receipt_details->contact;
-                            }
-                        @endphp
-
-                        @if (!empty($formattedAddress))
-                            {!! $formattedAddress !!}
-                        @endif --}}
-
-                    
+                                         
                     
                         @if (!empty($receipt_details->contact) && !empty($receipt_details->website))
                             ,
@@ -645,8 +637,8 @@
             </tbody>
         </table>
         @if (!empty($receipt_details->total_quantity_label))
-            <div class="flex-box">
-                <p class="width-70 left text-right">
+            <div class="flex-box mtqty-0">
+                <p class="width-70 left text-right font-family-1">
                     {!! $receipt_details->total_quantity_label !!}
                 </p>
                 <p class="width-30 text-right">
@@ -656,7 +648,7 @@
         @endif
         @if (!empty($receipt_details->total_items_label))
             <div class="flex-box">
-                <p class="width-70 left text-right">
+                <p class="width-70 left text-right font-family-1">
                     {!! $receipt_details->total_items_label !!}
                 </p>
                 <p class="width-30 text-right">
@@ -667,7 +659,7 @@
         @if (empty($receipt_details->hide_price))
             
                 <div class="flex-box">
-                    <p class="width-70 left text-right sub-headings">
+                    <p class="width-70 left text-right sub-headings font-family-1">
                         {!! $receipt_details->subtotal_label !!}
                     </p>
                     <p class="width-30 text-right sub-headings">
@@ -678,7 +670,7 @@
             <!-- Shipping Charges -->
             @if (!empty($receipt_details->shipping_charges))
                 <div class="flex-box">
-                    <p class="width-70 left text-right">
+                    <p class="width-70 left text-right font-family-1">
                         {!! $receipt_details->shipping_charges_label !!}
                     </p>
                     <p class="width-30 text-right">
@@ -689,7 +681,7 @@
 
             @if (!empty($receipt_details->packing_charge))
                 <div class="flex-box">
-                    <p class="width-70 left text-right">
+                    <p class="width-70 left text-right font-family-1">
                         {!! $receipt_details->packing_charge_label !!}
                     </p>
                     <p class="width-30 text-right">
@@ -699,9 +691,9 @@
             @endif
             @if (!empty($receipt_details->total_line_discount))
             <div class="flex-box">
-                <p class="width-70 text-right">
+                <p class="width-70 text-right font-family-1">
                     {{-- {!! $receipt_details->line_discount_label !!} --}}
-                    Campain Discount:
+                    Campaign Discount:
                 </p>
 
                 <p class="width-30 text-right">
@@ -712,7 +704,7 @@
             <!-- Discount -->
             @if (!empty($receipt_details->discount))
                 <div class="flex-box">
-                    <p class="width-70 text-right">
+                    <p class="width-70 text-right font-family-1">
                         Special Discount {!! $receipt_details->discount_label !!}
                         {{-- Special Discount: --}}
                     </p>
@@ -727,8 +719,8 @@
 
             @if (!empty($receipt_details->additional_expenses))
                 @foreach ($receipt_details->additional_expenses as $key => $val)
-                    <div class="flex-box">
-                        <p class="width-70 text-right">
+                    <div class="flex-box ">
+                        <p class="width-70 text-right ">
                             {{ $key }}:
                         </p>
 
@@ -742,7 +734,7 @@
 
             @if (!empty($receipt_details->reward_point_label))
                 <div class="flex-box">
-                    <p class="width-70 text-right">
+                    <p class="width-70 text-right font-family-1">
                         {!! $receipt_details->reward_point_label !!}
                     </p>
 
@@ -754,7 +746,7 @@
 
             @if (!empty($receipt_details->tax))
                 <div class="flex-box">
-                    <p class="width-70 text-right">
+                    <p class="width-70 text-right font-family-1">
                         {!! $receipt_details->tax_label !!}
                     </p>
                     <p class="width-30 text-right">
@@ -775,7 +767,7 @@
             @endif --}}
 
             <div class="flex-box">
-                <p class="width-70 text-right sub-headings">
+                <p class="width-70 text-right sub-headings font-family-1">
                     {!! $receipt_details->total_label !!}
                 </p>
                 <p class="width-30 text-right sub-headings">
@@ -783,16 +775,25 @@
                 </p>
             </div>
             @if (!empty($receipt_details->total_in_words))
-                <p colspan="2" class="text-right mb-0">
+                <p colspan="2" class="text-right mb-0 font-family-1">
                     <small>
-                        ({{ $receipt_details->total_in_words }})
+                        ({{ $receipt_details->total_in_words }}) 
                     </small>
                 </p>
             @endif
+
+            @php
+                $paymentCount = count($receipt_details->payments);
+                function getPaymentMethod($method) {
+                
+                    return explode(',', $method)[0];
+                }
+            @endphp
+            
             @if (!empty($receipt_details->payments))
                 @foreach ($receipt_details->payments as $payment)
                     <div class="flex-box">
-                        <p class="width-70 text-right">{{ $payment['method'] }} @if (!empty($receipt_details->total_due))
+                        <p class="width-70 text-right font-family-1"> Paid ({{ getPaymentMethod($payment['method']) }}) @if (!empty($receipt_details->total_due))
                                 ({{ $payment['date'] }})
                             @endif
                         </p>
@@ -802,15 +803,17 @@
             @endif
 
             <!-- Total Paid-->
-            @if (!empty($receipt_details->total_paid))
-                <div class="flex-box">
-                    <p class="width-70 text-right">
-                        {!! $receipt_details->total_paid_label !!}
-                    </p>
-                    <p class="width-30 text-right">
-                        ৳ {{ number_format($receipt_details->total_paid) }}
-                    </p>
-                </div>
+            @if ($paymentCount != 1)
+                @if (!empty($receipt_details->total_paid))
+                    <div class="flex-box">
+                        <p class="width-70 text-right font-family-1">
+                            {!! $receipt_details->total_paid_label !!}
+                        </p>
+                        <p class="width-30 text-right">
+                            ৳ {{ number_format($receipt_details->total_paid) }}
+                        </p>
+                    </div>
+                @endif
             @endif
 
             <!-- Total Due-->
@@ -820,7 +823,7 @@
                 </div>
 
                 <div class="flex-box">
-                    <p class="width-70 text-right">
+                    <p class="width-70 text-right font-family-1">
                         {!! $receipt_details->total_due_label !!}
                     </p>
                     <p class="width-30 text-right">
@@ -831,7 +834,7 @@
 
             @if (!empty($receipt_details->all_due))
                 <div class="flex-box">
-                    <p class="width-70 text-right">
+                    <p class="width-70 text-right font-family-1">
                         {!! $receipt_details->all_bal_label !!}
                     </p>
                     <p class="width-30 text-right">
@@ -840,7 +843,7 @@
                 </div>
             @endif
         @endif
-        <div class="border-bottom width-100">&nbsp;</div>
+        <div class="border-bottom width-100"></div>
         @if (empty($receipt_details->hide_price) && !empty($receipt_details->tax_summary_label))
             <!-- tax -->
             @if (!empty($receipt_details->taxes))
@@ -866,8 +869,7 @@
 
         {{-- Barcode --}}
         @if ($receipt_details->show_barcode)
-            <br />
-            <img class="center-block"
+            <img class="center-block barcode"
                 src="data:image/png;base64,{{ DNS1D::getBarcodePNG($receipt_details->invoice_no, 'C128', 2, 30, [39, 48, 54], true) }}">
         @endif
 
@@ -877,9 +879,9 @@
         @endif
 
         @if (!empty($receipt_details->footer_text))
-            <p class="centered infoot" >
+            <span class="centered infoot" >
                 {!! $receipt_details->footer_text !!}
-            </p>
+            </span> 
         @endif
 
     </div>
@@ -1049,5 +1051,10 @@
     .bw {
         word-break: break-word;
     }
-    
+    .mtqty-0{
+        margin-top: -12px;
+    }
+    .barcode{
+        margin-top: 5px;
+    }
 </style>

@@ -4719,15 +4719,8 @@ class TransactionUtil extends Util
             ->get();
 
         foreach ($map_line as $row) {
-            if($sign == 'Plus'){
-                PurchaseLine::where('id', $row->purchase_line_id)
-                    ->increment('quantity_adjusted', $row->quantity)
-                    ->increment('quantity_adjusted_surplus', $row->quantity);
-            }else{
-                PurchaseLine::where('id', $row->purchase_line_id)
-                ->decrement('quantity_adjusted', $row->quantity)
-                ->decrement('quantity_adjusted_damage', $row->quantity);
-            }
+            PurchaseLine::where('id', $row->purchase_line_id)
+                ->decrement('quantity_adjusted', $row->quantity);
         }
 
         //Delete the tslp line.
