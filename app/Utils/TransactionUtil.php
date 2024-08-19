@@ -4406,22 +4406,22 @@ class TransactionUtil extends Util
 
             //Iterate over the rows, assign the purchase line to sell lines.
             $qty_selling = $line->quantity;
-            // if ($rows->isEmpty()) {
-            //     // dd($purchaseId);
-            //     if ($qty_selling != 0) {
-            //         $purchase_adjustment_map[] =
-            //             [
-            //                 'stock_adjustment_line_id' => $line->id,
-            //                 'purchase_line_id' => $purchaseId,
-            //                 'quantity' => $qty_selling,
-            //                 'created_at' => \Carbon::now(),
-            //                 'updated_at' => \Carbon::now(),
-            //             ];
-            //         //Update purchase line
-            //         PurchaseLine::where('id', $purchaseId)
-            //             ->update(['quantity_adjusted_surplus' => $purchase_id->quantity_adjusted_surplus + $qty_selling, 'quantity_adjusted' => $purchase_id->quantity_adjusted+ $qty_selling]);
-            //     }
-            // }
+            if ($rows->isEmpty()) {
+                // dd($purchaseId);
+                if ($qty_selling != 0) {
+                    $purchase_adjustment_map[] =
+                        [
+                            'stock_adjustment_line_id' => $line->id,
+                            'purchase_line_id' => $purchaseId,
+                            'quantity' => $qty_selling,
+                            'created_at' => \Carbon::now(),
+                            'updated_at' => \Carbon::now(),
+                        ];
+                    //Update purchase line
+                    PurchaseLine::where('id', $purchaseId)
+                        ->update(['quantity_adjusted_surplus' => $purchase_id->quantity_adjusted_surplus + $qty_selling, 'quantity_adjusted' => $purchase_id->quantity_adjusted+ $qty_selling]);
+                }
+            }
             foreach ($rows as $k => $row) {
                 $qty_allocated = 0;
                 //Check if qty_available is more or equal
