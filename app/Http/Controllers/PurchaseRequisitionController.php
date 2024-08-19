@@ -171,33 +171,72 @@ class PurchaseRequisitionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    protected function generateRequisitionNumber()
+    {
+        $last_requisition = PurchaseRequisition::latest('id')->first();
+        $next_id = $last_requisition ? $last_requisition->id + 1 : 1;
+        return 'Requisition-' . $next_id;
+    }
+
+    protected function createPurchaseOrder($supplier_id, $purchase_lines, $transaction_data, $purchase_requisition_id)
+    {
+        $transaction = Transaction::create($transaction_data);
+
+        foreach ($purchase_lines as $purchase_line) {
+            $quantity = isset($purchase_line['quantity']) ? $this->commonUtil->num_uf($purchase_line['quantity']) : 0;
+            $secondary_unit_quantity = isset($purchase_line['secondary_unit_quantity']) ? $this->commonUtil->num_uf($purchase_line['secondary_unit_quantity']) : 0;
+
+            if (!empty($quantity) || !empty($secondary_unit_quantity)) {
+                $variation = Variation::findOrFail($purchase_line['variation_id']);
+
+                $transaction->purchase_lines()->create([
+                    'product_id' => $purchase_line['product_id'],
+                    'variation_id' => $purchase_line['variation_id'],
+                    'quantity' => $quantity,
+                    'secondary_unit_quantity' => $secondary_unit_quantity,
+                    'pp_without_discount' => $variation->default_purchase_price,
+                    'purchase_price' => $variation->default_purchase_price,
+                    'purchase_price_inc_tax' => $variation->dpp_inc_tax,
+                    'purchase_requisition_id' => $purchase_requisition_id,
+                ]);
+            }
+        }
+    }
+
+
     public function store(Request $request)
     {
         if (!auth()->user()->can('purchase_requisition.create')) {
             abort(403, 'Unauthorized action.');
         }
 
+        $validatedData = $request->validate([
+            'purchases.*.supplier_id' => 'required|integer|exists:contacts,id',
+            'purchases.*.product_id' => 'required|integer|exists:products,id',
+            'purchases.*.variation_id' => 'required|integer|exists:variations,id',
+            'purchases.*.quantity' => 'required|numeric|min:1',
+            'purchases.*.secondary_unit_quantity' => 'nullable|numeric|min:0',
+            'location_id' => 'required|integer|exists:business_locations,id',
+            'notes' => 'nullable|string',
+            'delivery_date' => 'nullable|date',
+        ]);
+
         $business_id = auth()->user()->business_id;
         $created_by = auth()->user()->id;
         $transaction_date = \Carbon\Carbon::now()->toDateTimeString();
         $delivery_date = !empty($request->input('delivery_date')) ? $this->commonUtil->uf_date($request->input('delivery_date'), true) : \Carbon\Carbon::now()->toDateTimeString();
 
-        // Initialize the array to group purchases by supplier_id
         $purchases_by_supplier = [];
 
-        // Log the entire request data for debugging
         \Log::info('Request Data:', $request->all());
 
         $purchases = $request->input('purchases', []);
-
-        // Ensure purchases is an array
         if (!is_array($purchases)) {
             return response()->json(['error' => 'Invalid purchases data'], 400);
         }
 
-        // Group purchase lines by supplier_id
         foreach ($purchases as $purchase_line) {
-            $supplier_id = $purchase_line['supplier_id']; // Assuming supplier_id is passed with each purchase line
+            $supplier_id = $purchase_line['supplier_id'];
             if (!isset($purchases_by_supplier[$supplier_id])) {
                 $purchases_by_supplier[$supplier_id] = [];
             }
@@ -207,66 +246,30 @@ class PurchaseRequisitionController extends Controller
         DB::beginTransaction();
 
         try {
-             // Generate requisition_no
-             $last_requisition = PurchaseRequisition::latest('id')->first();
-             $next_id = $last_requisition ? $last_requisition->id + 1 : 1;
-             $requisition_no = 'Requisition-' . $next_id;
+            $requisition_no = $this->generateRequisitionNumber();
 
-             // Add the purchase requisition
-             $purchase_requisition = PurchaseRequisition::create([
-                 'requisition_no' => $requisition_no,
-                 'requisition_by' => $created_by,
-                 'updated_by' => $request->input('updated_by', $created_by),
-                 'location_id' => $request->input('location_id'),
-                 'notes' => $request->input('notes'),
-             ]);
+            $purchase_requisition = PurchaseRequisition::create([
+                'requisition_no' => $requisition_no,
+                'requisition_by' => $created_by,
+                'updated_by' => $request->input('updated_by', $created_by),
+                'location_id' => $request->input('location_id'),
+                'notes' => $request->input('notes'),
+            ]);
 
-            // Create a transaction for each supplier_id
             foreach ($purchases_by_supplier as $supplier_id => $purchase_lines) {
                 $transaction_data = [
                     'business_id' => $business_id,
                     'location_id' => $request->input('location_id'),
                     'type' => 'purchase_order',
-                    'sub_type' => 'purchase_requisition',
                     'status' => 'ordered',
                     'created_by' => $created_by,
                     'transaction_date' => $transaction_date,
                     'contact_id' => $supplier_id,
                     'delivery_date' => $delivery_date,
+                    'ref_no' => $this->productUtil->generateReferenceNumber('purchase_order', $this->productUtil->setAndGetReferenceCount('purchase_order')),
                 ];
 
-                // Update reference count
-                $ref_count = $this->productUtil->setAndGetReferenceCount($transaction_data['type']);
-                // Generate reference number
-                if (empty($transaction_data['ref_no'])) {
-                    $transaction_data['ref_no'] = $this->productUtil->generateReferenceNumber($transaction_data['type'], $ref_count);
-                }
-
-                // Create the transaction
-                $transaction = Transaction::create($transaction_data);
-
-                // Add the purchase lines to the transaction
-                foreach ($purchase_lines as $purchase_line) {
-                    $quantity = isset($purchase_line['quantity']) ? $this->commonUtil->num_uf($purchase_line['quantity']) : 0;
-                    $secondary_unit_quantity = isset($purchase_line['secondary_unit_quantity']) ? $this->commonUtil->num_uf($purchase_line['secondary_unit_quantity']) : 0;
-
-                    if (!empty($quantity) || !empty($secondary_unit_quantity)) {
-                        // Fetch the purchase price from the variations table
-                        $variation = Variation::findOrFail($purchase_line['variation_id']);
-
-                        // Create the purchase line
-                        $transaction->purchase_lines()->create([
-                            'product_id' => $purchase_line['product_id'],
-                            'variation_id' => $purchase_line['variation_id'],
-                            'quantity' => $quantity,
-                            'secondary_unit_quantity' => $secondary_unit_quantity,
-                            'pp_without_discount' => $variation->default_purchase_price,
-                            'purchase_price' => $variation->default_purchase_price,
-                            'purchase_price_inc_tax' => $variation->dpp_inc_tax,
-                            'purchase_requisition_line_id' => $purchase_requisition->id,
-                        ]);
-                    }
-                }
+                $this->createPurchaseOrder($supplier_id, $purchase_lines, $transaction_data, $purchase_requisition->id);
             }
 
             DB::commit();
@@ -278,6 +281,7 @@ class PurchaseRequisitionController extends Controller
             return response()->json(['success' => false, 'msg' => 'An error occurred while creating the purchase requisition.'], 500);
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -300,7 +304,7 @@ class PurchaseRequisitionController extends Controller
         $requisition_by_name = $purchaseRequisition->requisitionBy->first_name . ' ' . $purchaseRequisition->requisitionBy->last_name;
 
         // Fetch the purchase requisition lines associated with the given ID
-        $purchaseLines = PurchaseLine::where('purchase_requisition_line_id', $id)
+        $purchaseLines = PurchaseLine::where('purchase_requisition_id', $id)
             ->with(['product', 'variations.product_variation', 'sub_unit'])
             ->get();
 
@@ -660,7 +664,7 @@ class PurchaseRequisitionController extends Controller
             $suggestedOrder = ceil(($product->total_qty_sold / 30) * $daysInRange) - $currentStock;
             $suggestedOrder = max(6, ceil($suggestedOrder / 6) * 6);
 
-            if ($currentStock < $suggestedOrder && $currentStock > 0){
+            if ($currentStock < $suggestedOrder && $currentStock > 0) {
                 $lastSupplier = PurchaseLine::join('transactions as t', 'purchase_lines.transaction_id', '=', 't.id')
                                 ->join('contacts as c', 't.contact_id', '=', 'c.id')
                                 ->where('purchase_lines.variation_id', $product->variation_id)

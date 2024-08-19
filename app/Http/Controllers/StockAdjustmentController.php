@@ -444,13 +444,6 @@ class StockAdjustmentController extends Controller
                     }
                 }
                 $product->lot_numbers = $lot_numbers;
-                Log::error('Error in getProductRow: ', [
-                    'Product' => $product,
-                    'row_index' => $request->input('row_index'),
-                    'variation_id' => $request->input('variation_id'),
-                    'location_id' => $request->input('location_id'),
-                    'business_id' => $request->session()->get('user.business_id'),
-                ]);
                 $sub_units = $this->productUtil->getSubUnits($business_id, $product->unit_id, false, $product->id);
                 if ($type == 'stock_transfer') {
                     return view('stock_transfer.partials.product_table_row')
