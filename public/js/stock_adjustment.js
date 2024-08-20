@@ -87,8 +87,10 @@ $(document).ready(function() {
         let sign = $('#adjustment_sign').val();
         if (sign=='Plus') {
             $('#total_amount_recovered_section').addClass('hide');
+            $('#search_status').removeClass('hide');
         } else if(sign=='Minus') {
             $('#total_amount_recovered_section').removeClass('hide');
+            $('#search_status').addClass('hide');
         }
         $('table#stock_adjustment_product_table tbody').html('');
         $('#product_row_index').val(0);

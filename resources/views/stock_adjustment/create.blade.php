@@ -67,6 +67,9 @@
 					<div class="form-group">
 						<div class="input-group">
 							<span class="input-group-addon">
+								<span class="hide" id="search_status">
+									@show_tooltip(__('lang_v1.surplus_search'))
+								</span>
 								<i class="fa fa-search"></i>
 							</span>
 							{!! Form::text('search_product', null, ['class' => 'form-control', 'id' => 'search_product_for_srock_adjustment', 'placeholder' => __('stock_adjustment.search_product'), 'disabled']); !!}

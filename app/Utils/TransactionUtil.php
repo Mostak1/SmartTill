@@ -4335,14 +4335,14 @@ class TransactionUtil extends Util
 
         $qty_selling = null;
         foreach ($transaction_lines as $line) {
-            //Check if stock is not enabled then no need to assign purchase & sell
+            //Check if stock is not enabled then no need to assign purchase & sell po_quantity_purchased
             $product = Product::find($line->product_id);
             if (empty($product) || $product->enable_stock != 1) {
                 continue;
             }
             $qty_sum_query = $this->get_pl_quantity_sum_string('PL');
             $purchase_line = PurchaseLine::where('product_id', $line->product_id)
-            ->where('variation_id', $line->variation_id);
+            ->where('variation_id', $line->variation_id)->where('po_quantity_purchased', 0);
             $purchase_qty = $purchase_line->whereRaw("(quantity_sold+quantity_adjusted+quantity_returned+mfg_quantity_used) < quantity")->count();
             if ($purchase_qty < 1) {
                 $purchase_id = PurchaseLine::where('product_id', $line->product_id)

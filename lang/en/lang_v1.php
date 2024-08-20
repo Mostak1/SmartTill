@@ -1102,6 +1102,7 @@ return [
     'in_transit' => 'In Transit',
     'edit_stock_transfer' => 'Edit Stock Transfer',
     'completed_status_help' => 'Stock transfer will not be editable if status is completed',
+    'surplus_search' => 'Only products with transaction history are searchable. Products with zero stock and no transaction history will not be shown',
     'no_data' => 'No data',
     'sms_service' => 'SMS Service',
     'nexmo_key' => 'Nexmo Key',
