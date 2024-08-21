@@ -1520,7 +1520,8 @@ class TransactionUtil extends Util
                         ];
 
                         if ($value['method'] == 'cash') {
-                            $payment_entry['method'] .= $value['is_return'] == 1 ? ' (' . $il->change_return_label . ')(-)' : '';
+                            $payment_entry['method'] .= $value['is_return'] == 1 ? 'change' : '';
+                            // $payment_entry['method'] .= $value['is_return'] == 1 ? ' (' . $il->change_return_label . ')(-)' : '';
                         } elseif ($value['method'] == 'card') {
                             $payment_entry['method'] .= !empty($value['card_transaction_number']) ? ', Transaction Number:' . $value['card_transaction_number'] : '';
                         } elseif ($value['method'] == 'cheque') {

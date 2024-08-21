@@ -132,6 +132,11 @@ class AdminSidebarMenu
                                 ['icon' => 'fa fas fa-plus-circle', 'active' => request()->segment(1) == 'products' && request()->segment(2) == 'create']
                             );
                         }
+                        $sub->url(
+                            action([\App\Http\Controllers\CheckController::class, 'randomCheck']),
+                            __('Stock Audit'),
+                            ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'random-check-index']
+                        );
                         if (auth()->user()->can('product.create')) {
                             $sub->url(
                                 action([\App\Http\Controllers\SellingPriceGroupController::class, 'updateProductPrice']),
@@ -205,12 +210,7 @@ class AdminSidebarMenu
                             action([\App\Http\Controllers\WarrantyController::class, 'index']),
                             __('lang_v1.warranties'),
                             ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'warranties']
-                        );
-                        $sub->url(
-                            action([\App\Http\Controllers\CheckController::class, 'randomCheck']),
-                            __('Stock Audit'),
-                            ['icon' => 'fa fas fa-shield-alt', 'active' => request()->segment(1) == 'random-check-index']
-                        );
+                        );                        
                     },
                     ['icon' => 'fa fas fa-cubes', 'id' => 'tour_step5']
                 )->order(20);

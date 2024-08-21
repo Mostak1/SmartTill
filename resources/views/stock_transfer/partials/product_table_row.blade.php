@@ -28,7 +28,7 @@
                         class="qty_available_text">{{ $product->qty_available }}</span>
                     {{ $product->unit }}</small>
             @endif
-            {{-- @if (!empty($product->lot_numbers))
+             @if (!empty($product->lot_numbers))
                 <select class="form-control lot_number" name="products[{{ $row_index }}][lot_no_line_id]">
                     <option value="">@lang('lang_v1.lot_n_expiry')</option>
                     @foreach ($product->lot_numbers as $lot_number)
@@ -64,7 +64,7 @@
                         </option>
                     @endforeach
                 </select>
-            @endif --}}
+            @endif
         @endif
     </td>
     <td>

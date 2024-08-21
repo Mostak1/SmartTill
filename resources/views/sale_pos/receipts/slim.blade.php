@@ -659,10 +659,10 @@
         @if (empty($receipt_details->hide_price))
             
                 <div class="flex-box">
-                    <p class="width-70 left text-right sub-headings font-family-1">
+                    <p class="width-70 left text-right  font-family-1">
                         {!! $receipt_details->subtotal_label !!}
                     </p>
-                    <p class="width-30 text-right sub-headings">
+                    <p class="width-30 text-right ">
                         ৳ {{ number_format($receipt_details->subtotal + $receipt_details->total_line_discount) }}
                     </p>
                 </div>
@@ -793,7 +793,13 @@
             @if (!empty($receipt_details->payments))
                 @foreach ($receipt_details->payments as $payment)
                     <div class="flex-box">
-                        <p class="width-70 text-right font-family-1"> Paid ({{ getPaymentMethod($payment['method']) }}) @if (!empty($receipt_details->total_due))
+                        <p class="width-70 text-right font-family-1"> 
+                            @if(getPaymentMethod($payment['method'])==='Cashchange')
+                            Change(Cash)
+                            @else
+                            Paid ({{ getPaymentMethod($payment['method']) }}) 
+                            @endif
+                            @if (!empty($receipt_details->total_due))
                                 ({{ $payment['date'] }})
                             @endif
                         </p>

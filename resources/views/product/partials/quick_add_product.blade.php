@@ -67,7 +67,7 @@
                         <div class="input-group">
                             {!! Form::select('brand_id', $brands, null, [
                                 'placeholder' => __('messages.please_select'),
-                                'class' => 'form-control select2',
+                                'class' => 'form-control select2', 'required'
                             ]) !!}
                             <span class="input-group-btn">
                                 <button type="button" @if (!auth()->user()->can('brand.create')) disabled @endif
@@ -87,7 +87,7 @@
                         {!! Form::select('category_id', $categories, null, [
                             'placeholder' => __('messages.please_select'),
                             'class' => 'form-control select2',
-                            'id' => 'category_select',
+                            'id' => 'category_select', 'required'
                         ]) !!}
                        @if ($foreign_cat)
                        <input type="hidden" id="foreign_cat_id" value="{{ $foreign_cat->id }}">
@@ -179,7 +179,7 @@
                         {!! Form::select('product_locations[]', $business_locations, $default_location, [
                             'class' => 'form-control select2',
                             'multiple',
-                            'id' => 'product_locations',
+                            'id' => 'product_locations','required'
                         ]) !!}
                     </div>
                 </div>
