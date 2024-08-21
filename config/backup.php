@@ -36,7 +36,7 @@ return [
         'destination' => [
             'filename_prefix' => '',
             'disks' => [
-                'local'
+                env('BACKUP_DISK', 'local')
             ],
         ],
 
