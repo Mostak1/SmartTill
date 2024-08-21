@@ -36,8 +36,7 @@ return [
         'destination' => [
             'filename_prefix' => '',
             'disks' => [
-                // 'google' // Comment out or remove this line
-                'local' // Ensure backups are saved locally first
+                'local'
             ],
         ],
 

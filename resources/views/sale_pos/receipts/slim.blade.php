@@ -520,7 +520,7 @@
                             </small>
                         @endif
                     </td>
-                        <td class="description" style="font-size: 9px" width="48%">
+                        <td class="description" style="font-size: 10px" width="48%">
                             {{ $line['name'] }} {{ $line['product_variation'] }} {{ $line['variation'] }}
                             @if (!empty($line['sub_sku']))
                                 , {{ $line['sub_sku'] }}
@@ -783,21 +783,22 @@
             @endif
 
             @php
-                $paymentCount = count($receipt_details->payments);
-                function getPaymentMethod($method) {
-                
-                    return explode(',', $method)[0];
-                }
-            @endphp
+            $paymentCount = isset($receipt_details->payments) && is_array($receipt_details->payments) ? count($receipt_details->payments) : 0;
+        
+            function getPaymentMethod($method) {
+                return explode(',', $method)[0];
+            }
+        @endphp
+        
             
             @if (!empty($receipt_details->payments))
                 @foreach ($receipt_details->payments as $payment)
                     <div class="flex-box">
                         <p class="width-70 text-right font-family-1"> 
-                            @if(getPaymentMethod($payment['method'])==='Cashchange')
+                            @if($payment['method']==='Cashchange')
                             Change(Cash)
                             @else
-                            Paid ({{ getPaymentMethod($payment['method']) }}) 
+                            Paid ({{ $payment['method'] }}) 
                             @endif
                             @if (!empty($receipt_details->total_due))
                                 ({{ $payment['date'] }})
