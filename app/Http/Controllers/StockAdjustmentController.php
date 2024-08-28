@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\BusinessLocation;
+use App\CustomerGroup;
 use App\PurchaseLine;
 use App\Transaction;
 use App\Utils\ModuleUtil;
 use App\Utils\ProductUtil;
 use App\Utils\TransactionUtil;
+use App\Utils\BusinessUtil;
 use Datatables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
 use App\Events\StockAdjustmentCreatedOrModified;
+use App\TaxRate;
 use Illuminate\Support\Facades\Log;
 
 class StockAdjustmentController extends Controller
@@ -32,11 +35,16 @@ class StockAdjustmentController extends Controller
      * @param  ProductUtils  $product
      * @return void
      */
-    public function __construct(ProductUtil $productUtil, TransactionUtil $transactionUtil, ModuleUtil $moduleUtil)
+    public function __construct(BusinessUtil $businessUtil ,ProductUtil $productUtil, TransactionUtil $transactionUtil, ModuleUtil $moduleUtil)
     {
         $this->productUtil = $productUtil;
         $this->transactionUtil = $transactionUtil;
         $this->moduleUtil = $moduleUtil;
+        $this->businessUtil = $businessUtil;
+        $this->dummyPaymentLine = [
+            'method' => 'cash', 'amount' => 0, 'note' => '', 'card_transaction_number' => '', 'card_number' => '', 'card_type' => '', 'card_holder_name' => '', 'card_month' => '', 'card_year' => '', 'card_security' => '', 'cheque_number' => '', 'bank_account_number' => '',
+            'is_return' => 0, 'transaction_no' => '',
+        ];
     }
 
     /**
@@ -44,6 +52,162 @@ class StockAdjustmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    public function stockSurplusStore(Request $request)
+    {
+        if (!auth()->user()->can('purchase.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $input_data = $request->only(['location_id', 'transaction_date', 'additional_notes', 'total_amount_recovered', 'final_total', 'ref_no']);
+            $business_id = $request->session()->get('user.business_id');
+
+            //Check if subscribed or not
+            if (!$this->moduleUtil->isSubscribed($business_id)) {
+                return $this->moduleUtil->expiredResponse(action([\App\Http\Controllers\StockAdjustmentController::class, 'index']));
+            }
+
+            $user_id = $request->session()->get('user.id');
+
+            $input_data['adjustment_type'] = 'normal';
+            $input_data['adjustment_sign'] = 'Plus';
+            $input_data['type'] = 'stock_adjustment';
+            $input_data['business_id'] = $business_id;
+            $input_data['created_by'] = $user_id;
+            $input_data['transaction_date'] = $this->productUtil->uf_date($input_data['transaction_date'], true);
+            // dd($input_data['transaction_date']);
+            $input_data['total_amount_recovered'] = 0;
+
+            //Update reference count
+            $ref_count = $this->productUtil->setAndGetReferenceCount('stock_adjustment');
+            //Generate reference number
+            if (empty($input_data['ref_no'])) {
+                $input_data['ref_no'] = $this->productUtil->generateReferenceNumber('stock_adjustment', $ref_count);
+            }
+
+            $products = $request->input('purchases');
+
+            if (!empty($products)) {
+                $product_data = [];
+
+                foreach ($products as $product) {
+                    //Increase available quantity increaseProductQuantity
+                        $adjustment_line = [
+                            'product_id' => $product['product_id'],
+                            'variation_id' => $product['variation_id'],
+                            'quantity' => $this->productUtil->num_uf(-$product['quantity']),
+                            'unit_price' => $this->productUtil->num_uf($product['default_sell_price']),
+                            'sign' => $input_data['adjustment_sign'],
+                        ];
+                        if (!empty($product['lot_no_line_id'])) {
+                            //Add lot_no_line_id to stock adjustment line
+                            $adjustment_line['lot_no_line_id'] = $product['lot_no_line_id'];
+                        }
+                        $product_data[] = $adjustment_line;
+                        $this->productUtil->increaseProductQuantity(
+                            $product['product_id'],
+                            $product['variation_id'],
+                            $input_data['location_id'],
+                            $this->productUtil->num_uf($product['quantity'])
+                        );
+                }
+
+                $stock_adjustment = Transaction::create($input_data);
+                $stock_adjustment->stock_adjustment_lines()->createMany($product_data);
+
+                //Map Stock adjustment & Purchase.
+                $business = [
+                    'id' => $business_id,
+                    'accounting_method' => $request->session()->get('business.accounting_method'),
+                    'location_id' => $input_data['location_id'],
+                    'adjustment_sign'=>$input_data['adjustment_sign'],
+                ];
+                $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
+                $enable_product_editing = $request->session()->get('business.enable_editing_product_from_purchase');
+                // dd($stock_adjustment->stock_adjustment_lines);
+                $this->productUtil->createOrUpdatePurchaseLines($stock_adjustment, $products, $currency_details, $enable_product_editing);
+
+                $this->transactionUtil->activityLog($stock_adjustment, 'added', null, [], false);
+            }
+
+            $output = [
+                'success' => 1,
+                'msg' => __('stock_adjustment.stock_adjustment_added_successfully'),
+            ];
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
+            $msg = trans('messages.something_went_wrong');
+
+            if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {
+                $msg = 'Products must have an opening stock before adding surplus. Please add an opening stock first to proceed.' ;
+            }
+
+            $output = [
+                'success' => 0,
+                'msg' => $msg,
+            ];
+        }
+
+        return redirect('stock-adjustments')->with('status', $output);
+    }
+    public function stockSurplus(){
+        if (!auth()->user()->can('purchase.create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $business_id = request()->session()->get('user.business_id');
+
+        //Check if subscribed or not
+        if (!$this->moduleUtil->isSubscribed($business_id)) {
+            return $this->moduleUtil->expiredResponse();
+        }
+
+        $taxes = TaxRate::where('business_id', $business_id)
+            ->ExcludeForTaxGroup()
+            ->get();
+        $orderStatuses = $this->productUtil->orderStatuses();
+        $business_locations = BusinessLocation::forDropdown($business_id, false, true);
+        $bl_attributes = $business_locations['attributes'];
+        $business_locations = $business_locations['locations'];
+
+        $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
+
+        $default_purchase_status = null;
+        if (request()->session()->get('business.enable_purchase_status') != 1) {
+            $default_purchase_status = 'received';
+        }
+
+        $types = [];
+        if (auth()->user()->can('supplier.create')) {
+            $types['supplier'] = __('report.supplier');
+        }
+        if (auth()->user()->can('customer.create')) {
+            $types['customer'] = __('report.customer');
+        }
+        if (auth()->user()->can('supplier.create') && auth()->user()->can('customer.create')) {
+            $types['both'] = __('lang_v1.both_supplier_customer');
+        }
+        $customer_groups = CustomerGroup::forDropdown($business_id);
+
+        $business_details = $this->businessUtil->getDetails($business_id);
+        $shortcuts = json_decode($business_details->keyboard_shortcuts, true);
+
+        $payment_line = $this->dummyPaymentLine;
+        $payment_types = $this->productUtil->payment_types(null, true, $business_id);
+
+        //Accounts
+        $accounts = $this->moduleUtil->accountsDropdown($business_id, true);
+
+        $common_settings = !empty(session('business.common_settings')) ? session('business.common_settings') : [];
+
+        return view('stock_adjustment.surplus')
+            ->with(compact('taxes', 'orderStatuses', 'business_locations', 'currency_details', 'default_purchase_status', 'customer_groups', 'types', 'shortcuts', 'payment_line', 'payment_types', 'accounts', 'bl_attributes', 'common_settings'));
+    }
     public function index()
     {
         if (!auth()->user()->can('purchase.view') && !auth()->user()->can('purchase.create')) {

@@ -378,6 +378,8 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
 
     Route::get('/stock-adjustments/remove-expired-stock/{purchase_line_id}', [StockAdjustmentController::class, 'removeExpiredStock']);
     Route::post('/stock-adjustments/get_product_row', [StockAdjustmentController::class, 'getProductRow']);
+    Route::get('/stock-surplus', [StockAdjustmentController::class, 'stockSurplus']);
+    Route::post('/stock-surplus-store', [StockAdjustmentController::class, 'stockSurplusStore']);
     Route::resource('stock-adjustments', StockAdjustmentController::class);
 
     Route::get('/cash-register/register-details', [CashRegisterController::class, 'getRegisterDetails']);

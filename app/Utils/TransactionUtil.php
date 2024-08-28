@@ -1523,13 +1523,13 @@ class TransactionUtil extends Util
                             $payment_entry['method'] .= $value['is_return'] == 1 ? 'change' : '';
                             // $payment_entry['method'] .= $value['is_return'] == 1 ? ' (' . $il->change_return_label . ')(-)' : '';
                         } elseif ($value['method'] == 'card') {
-                            $payment_entry['method'] .= !empty($value['card_transaction_number']) ? ', Transaction Number:' . $value['card_transaction_number'] : '';
+                            $payment_entry['method'] .= !empty($value['card_transaction_number']) ? ',TXN:' . $value['card_transaction_number'] : '';
                         } elseif ($value['method'] == 'cheque') {
                             $payment_entry['method'] .= !empty($value['cheque_number']) ? ', Cheque Number:' . $value['cheque_number'] : '';
                         } elseif ($value['method'] == 'bank_transfer') {
                             $payment_entry['method'] .= !empty($value['bank_account_number']) ? ', Account Number:' . $value['bank_account_number'] : '';
                         } elseif ($value['method'] == 'custom_pay_1' || $value['method'] == 'custom_pay_2' || $value['method'] == 'custom_pay_3' || $value['method'] == 'custom_pay_4' || $value['method'] == 'custom_pay_5' || $value['method'] == 'custom_pay_6' || $value['method'] == 'custom_pay_7') {
-                            $payment_entry['method'] .= !empty($value['transaction_no']) ? ', ' . trans('lang_v1.transaction_no') . ':' . $value['transaction_no'] : '';
+                            $payment_entry['method'] .= !empty($value['transaction_no']) ? ',TXN:' . $value['transaction_no'] : '';
                         }
 
                         $output['payments'][] = $payment_entry;

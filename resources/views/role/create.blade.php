@@ -377,6 +377,53 @@
         </div>
         </div>
         <hr>
+        <div class="row check_group">
+          <div class="col-md-1">
+              <h4>Stock Audit</h4>
+          </div>
+          <div class="col-md-2">
+              <div class="checkbox">
+                  <label>
+                      <input type="checkbox" class="check_all input-icheck"> {{ __('role.select_all') }}
+                  </label>
+              </div>
+          </div>
+          <div class="col-md-9">
+              <div class="col-md-12">
+                  <div class="checkbox">
+                      <label>
+                          {!! Form::checkbox('permissions[]', 'stock_audit.view', false, 
+                          ['class' => 'input-icheck']) !!} {{ __('role.stock_audit.view') }}
+                      </label>
+                  </div>
+              </div>
+              <div class="col-md-12">
+                  <div class="checkbox">
+                      <label>
+                          {!! Form::checkbox('permissions[]', 'stock_audit.create', false, 
+                          ['class' => 'input-icheck']) !!} {{ __('role.stock_audit.create') }}
+                      </label>
+                  </div>
+              </div>
+              <div class="col-md-12">
+                  <div class="checkbox">
+                      <label>
+                          {!! Form::checkbox('permissions[]', 'stock_audit.update', false, 
+                          ['class' => 'input-icheck']) !!} {{ __('role.stock_audit.update') }}
+                      </label>
+                  </div>
+              </div>
+              <div class="col-md-12">
+                  <div class="checkbox">
+                      <label>
+                          {!! Form::checkbox('permissions[]', 'stock_audit.delete', false, 
+                          ['class' => 'input-icheck']) !!} {{ __('role.stock_audit.delete') }}
+                      </label>
+                  </div>
+              </div>
+          </div>
+      </div>
+      <hr>
         @if(in_array('purchases', $enabled_modules) || in_array('stock_adjustment', $enabled_modules) )
         <div class="row check_group">
         <div class="col-md-1">

@@ -1238,9 +1238,9 @@ class PurchaseController extends Controller
 
                     $tax_id = $tax->id ?? $tax_id;
                 }
-
+                $currentDate = date('ymd').''.$row_index; // YYMMDD format
                 $temp_array['tax_id'] = $tax_id;
-                $temp_array['lot_number'] = !empty($value[5]) ? $value[5] : null;
+                $temp_array['lot_number'] = !empty($value[5]) ? $value[5]:$currentDate;
                 $temp_array['mfg_date'] = !empty($value[6]) ? $this->productUtil->format_date($value[6]) : null;
                 $temp_array['exp_date'] = !empty($value[7]) ? $this->productUtil->format_date($value[7]) : null;
 

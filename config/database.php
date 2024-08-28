@@ -61,7 +61,7 @@ return [
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
-            'dump' => [ 'dump_binary_path' => 'D:\Xampp\mysql\bin'] 
+            'dump' => [ 'dump_binary_path' => '\user\bin'] 
             // Uncomment above line for windows & provide path to mysql dump binary for backup to work
         ],
 
