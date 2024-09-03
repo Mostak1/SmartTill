@@ -772,7 +772,10 @@ class SellController extends Controller
         $common_settings = $business->common_settings;
         $expiring_soon = $common_settings['expiring_soon'] ?? 30;
         $expiring_later = $common_settings['expiring_later'] ?? 90;
-
+        $pos_settings = json_decode($business->pos_settings, true);
+        
+        $discount_rules = $pos_settings['discount_rules'] ?? [];
+        $enable_discount_rules = $pos_settings['enable_discount_rules'] ?? [];
         // Set session values
         session([
             'expiring_soon' => $expiring_soon,
@@ -783,6 +786,8 @@ class SellController extends Controller
             ->with(compact(
                 'business_details',
                 'taxes',
+                'discount_rules',
+                'enable_discount_rules',
                 'walk_in_customer',
                 'business_locations',
                 'bl_attributes',

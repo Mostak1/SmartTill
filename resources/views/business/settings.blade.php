@@ -217,6 +217,30 @@
                 textarea.addClass('hide');
             }
         })
+        // for discount roles
+        let discountRuleIndex = {{ !empty($pos_settings['discount_rules']) ? count($pos_settings['discount_rules']) : 0 }};
+
+        $('#add_discount_rule').on('click', function() {
+            let newRow = `<tr>
+                            <td>
+                                <input type="number" name="pos_settings[discount_rules][${discountRuleIndex}][max_discount]" class="form-control" placeholder="Max Discount (Fixed)">
+                            </td>
+                            <td>
+                                <input type="number" name="pos_settings[discount_rules][${discountRuleIndex}][min_sell_amount]" class="form-control" placeholder="Minimum Sell Amount">
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger remove_discount_rule">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+            $('#discount_rules_table tbody').append(newRow);
+            discountRuleIndex++;
+        });
+
+        $(document).on('click', '.remove_discount_rule', function() {
+            $(this).closest('tr').remove();
+        });
     });
 </script>
 @endsection

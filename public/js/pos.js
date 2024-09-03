@@ -1918,12 +1918,63 @@ function calculate_billing_details(price_total) {
 function pos_discount(total_amount) {
     var calculation_type = $('#discount_type').val();
     var calculation_amount = __read_number($('#discount_amount'));
-
     var discount = __calculate_amount(calculation_type, calculation_amount, total_amount);
+
+    // Perform discount validation
+    var isValid = validateDiscount(total_amount, {
+        type: calculation_type,
+        amount: calculation_amount
+    });
+
+    if (!isValid) {
+        $('#discount_alert').text('Invalid discount amount.').show();
+        discount = 0; // Reset discount if invalid
+    } else {
+        $('#discount_alert').text('').hide();
+    }
 
     $('span#total_discount').text(__currency_trans_from_en(discount, false));
 
     return discount;
+}
+
+function validateDiscount(totalAmount, discount) {
+    if (discountRules.length === 0 || enable_discount_rules.length === 0) {
+        // No discount rules, so no validation needed
+        return true;
+    }
+
+    var maxDiscount = 0;
+
+    // Find applicable discount rule based on totalAmount
+    for (var i = 0; i < discountRules.length; i++) {
+        var rule = discountRules[i];
+        if (totalAmount >= rule.min_sell_amount) {
+            maxDiscount = rule.max_discount;
+        }
+    }
+
+    // Validate discount based on the type
+    var isValid = true;
+
+    if (discount.type === 'fixed') {
+        if (discount.amount > maxDiscount) {
+            isValid = false;
+            showDiscountAlert(`Discount exceeds the maximum allowed discount of ${maxDiscount}.`);
+        }
+    } else if (discount.type === 'percentage') {
+        var calculatedDiscount = (discount.amount / 100) * totalAmount;
+        if (calculatedDiscount > maxDiscount) {
+            isValid = false;
+            showDiscountAlert(`Discount exceeds the maximum allowed discount of ${maxDiscount}.`);
+        }
+    }
+
+    return isValid;
+}
+
+function showDiscountAlert(message) {
+    $('#discount_alert').text(message).show();
 }
 
 function pos_order_tax(price_total, discount) {

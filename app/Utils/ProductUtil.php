@@ -789,51 +789,121 @@ class ProductUtil extends Util
             return false;
         }
 
-        $output = ['total_before_tax' => 0, 'tax' => 0, 'discount' => 0, 'final_total' => 0];
+        $output = [
+            'total_before_tax' => 0,
+            'tax' => 0,
+            'discount' => 0,
+            'final_total' => 0,
+        ];
 
-        //Sub Total
+        // Calculate Sub Total
         foreach ($products as $product) {
             $unit_price_inc_tax = $uf_number ? $this->num_uf($product['unit_price_inc_tax']) : $product['unit_price_inc_tax'];
             $quantity = $uf_number ? $this->num_uf($product['quantity']) : $product['quantity'];
 
             $output['total_before_tax'] += $quantity * $unit_price_inc_tax;
 
-            //Add modifier price to total if exists
-            if (! empty($product['modifier_price'])) {
+            // Add modifier price to total if exists
+            if (!empty($product['modifier_price'])) {
                 foreach ($product['modifier_price'] as $key => $modifier_price) {
                     $modifier_price = $uf_number ? $this->num_uf($modifier_price) : $modifier_price;
-                    $uf_modifier_price = $uf_number ? $this->num_uf($modifier_price) : $modifier_price;
-                    $modifier_qty = isset($product['modifier_quantity'][$key]) ? $product['modifier_quantity'][$key] : 0;
-                    $modifier_total = $uf_modifier_price * $modifier_qty;
-                    $output['total_before_tax'] += $modifier_total;
+                    $modifier_qty = $uf_number ? $this->num_uf($product['modifier_quantity'][$key] ?? 0) : ($product['modifier_quantity'][$key] ?? 0);
+                    $output['total_before_tax'] += $modifier_price * $modifier_qty;
                 }
             }
         }
 
-        //Calculate discount
-        if (is_array($discount)) {
-            $discount_amount = $uf_number ? $this->num_uf($discount['discount_amount']) : $discount['discount_amount'];
-            if ($discount['discount_type'] == 'fixed') {
-                $output['discount'] = $discount_amount;
-            } else {
-                $output['discount'] = ($discount_amount / 100) * $output['total_before_tax'];
+        // Get business settings
+        $business_id = request()->session()->get('user.business_id');
+        $business = Business::findOrFail($business_id);
+        $pos_settings = json_decode($business->pos_settings, true);
+
+        // Default discount validation
+        $max_discount = 0;
+        $min_sell_amount = 0;
+
+        if (isset($pos_settings['discount_rules']) && isset($pos_settings['enable_discount_rules'])) {
+            foreach ($pos_settings['discount_rules'] as $rule) {
+                $rule_min_sell_amount = $uf_number ? $this->num_uf($rule['min_sell_amount'] ?? 0) : ($rule['min_sell_amount'] ?? 0);
+                $rule_max_discount = $uf_number ? $this->num_uf($rule['max_discount'] ?? 0) : ($rule['max_discount'] ?? 0);
+
+                if ($output['total_before_tax'] >= $rule_min_sell_amount) {
+                    $min_sell_amount = $rule_min_sell_amount;
+                    $max_discount = $rule_max_discount;
+                }
+            }
+
+            // Calculate and validate discount
+            if (is_array($discount) && isset($discount['discount_amount'])) {
+                $discount_amount = $uf_number ? $this->num_uf($discount['discount_amount']) : $discount['discount_amount'];
+
+                if ($output['total_before_tax'] < $min_sell_amount) {
+                    $output['discount'] = 0; // No discount if below minimum sell amount
+                } else {
+                    $discount_result = $this->calculateDiscount($discount, $discount_amount, $output['total_before_tax'], $max_discount);
+                    if (isset($discount_result['success']) && $discount_result['success'] === 0) {
+                        return $discount_result;
+                    }
+                    $output['discount'] = $discount_result;
+                }
+            }
+        } else {
+            // Calculate discount
+            if (is_array($discount)) {
+                $discount_amount = $uf_number ? $this->num_uf($discount['discount_amount']) : $discount['discount_amount'];
+                $output['discount'] = ($discount['discount_type'] === 'fixed') ? $discount_amount : ($discount_amount / 100) * $output['total_before_tax'];
             }
         }
 
-        //Tax
-        $output['tax'] = 0;
-        if (! empty($tax_id)) {
-            $tax_details = TaxRate::find($tax_id);
-            if (! empty($tax_details)) {
-                $output['tax_id'] = $tax_id;
-                $output['tax'] = ($tax_details->amount / 100) * ($output['total_before_tax'] - $output['discount']);
-            }
+        // Calculate tax
+        $output['tax'] = $this->calculateTax($tax_id, $output['total_before_tax'], $output['discount']);
+
+        // Ensure discount is a numeric value before calculating the final total
+        if (is_array($output['discount'])) {
+            $output['discount'] = 0;
         }
 
-        //Calculate total
+        // Calculate final total
         $output['final_total'] = $output['total_before_tax'] + $output['tax'] - $output['discount'];
 
         return $output;
+    }
+
+    private function calculateDiscount($discount, $discount_amount, $total_before_tax, $max_discount)
+    {
+        if ($discount['discount_type'] === 'fixed') {
+            if ($discount_amount > $max_discount) {
+                return [
+                    'success' => 0,
+                    'msg' => 'Discount exceeds the maximum allowed discount.',
+                ];
+            }
+            return $discount_amount;
+        }
+
+        $calculated_discount = ($discount_amount / 100) * $total_before_tax;
+        if ($calculated_discount > $max_discount) {
+            return [
+                'success' => 0,
+                'msg' => 'Discount exceeds the maximum allowed discount.',
+            ];
+        }
+
+        return $calculated_discount;
+    }
+
+    private function calculateTax($tax_id, $total_before_tax, $discount)
+    {
+        if (empty($tax_id)) {
+            return 0;
+        }
+
+        $tax_details = TaxRate::find($tax_id);
+        if (empty($tax_details)) {
+            return 0;
+        }
+
+        return ($tax_details->amount / 100) * ($total_before_tax - $discount);
     }
 
     /**

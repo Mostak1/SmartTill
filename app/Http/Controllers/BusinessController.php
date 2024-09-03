@@ -498,6 +498,17 @@ class BusinessController extends Controller
                     $pos_settings[$key] = $value;
                 }
             }
+            // Process discount rules to remove rules with empty values
+            if (isset($pos_settings['discount_rules'])) {
+                $filtered_rules = [];
+                foreach ($pos_settings['discount_rules'] as $rule) {
+                    // Only add rules where both max_discount and min_sell_amount are non-empty
+                    if (!empty($rule['max_discount']) && !empty($rule['min_sell_amount'])) {
+                        $filtered_rules[] = $rule;
+                    }
+                }
+                $pos_settings['discount_rules'] = $filtered_rules;
+            }
             $business_details['pos_settings'] = json_encode($pos_settings);
 
             $business_details['custom_labels'] = json_encode($business_details['custom_labels']);

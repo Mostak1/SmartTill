@@ -192,4 +192,69 @@
             </div>
         </div>
     </div>
+    <hr>
+    <!-- New Discount Rules Section -->
+    <div class="row">
+        <div class="col-md-8">
+            <h4>Discount Rules:</h4>
+        </div>
+        <div class="col-sm-8">
+            <div class="form-group">
+                <table class="table table-bordered" id="discount_rules_table">
+                    <thead>
+                        <tr>
+                            <th>Max Discount (Fixed)</th>
+                            <th>Minimum Sell Amount</th>
+                            <th>
+                                <button type="button" class="btn btn-success" id="add_discount_rule">
+                                    <i class="fa fa-plus"></i> Add Rule
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!empty($pos_settings['discount_rules']))
+                            @foreach ($pos_settings['discount_rules'] as $index => $rule)
+                                <tr>
+                                    <td>
+                                        {!! Form::number("pos_settings[discount_rules][$index][max_discount]", $rule['max_discount'] ?? 0, [
+                                            'class' => 'form-control',
+                                            'placeholder' => 'Max Discount (Fixed)',
+                                        ]) !!}
+                                    </td>
+                                    <td>
+                                        {!! Form::number("pos_settings[discount_rules][$index][min_sell_amount]", $rule['min_sell_amount'] ?? 0, [
+                                            'class' => 'form-control',
+                                            'placeholder' => 'Minimum Sell Amount',
+                                        ]) !!}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger remove_discount_rule">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="form-group">
+                <div class="checkbox">
+                    <br>
+                    <label>
+                        {!! Form::checkbox(
+                            'pos_settings[enable_discount_rules]',
+                            1,
+                            !empty($pos_settings['enable_discount_rules']) ? true : false,
+                            ['class' => 'input-icheck'],
+                        ) !!} Enable Discount Rules
+                    </label>
+                    @show_tooltip('that allows businesses to implement and enforce specific discounting policies automatically. This feature ensures that discounts are applied consistently according to predefined rules, providing flexibility in pricing while maintaining control over the discounting process.')
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
