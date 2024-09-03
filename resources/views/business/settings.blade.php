@@ -100,6 +100,7 @@
 <!-- /.content -->
 @stop
 @section('javascript')
+<script src="{{ asset('js/purchase.js?v=' . $asset_v) }}"></script>
 <script type="text/javascript">
     __page_leave_confirmation('#bussiness_edit_form');
     $(document).on('ifToggled', '#use_superadmin_settings', function() {

@@ -978,48 +978,70 @@ function updateProjectTaskStatusForKanban(data, el) {
     });
 }
 
-function initializeProjectTaskDatatable() {
+function initializeMyTaskDataTable() {
     var task_view = $("[name='task_view']:checked").val();
-    if((typeof project_task_datatable == 'undefined') && task_view == 'list_view') {
-        project_task_datatable = $('#project_task_table').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax:{
-                    url: '/project/project-task',
-                    data: function(d) {
-                        d.project_id = $('#project_id').val();
-                        d.user_id = $('#assigned_to_filter').val();
-                        d.status = $('#status_filter').val();
-                        d.due_date = $('#due_date_filter').val();
-                        d.priority = $('#priority_filter').val();
-                        d.task_view = $("[name='task_view']:checked").val();
+    if (typeof my_task_datatable == 'undefined' && task_view == 'list_view') {
+        my_task_datatable = $('#my_task_table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '/project/project-task',
+                data: function (d) {
+                    d.project_id = $('#project_id').val();
+                    d.user_id = $('#assigned_to_filter').val();
+                    d.status = $('#status_filter').val();
+                    d.due_date = $('#due_date_filter').val();
+                    d.priority = $('#priority_filter').val();
+                    d.task_view = $("[name='task_view']:checked").val();
+                },
+            },
+            columnDefs: [
+                {
+                    targets: [0, 1, 3, 7, 8],
+                    orderable: false,
+                    searchable: false,
+                },
+            ],
+            aaSorting: [[7, 'asc']],
+            columns: [
+                { data: 'action', name: 'action' },
+                { data: 'created_at', name: 'created_at' },
+                { data: 'project' },
+                { data: 'subject', name: 'subject' },
+                { data: 'members' },
+                { data: 'priority', name: 'priority' },
+                {
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
                     }
                 },
-                columnDefs: [
-                    {
-                        targets: [0, 2, 6, 7],
-                        orderable: false,
-                        searchable: false,
-                    },
-                ],
-                aaSorting: [[6, 'asc']],
-                columns: [
-                    { data: 'action', name: 'action' },
-                    { data: 'subject', name: 'subject' },
-                    { data: 'members'},
-                    { data: 'priority', name: 'priority' },
-                    { data: 'start_date', name: 'start_date' },
-                    { data: 'due_date', name: 'due_date' },
-                    { data: 'status', name: 'status' },
-                    { data: 'createdBy'},
-                    { data: 'custom_field_1', name: 'custom_field_1' },
-                    { data: 'custom_field_2', name: 'custom_field_2' },
-                    { data: 'custom_field_3', name: 'custom_field_3' },
-                    { data: 'custom_field_4', name: 'custom_field_4' },
-                ]
+                { data: 'start_date', name: 'start_date' },
+                { data: 'due_date', name: 'due_date' },
+                { data: 'status', name: 'status' },
+                { data: 'createdBy' },
+                { data: 'updated_at', name: 'updated_at' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function (data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
+            ],
         });
-    } else if (task_view == 'list_view') {
-        project_task_datatable.ajax.reload();
+    } else if (typeof my_task_datatable != 'undefined' && task_view == 'list_view') {
+        my_task_datatable.ajax.reload();
     } else if (task_view == 'kanban') {
         initializeTaskKanbanBoard();
     }
@@ -1307,21 +1329,83 @@ KanbanBoard.prototype.initTaskKanban = function (boards, jKanbanElemSelector) {
                         status : $newParentStatus,
                         task_id: $(el).data('eid')
                     };
-
                     updateProjectTaskStatusForKanban(data, $el);
                 }
             }
         },
-
         addItemButton: false,
         boards: boards
     });
-
     initializeAutoScrollOnKanbanWhileCardDragging(kanban);
-
     return kanban;
 };
-
+function initializeProjectTaskDatatable() {
+    var task_view = $("[name='task_view']:checked").val();
+    if (typeof project_task_datatable == 'undefined' && task_view == 'list_view') {
+        project_task_datatable = $('#project_task_table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '/project/project-task',
+                data: function (d) {
+                    d.project_id = $('#project_id').val();
+                    d.user_id = $('#assigned_to_filter').val();
+                    d.status = $('#status_filter').val();
+                    d.due_date = $('#due_date_filter').val();
+                    d.priority = $('#priority_filter').val();
+                    d.task_view = $("[name='task_view']:checked").val();
+                },
+            },
+            columnDefs: [
+                {
+                    targets: [0, 2, 6, 7],
+                    orderable: false,
+                    searchable: false,
+                },
+            ],
+            aaSorting: [[6, 'asc']],
+            columns: [
+                { data: 'action', name: 'action' },
+                { data: 'created_at', name: 'created_at' },
+                { data: 'subject', name: 'subject' },
+                { data: 'members' },
+                { data: 'priority', name: 'priority' },
+                {
+                    data: 'custom_field_2', 
+                    name: 'custom_field_2',
+                    render: function(data, type, row) {
+                        if (data) {
+                            return data + ' hours';
+                        } else {
+                            return '';
+                        }
+                    }
+                },
+                { data: 'start_date', name: 'start_date' },
+                { data: 'due_date', name: 'due_date' },
+                { data: 'status', name: 'status' },
+                { data: 'createdBy' },
+                { data: 'updated_at', name: 'updated_at' },
+                {
+                    data: 'custom_field_1',
+                    name: 'custom_field_1',
+                    render: function (data, type, row) {
+                        // Create a temporary element to parse the HTML content
+                        var tempElement = $('<div>').html(data);
+                        // Extract the text content from the temporary element
+                        var textContent = tempElement.text();
+                        // Return the extracted text content
+                        return textContent;
+                    }
+                },
+            ],
+        });
+    } else if (task_view == 'list_view') {
+        project_task_datatable.ajax.reload();
+    } else if (task_view == 'kanban') {
+        initializeTaskKanbanBoard();
+    }
+}
 /**
  * PROJECT MODULE
  * project report

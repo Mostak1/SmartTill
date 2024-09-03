@@ -240,13 +240,13 @@
 			data-rule-required="true" 
 			data-msg-required="@lang('validation.custom-messages.this_field_is_required')" 
 			@if($product->enable_stock && empty($pos_settings['allow_overselling']) && empty($is_sales_order) )
-				data-rule-max-value="{{$max_qty_rule}}" data-qty_available="{{$product->qty_available}}" data-msg-max-value="{{$max_qty_msg}}" 
+				 data-qty_available="{{$product->qty_available}}" data-msg-max-value="{{$max_qty_msg}}" 
 				data-msg_max_default="@lang('validation.custom-messages.quantity_not_available', ['qty'=> $product->formatted_qty_available, 'unit' => $product->unit  ])" 
 			@endif 
 		>
 		<span class="input-group-btn"><button type="button" class="btn btn-default btn-flat quantity-up"><i class="fa fa-plus text-success"></i></button></span>
 		</div>
-		
+		<span class="pos_qty_error error hide">Quantity {{$product->formatted_qty_available}} {{$product->unit}} available</span>
 		<input type="hidden" name="products[{{$row_count}}][product_unit_id]" value="{{$product->unit_id}}">
 		@if(count($sub_units) > 0)
 			<br>

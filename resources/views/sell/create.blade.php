@@ -54,6 +54,14 @@
 	$custom_labels = json_decode(session('business.custom_labels'), true);
 	$common_settings = session()->get('business.common_settings');
 @endphp
+<!-- Debugging the session values -->
+@php
+    $expiringSoon = session('expiring_soon');
+    $expiringLater = session('expiring_later');
+@endphp
+
+<input hidden type="number" value="{{ $expiringSoon }}" id="expiring_soon">
+<input hidden type="number" value="{{ $expiringLater }}" id="expiring_later">
 <input type="hidden" id="item_addition_method" value="{{$business_details->item_addition_method}}">
 	{!! Form::open(['url' => action([\App\Http\Controllers\SellPosController::class, 'store']), 'method' => 'post', 'id' => 'add_sell_form', 'files' => true ]) !!}
 	 @if(!empty($sale_type))
@@ -215,9 +223,9 @@
 				@if(!empty($status))
 					<input type="hidden" name="status" id="status" value="{{$status}}">
 
-					@if(in_array($status, ['draft', 'quotation']))
+					{{-- @if(in_array($status, ['draft', 'quotation']))
 						<input type="hidden" id="disable_qty_alert">
-					@endif
+					@endif --}}
 				@else
 					<div class="@if(!empty($commission_agent)) col-sm-3 @else col-sm-4 @endif">
 						<div class="form-group">

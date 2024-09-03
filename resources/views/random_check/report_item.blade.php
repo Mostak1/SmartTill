@@ -10,7 +10,7 @@
         <div class="modal-body">
             <p style="text-align: right">Generated at: {{ now()->format('d-m-Y, h:i A') }}</p>
             <p><strong>Location:</strong> {{ $location->name }}</p>
-            
+            <p><strong>Report:</strong> {{ $report->report_no }}</p>
             <h3>Missing Items</h3>
             <table class="table table-bordered table-striped print-font">
                 <thead>

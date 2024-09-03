@@ -125,6 +125,9 @@
                         <a href="#product_stock_report" data-toggle="tab" aria-expanded="true"><i class="fa fa-hourglass-half" aria-hidden="true"></i> @lang('report.stock_report')</a>
                     </li>
                     @endcan
+                    <li>
+                        <a href="#product_expiry_tab" data-toggle="tab" aria-expanded="true"><i class="fa fa-exclamation-triangle text-yellow" aria-hidden="true"></i> Stock Expiry Alert</a>
+                    </li>
                 </ul>
 
                 <div class="tab-content">
@@ -149,8 +152,10 @@
                     <div class="tab-pane" id="product_stock_report">
                         @include('report.partials.stock_report_table')
                     </div>
-                  
                     @endcan
+                    <div class="tab-pane" id="product_expiry_tab">
+                        @include('product.partials.product_expiry_alert')
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,6 +179,7 @@
 @endif
 @include('product.partials.edit_product_location_modal')
 
+<input type="hidden" id="stock_expiry_alert_days" value="{{ \Carbon::now()->addDays(session('business.stock_expiry_alert_days', 30))->format('Y-m-d') }}">
 </section>
 <!-- /.content -->
 
@@ -527,6 +533,33 @@ $(document).ready(function() {
     // Trigger DataTable reload on filter change
     $('#product_list_filter_category_id, #product_list_filter_brand_id, #product_list_filter_type, #product_list_filter_unit_id, #product_list_filter_tax_id, #active_state, #location_id, #product_list_filter_stock_status, #selling_state').change(function() {
         sell_return_table.draw();
+    });
+});
+
+
+$(document).ready(function() {
+        //Stock expiry report table
+stock_expiry_alert_table = $('#stock_expiry_table').DataTable({
+            processing: true,
+            serverSide: true,
+        ajax: {
+            url: '/reports/stock-expiry',
+            data: function(d) {
+                d.exp_date_filter = $('#stock_expiry_alert_days').val();
+            },
+        },
+        order: [[3, 'asc']],
+        columns: [
+            { data: 'product', name: 'p.name' },
+            { data: 'location', name: 'l.name' },
+            { data: 'stock_left', name: 'stock_left' },
+            { data: 'lot_number', name: 'lot_number' },
+            { data: 'exp_date', name: 'exp_date' },
+        ],
+        fnDrawCallback: function(oSettings) {
+            __show_date_diff_for_human($('#stock_expiry_table'));
+            __currency_convert_recursively($('#stock_expiry_table'));
+        },
     });
 });
 

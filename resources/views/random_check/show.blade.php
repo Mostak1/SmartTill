@@ -31,6 +31,7 @@
                             <th>Soft. Count</th>
                             <th>Phy. Count Dif.</th>
                             <th>Comment</th>
+                            <th>Lot No.</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,6 +56,7 @@
                                     {{ $formatted }}
                                 </td>
                                 <td>{{ $detail->comment }}</td>
+                                <td>{{ $detail->lot_number }}</td>
                             </tr>
                         @endforeach
                     </tbody>

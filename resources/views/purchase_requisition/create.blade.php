@@ -64,7 +64,22 @@
                             ]) !!}
                         </div>
                     </div>
-                    <div class="col-md-3">
+
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            {!! Form::label('product_type', __('product.product_type') . ':') !!}
+                            {!! Form::select('product_type', [
+                                'sale' => 'For Sale',
+                                'raw_materials' => 'Raw Materials'
+                            ], null, [
+                                'class' => 'form-control select2',
+                                'style' => 'width:100%',
+                                'id' => 'product_type',
+                            ]) !!}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
                         <div class="form-group">
                             {!! Form::label('category_id[]', __('product.category') . ':') !!}
                             {!! Form::select('category_id[]', $categories, null, [
@@ -75,7 +90,7 @@
                             ]) !!}
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="form-group">
                             {!! Form::label('brand_id[]', __('product.brand') . ':') !!}
                             {!! Form::select('brand_id[]', $brands, null, [
@@ -162,10 +177,11 @@
         $(document).ready(function() {
             var dateRangeSettings = {
                 ranges: {
-                    'Next 30 Days': [moment(), moment().add(30, 'days')],
                     'Next 7 Days': [moment(), moment().add(7, 'days')],
                     'Next 15 Days': [moment(), moment().add(15, 'days')],
-                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Next 30 Days': [moment(), moment().add(30, 'days')],
+                    'Next 60 Days': [moment(), moment().add(60, 'days')],
+                    'Days Left (Month)': [moment().startOf('month'), moment().endOf('month')],
                     'Next Month': [moment().add(1, 'months').startOf('month'), moment().add(1, 'months').endOf(
                         'month')]
                 },
@@ -222,6 +238,7 @@
                 var business_location_id = $('#business_location_id').val();
                 var category_ids = $('#category_id').val();
                 var brand_ids = $('#brand_id').val();
+                var product_type = $('#product_type').val();
 
                 $.ajax({
                     url: '{{ route('purchase_requisition.getProductRequisitionDetails') }}',
@@ -231,7 +248,8 @@
                         end_date: end,
                         business_location_id: business_location_id,
                         category_id: category_ids,
-                        brand_id: brand_ids
+                        brand_id: brand_ids,
+                        product_type: product_type
                     },
                     success: function(response) {
                         $('#orderContent').html(response.content);

@@ -264,7 +264,16 @@ class SellPosController extends Controller
 
         //Added check because $users is of no use if enable_contact_assign if false
         $users = config('constants.enable_contact_assign') ? User::forDropdown($business_id, false, false, false, true) : [];
+        $business = Business::findOrFail($business_id);
+        $common_settings = $business->common_settings;
+        $expiring_soon = $common_settings['expiring_soon'] ?? 30;
+        $expiring_later = $common_settings['expiring_later'] ?? 90;
 
+        // Set session values
+        session([
+            'expiring_soon' => $expiring_soon,
+            'expiring_later' => $expiring_later,
+        ]);
         return view('sale_pos.create')
             ->with(compact(
                 'edit_discount',
@@ -511,6 +520,11 @@ class SellPosController extends Controller
                 $is_credit_sale = isset($input['is_credit_sale']) && $input['is_credit_sale'] == 1 ? true : false;
 
                 if (!$transaction->is_suspend && !empty($input['payment']) && !$is_credit_sale) {
+                    foreach ($input['payment'] as &$payment) {
+                        // Assuming transaction_no and note are part of the input
+                        $payment['transaction_no'] = $request->input('transaction_no', null);
+                        $payment['note'] = $request->input('note', null);
+                    }
                     $this->transactionUtil->createOrUpdatePaymentLines($transaction, $input['payment']);
                 }
 

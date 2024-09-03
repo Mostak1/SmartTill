@@ -231,3 +231,39 @@
 		</div>
 	</div>
 </div>
+<!-- Bkash Payment Details Modal -->
+<div id="bkash_details_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="bkashModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Bkash Payment Details</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {!! Form::label("transaction_no", __('Transaction No.')) !!}
+                                {!! Form::text("transaction_no", null, ['class' => 'form-control', 'placeholder' => __('Enter Transaction No.'), 'id' => "transaction_no", 'autofocus', 'required' => 'required']); !!}
+								<div id="transaction_no_error" class="text-danger" style="display: none;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                {!! Form::label("note", __('Notes')) !!}
+                                {!! Form::textarea("note", null, ['class' => 'form-control', 'rows' => 3, 'placeholder' => __('Enter Notes'), 'id' => "note"]); !!}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">@lang('messages.close')</button>
+                <button type="button" class="btn btn-primary" id="pos-save-bkash">@lang('sale.finalize_payment')</button>
+            </div>
+        </div>
+    </div>
+</div>

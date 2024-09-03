@@ -50,8 +50,20 @@ class PurchaseController extends Controller
         $this->moduleUtil = $moduleUtil;
 
         $this->dummyPaymentLine = [
-            'method' => 'cash', 'amount' => 0, 'note' => '', 'card_transaction_number' => '', 'card_number' => '', 'card_type' => '', 'card_holder_name' => '', 'card_month' => '', 'card_year' => '', 'card_security' => '', 'cheque_number' => '', 'bank_account_number' => '',
-            'is_return' => 0, 'transaction_no' => '',
+            'method' => 'cash',
+            'amount' => 0,
+            'note' => '',
+            'card_transaction_number' => '',
+            'card_number' => '',
+            'card_type' => '',
+            'card_holder_name' => '',
+            'card_month' => '',
+            'card_year' => '',
+            'card_security' => '',
+            'cheque_number' => '',
+            'bank_account_number' => '',
+            'is_return' => 0,
+            'transaction_no' => '',
         ];
     }
 
@@ -686,12 +698,23 @@ class PurchaseController extends Controller
             $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
 
             $update_data = $request->only([
-                'ref_no', 'status', 'contact_id',
-                'transaction_date', 'total_before_tax',
-                'discount_type', 'discount_amount', 'tax_id',
-                'tax_amount', 'shipping_details',
-                'shipping_charges', 'final_total',
-                'additional_notes', 'exchange_rate', 'pay_term_number', 'pay_term_type', 'purchase_order_ids',
+                'ref_no',
+                'status',
+                'contact_id',
+                'transaction_date',
+                'total_before_tax',
+                'discount_type',
+                'discount_amount',
+                'tax_id',
+                'tax_amount',
+                'shipping_details',
+                'shipping_charges',
+                'final_total',
+                'additional_notes',
+                'exchange_rate',
+                'pay_term_number',
+                'pay_term_type',
+                'purchase_order_ids',
             ]);
 
             $exchange_rate = $update_data['exchange_rate'];
@@ -1113,8 +1136,8 @@ class PurchaseController extends Controller
                 $foreign_cat = Category::where('is_us_product', 1)->first();
                 if ($foreign_cat) {
                     $cat_desck = $foreign_cat->description;
-                }else{
-                    $cat_desck=null;
+                } else {
+                    $cat_desck = null;
                 }
                 return view('purchase.partials.purchase_entry_row')
                     ->with(compact(
@@ -1238,9 +1261,9 @@ class PurchaseController extends Controller
 
                     $tax_id = $tax->id ?? $tax_id;
                 }
-                $currentDate = date('ymd').''.$row_index; // YYMMDD format
+                $currentDate = date('ymd') . '' . $row_index; // YYMMDD format
                 $temp_array['tax_id'] = $tax_id;
-                $temp_array['lot_number'] = !empty($value[5]) ? $value[5]:$currentDate;
+                $temp_array['lot_number'] = !empty($value[5]) ? $value[5] : $currentDate;
                 $temp_array['mfg_date'] = !empty($value[6]) ? $this->productUtil->format_date($value[6]) : null;
                 $temp_array['exp_date'] = !empty($value[7]) ? $this->productUtil->format_date($value[7]) : null;
 
@@ -1288,8 +1311,11 @@ class PurchaseController extends Controller
         $purchase_order = Transaction::where('business_id', $business_id)
             ->where('type', 'purchase_order')
             ->with([
-                'purchase_lines', 'purchase_lines.variations',
-                'purchase_lines.product', 'purchase_lines.product.unit', 'purchase_lines.variations.product_variation',
+                'purchase_lines',
+                'purchase_lines.variations',
+                'purchase_lines.product',
+                'purchase_lines.product.unit',
+                'purchase_lines.variations.product_variation',
             ])
             ->findOrFail($purchase_order_id);
 

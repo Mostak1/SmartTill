@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\SellingPriceGroup;
+use App\User;
 use App\Utils\ModuleUtil;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -48,12 +49,13 @@ class RoleController extends Controller
                     if (! $row->is_default || $row->name == 'Cashier#'.$row->business_id) {
                         $action = '';
                         if (auth()->user()->can('roles.update')) {
-                            $action .= '<a href="'.action([\App\Http\Controllers\RoleController::class, 'edit'], [$row->id]).'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> '.__('messages.edit').'</a>';
+                            $action .= '<a href="'.action([\App\Http\Controllers\RoleController::class, 'edit'], [$row->id]).'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> '.('messages.edit').'</a>';
                         }
                         if (auth()->user()->can('roles.delete')) {
                             $action .= '&nbsp
-                                <button data-href="'.action([\App\Http\Controllers\RoleController::class, 'destroy'], [$row->id]).'" class="btn btn-xs btn-danger delete_role_button"><i class="glyphicon glyphicon-trash"></i> '.__('messages.delete').'</button>';
+                                <button data-href="'.action([\App\Http\Controllers\RoleController::class, 'destroy'], [$row->id]).'" class="btn btn-xs btn-danger delete_role_button"><i class="glyphicon glyphicon-trash"></i> '.('messages.delete').'</button>';
                         }
+                        $action .= '&nbsp <a href="#" data-href="' .action([\App\Http\Controllers\RoleController::class, 'users'], [$row->id]).'" class="btn btn-xs btn-success users-modal-show"><i class="fas fa-users"></i> '.('Users').'</a>';
 
                         return $action;
                     } else {
@@ -78,30 +80,62 @@ class RoleController extends Controller
         return view('role.index');
     }
 
+    public function create()
+    {
+        $business_id = request()->session()->get('user.business_id');
+        $roles = Role::where('business_id', $business_id)
+                 ->where('id', '!=', 1)
+                 ->get();
+
+        // Process role names to remove '#1' part
+        $roles = $roles->mapWithKeys(function($role) use ($business_id) {
+            $role_name = str_replace('#' . $business_id, '', $role->name);
+            return [$role->id => $role_name];
+        });
+
+        return view('role.role_create_modal', compact('roles'));
+    }
+
+    public function users($role_id)
+    {
+        if (! auth()->user()->can('roles.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $business_id = request()->session()->get('user.business_id');
+
+        $role = Role::findOrFail($role_id);
+
+        // Process the role name to remove the '#{business_id}' part
+        $role_name = str_replace('#' . $business_id, '', $role->name);
+
+        $users = User::role($role->name)->get(['username', 'first_name', 'last_name', 'email']);
+
+        return view('role.users_modal', compact('role_name', 'users'));
+    }
     /**
      * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
-    {
-        if (! auth()->user()->can('roles.create')) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $business_id = request()->session()->get('user.business_id');
-
-        $selling_price_groups = SellingPriceGroup::where('business_id', $business_id)
-                                    ->active()
-                                    ->get();
-
-        $module_permissions = $this->moduleUtil->getModuleData('user_permissions');
-
-        $common_settings = ! empty(session('business.common_settings')) ? session('business.common_settings') : [];
-
-        return view('role.create')
-                ->with(compact('selling_price_groups', 'module_permissions', 'common_settings'));
-    }
+    // public function create($role_name = null)
+    // {
+    //     if (! auth()->user()->can('roles.create')) {
+    //         abort(403, 'Unauthorized action.');
+    //     }
+    
+    //     $business_id = request()->session()->get('user.business_id');
+    
+    //     $selling_price_groups = SellingPriceGroup::where('business_id', $business_id)
+    //                                 ->active()
+    //                                 ->get();
+    
+    //     $module_permissions = $this->moduleUtil->getModuleData('user_permissions');
+    
+    //     $common_settings = ! empty(session('business.common_settings')) ? session('business.common_settings') : [];
+        
+    //     return view('role.create')
+    //             ->with(compact('selling_price_groups', 'module_permissions', 'common_settings', 'role_name'));
+    // }    
 
     /**
      * Store a newly created resource in storage.
@@ -114,50 +148,43 @@ class RoleController extends Controller
         if (! auth()->user()->can('roles.create')) {
             abort(403, 'Unauthorized action.');
         }
-
+    
         try {
-            $role_name = $request->input('name');
-            $permissions = $request->input('permissions');
+            $role_name = $request->input('role_name');
+            $copy_role_id = $request->input('copy_role');
+            $permissions = $request->input('permissions', []);
             $business_id = $request->session()->get('user.business_id');
-
+    
             $count = Role::where('name', $role_name.'#'.$business_id)
                         ->where('business_id', $business_id)
                         ->count();
+    
             if ($count == 0) {
-                $is_service_staff = 0;
-                if ($request->input('is_service_staff') == 1) {
-                    $is_service_staff = 1;
-                }
-
+                $is_service_staff = $request->input('is_service_staff') == 1 ? 1 : 0;
+    
                 $role = Role::create([
                     'name' => $role_name.'#'.$business_id,
                     'business_id' => $business_id,
                     'is_service_staff' => $is_service_staff,
                 ]);
-
-                //Include selling price group permissions
-                $spg_permissions = $request->input('radio_option');
-                if (! empty($spg_permissions)) {
-                    foreach ($spg_permissions as $spg_permission) {
-                        $permissions[] = $spg_permission;
-                    }
+    
+                if ($copy_role_id) {
+                    $existingRole = Role::find($copy_role_id);
+                    $existingPermissions = $existingRole->permissions->pluck('name')->toArray();
+                    $permissions = array_merge($permissions, $existingPermissions);
                 }
-
-                $radio_options = $request->input('radio_option');
-                if (! empty($radio_options)) {
-                    foreach ($radio_options as $key => $value) {
-                        $permissions[] = $value;
-                    }
-                }
-
+    
                 $this->__createPermissionIfNotExists($permissions);
-
+    
                 if (! empty($permissions)) {
                     $role->syncPermissions($permissions);
                 }
+    
                 $output = ['success' => 1,
                     'msg' => __('user.role_added'),
                 ];
+            // Redirect to the edit page of the newly created role
+            return redirect()->action([\App\Http\Controllers\RoleController::class, 'edit'], [$role->id])->with('status', $output);
             } else {
                 $output = ['success' => 0,
                     'msg' => __('user.role_already_exists'),
@@ -165,14 +192,15 @@ class RoleController extends Controller
             }
         } catch (\Exception $e) {
             \Log::emergency('File:'.$e->getFile().'Line:'.$e->getLine().'Message:'.$e->getMessage());
-
+    
             $output = ['success' => 0,
                 'msg' => __('messages.something_went_wrong'),
             ];
         }
-
+    
         return redirect('roles')->with('status', $output);
     }
+    
 
     /**
      * Display the specified resource.

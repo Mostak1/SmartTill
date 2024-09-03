@@ -19,7 +19,7 @@
                 <th>@lang('report.total_stock_adjustment')(Surplus)</th>
                 <td>
                     <span class="display_currency"
-                        data-is_quantity="true">{{ -$stock_details['total_adjusted_surplus'] }}</span>
+                        data-is_quantity="true">{{$stock_details['total_adjusted_surplus'] }}</span>
                     {{ $stock_details['unit'] }}
                 </td>
             </tr>
@@ -189,7 +189,7 @@
                                 <a href="#"
                                     data-href="{{ action([\App\Http\Controllers\SellController::class, 'show'], $history['sele_id']) }}"
                                     class="btn-modal" data-container=".view_modal">{{ $history['ref_no'] }}</a>
-                            @elseif ($history['type_label'] == 'Purchase')
+                            @elseif ($history['type_label'] == 'Purchase' || $history['type_label'] == 'Surplus')
                                 <a href="#"
                                     data-href="{{ action([\App\Http\Controllers\PurchaseController::class, 'show'], $history['sele_id']) }}"
                                     class="btn-modal" data-container=".view_modal">{{ $history['ref_no'] }}</a>

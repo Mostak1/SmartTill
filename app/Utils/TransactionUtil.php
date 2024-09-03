@@ -766,6 +766,7 @@ class TransactionUtil extends Util
                         'card_security' => isset($payment['card_security']) ? $payment['card_security'] : null,
                         'cheque_number' => isset($payment['cheque_number']) ? $payment['cheque_number'] : null,
                         'bank_account_number' => isset($payment['bank_account_number']) ? $payment['bank_account_number'] : null,
+                        'transaction_no' => isset($payment['transaction_no']) ? $payment['transaction_no'] : null,
                         'note' => isset($payment['note']) ? $payment['note'] : null,
                         'paid_on' => $paid_on,
                         'created_by' => empty($user_id) ? auth()->user()->id : $user_id,
@@ -774,11 +775,11 @@ class TransactionUtil extends Util
                         'account_id' => !empty($payment['account_id']) && $payment['method'] != 'advance' ? $payment['account_id'] : null,
                     ];
 
-                    for ($i = 1; $i < 8; $i++) {
-                        if ($payment['method'] == 'custom_pay_' . $i) {
-                            $payment_data['transaction_no'] = $payment["transaction_no_{$i}"];
-                        }
-                    }
+                    // for ($i = 1; $i < 8; $i++) {
+                    //     if ($payment['method'] == 'custom_pay_' . $i) {
+                    //         $payment_data['transaction_no'] = $payment["transaction_no_{$i}"];
+                    //     }
+                    // }
 
                     $payments_formatted[] = new TransactionPayment($payment_data);
 
@@ -4142,6 +4143,7 @@ class TransactionUtil extends Util
                 ->whereIn('transactions.type', [
                     'purchase',
                     'purchase_transfer',
+                    'stock_adjustment',
                     'opening_stock',
                     'production_purchase',
                 ])
@@ -4420,7 +4422,7 @@ class TransactionUtil extends Util
                         ];
                     //Update purchase line
                     PurchaseLine::where('id', $purchaseId)
-                        ->update(['quantity_adjusted_surplus' => $purchase_id->quantity_adjusted_surplus + $qty_selling, 'quantity_adjusted' => $purchase_id->quantity_adjusted+ $qty_selling]);
+                        ->update(['quantity_adjusted_surplus' => $purchase_id->quantity_adjusted_surplus - $qty_selling, 'quantity_adjusted' => $purchase_id->quantity_adjusted+ $qty_selling]);
                 }
             }
             foreach ($rows as $k => $row) {
@@ -4450,7 +4452,7 @@ class TransactionUtil extends Util
 
                         //Update purchase line
                         PurchaseLine::where('id', $purchaseId)
-                            ->update(['quantity_adjusted_surplus' => $row->quantity_adjusted_surplus + $qty_allocated, 'quantity_adjusted' => $row->quantity_adjusted+ $qty_allocated]);
+                            ->update(['quantity_adjusted_surplus' => $row->quantity_adjusted_surplus - $qty_allocated, 'quantity_adjusted' => $row->quantity_adjusted+ $qty_allocated]);
                     }
                 } elseif ($mapping_type == 'purchase') {
                     //Mapping of purchase

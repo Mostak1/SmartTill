@@ -1352,19 +1352,6 @@ class ReportController extends Controller
                         return '--';
                     }
                 })
-                // ->editColumn('exp_date', function ($row) {
-                //     if (!empty($row->exp_date)) {
-                //         $carbon_exp = \Carbon::createFromFormat('Y-m-d', $row->exp_date);
-                //         $carbon_now = \Carbon::now();
-                //         if ($carbon_now->diffInDays($carbon_exp, false) >= 0) {
-                //             return $this->productUtil->format_date($row->exp_date) . '<br><small>( <span class="time-to-now">' . $row->exp_date . '</span> )</small>';
-                //         } else {
-                //             return $this->productUtil->format_date($row->exp_date) . ' &nbsp; <span class="label label-danger no-print">' . __('report.expired') . '</span><span class="print_section">' . __('report.expired') . '</span><br><small>( <span class="time-from-now">' . $row->exp_date . '</span> )</small>';
-                //         }
-                //     } else {
-                //         return '--';
-                //     }
-                // })
                 ->editColumn('ref_no', function ($row) {
                     return '<button type="button" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], [$row->transaction_id])
                         . '" class="btn btn-link btn-modal" data-container=".view_modal"  >' . $row->ref_no . '</button>';
@@ -1372,6 +1359,10 @@ class ReportController extends Controller
                 ->editColumn('stock_left', function ($row) {
                     return '<span data-is_quantity="true" class="display_currency stock_left" data-currency_symbol=false data-orig-value="' . $row->stock_left . '" data-unit="' . $row->unit . '" >' . $row->stock_left . '</span> ' . $row->unit;
                 })
+                ->editColumn('lot_number', function ($row) {
+                    return !empty($row->lot_number) ? $row->lot_number : '-';
+                })
+                
                 ->addColumn('edit', function ($row) {
                     $html = '<button type="button" class="btn btn-primary btn-xs stock_expiry_edit_btn" data-transaction_id="' . $row->transaction_id . '" data-purchase_line_id="' . $row->purchase_line_id . '"> <i class="fa fa-edit"></i> ' . __('messages.edit') .
                         '</button>';
@@ -1387,7 +1378,23 @@ class ReportController extends Controller
 
                     return $html;
                 })
-                ->rawColumns(['exp_date', 'ref_no', 'edit', 'stock_left'])
+                ->editColumn('exp_date', function ($row) {
+                    if (!empty($row->exp_date)) {
+                        $carbon_exp = \Carbon::createFromFormat('Y-m-d', $row->exp_date);
+                        $carbon_now = \Carbon::now();
+                        if ($carbon_now->diffInDays($carbon_exp, false) >= 0) {
+                            return $this->productUtil->format_date($row->exp_date) . '<br><small>( <span class="time-to-now">' . $row->exp_date . '</span> )</small>';
+                        } else {
+                            return $this->productUtil->format_date($row->exp_date) . ' &nbsp; <span class="label label-danger no-print">' . __('report.expired') . '</span><span class="print_section">' . __('report.expired') . '</span><br><small>( <span class="time-from-now">' . $row->exp_date . '</span> )</small>';
+                        }
+                    } else {
+                        return '--';
+                    }
+                })  
+                ->editColumn('ref_no', function ($row) {
+                    return '<button type="button" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], [$row->transaction_id]) . '" class="btn btn-link btn-modal" data-container=".view_modal">' . $row->ref_no . '</button>';
+                })                              
+                ->rawColumns(['exp_date', 'ref_no', 'edit', 'stock_left', 'lot_number'])
                 ->make(true);
         }
 

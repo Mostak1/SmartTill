@@ -160,7 +160,9 @@ class ProductController extends Controller
                 DB::raw('MAX(v.dpp_inc_tax) as max_purchase_price'),
                 DB::raw('MAX(v.foreign_p_price_inc_tex) as max_foreign_p_price'),
                 DB::raw('MAX(v.currency_rate) as foreign_currency_rate'),
-                DB::raw('MIN(v.dpp_inc_tax) as min_purchase_price')
+                DB::raw('MIN(v.dpp_inc_tax) as min_purchase_price'),
+                DB::raw('(v.sell_price_inc_tax - v.dpp_inc_tax) as profit_per_unit'),
+                DB::raw('((v.sell_price_inc_tax - v.dpp_inc_tax) / v.sell_price_inc_tax * 100) as profit_margin_percentage')
             );
 
             //if woocomerce enabled add field to query
@@ -347,11 +349,7 @@ class ProductController extends Controller
                      @format_currency($min_price) @if($max_price != $min_price && $type == "variable") -  @format_currency($max_price)@endif </div> @endif '
                 )
                 ->addColumn('profit_margin', function ($row) {
-                    $profit = 0;
-                    if ($row->max_price > 0) {
-                        $profit = round((($row->max_price - $row->max_purchase_price) / $row->max_price) * 100, 2);
-                    }
-                    return $profit . '%';
+                    return number_format($row->profit_margin_percentage, 2) . '%';
                 })
                 ->filterColumn('products.sku', function ($query, $keyword) {
                     $query->whereHas('variations', function ($q) use ($keyword) {
@@ -367,7 +365,7 @@ class ProductController extends Controller
                             return '';
                         }
                     },
-                ])
+                ])->orderColumn('profit_margin', 'profit_margin_percentage $1')
                 ->rawColumns(['profit_margin', 'action', 'image', 'mass_delete', 'product', 'selling_price', 'purchase_price', 'category', 'current_stock'])
                 ->make(true);
         }

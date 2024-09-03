@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Business;
 use App\BusinessLocation;
 use App\CustomerGroup;
+use App\Events\PurchaseCreatedOrModified;
 use App\PurchaseLine;
 use App\Transaction;
 use App\Utils\ModuleUtil;
@@ -35,15 +37,27 @@ class StockAdjustmentController extends Controller
      * @param  ProductUtils  $product
      * @return void
      */
-    public function __construct(BusinessUtil $businessUtil ,ProductUtil $productUtil, TransactionUtil $transactionUtil, ModuleUtil $moduleUtil)
+    public function __construct(BusinessUtil $businessUtil, ProductUtil $productUtil, TransactionUtil $transactionUtil, ModuleUtil $moduleUtil)
     {
         $this->productUtil = $productUtil;
         $this->transactionUtil = $transactionUtil;
         $this->moduleUtil = $moduleUtil;
         $this->businessUtil = $businessUtil;
         $this->dummyPaymentLine = [
-            'method' => 'cash', 'amount' => 0, 'note' => '', 'card_transaction_number' => '', 'card_number' => '', 'card_type' => '', 'card_holder_name' => '', 'card_month' => '', 'card_year' => '', 'card_security' => '', 'cheque_number' => '', 'bank_account_number' => '',
-            'is_return' => 0, 'transaction_no' => '',
+            'method' => 'cash',
+            'amount' => 0,
+            'note' => '',
+            'card_transaction_number' => '',
+            'card_number' => '',
+            'card_type' => '',
+            'card_holder_name' => '',
+            'card_month' => '',
+            'card_year' => '',
+            'card_security' => '',
+            'cheque_number' => '',
+            'bank_account_number' => '',
+            'is_return' => 0,
+            'transaction_no' => '',
         ];
     }
 
@@ -57,108 +71,174 @@ class StockAdjustmentController extends Controller
         if (!auth()->user()->can('purchase.create')) {
             abort(403, 'Unauthorized action.');
         }
-
+        $cat_desck = $request->input('cat_desck', null);
         try {
-            DB::beginTransaction();
-
-            $input_data = $request->only(['location_id', 'transaction_date', 'additional_notes', 'total_amount_recovered', 'final_total', 'ref_no']);
             $business_id = $request->session()->get('user.business_id');
 
             //Check if subscribed or not
             if (!$this->moduleUtil->isSubscribed($business_id)) {
-                return $this->moduleUtil->expiredResponse(action([\App\Http\Controllers\StockAdjustmentController::class, 'index']));
+                return $this->moduleUtil->expiredResponse(action([\App\Http\Controllers\PurchaseController::class, 'index']));
+            }
+            $business = Business::where('id', $business_id)->first();
+
+            $common_settings = is_string($business->common_settings) ? json_decode($business->common_settings, true) : (array) $business->common_settings;
+            $transaction_data = $request->only(['ref_no', 'status', 'contact_id', 'transaction_date', 'total_before_tax', 'location_id', 'discount_type', 'discount_amount', 'tax_id', 'tax_amount', 'shipping_details', 'shipping_charges', 'final_total', 'additional_notes', 'exchange_rate', 'pay_term_number', 'pay_term_type', 'purchase_order_ids', 'add_surplus','adjustment_sign']);
+
+            $exchange_rate = $transaction_data['exchange_rate'];          
+            $transaction_data['contact_id'] = $common_settings['contact_id'];
+            $transaction_data['status'] = 'received';
+                if($transaction_data['contact_id']==null){
+                    $output = [
+                        'success' => 0,
+                        'msg' => 'Set Supplier For Surplus From Settings->Purchase',
+                    ];
+                    return redirect('purchases')->with('status', $output);
+                };
+              
+                $request->validate([
+                    'transaction_date' => 'required',
+                    'total_before_tax' => 'required',
+                    'location_id' => 'required',
+                    'final_total' => 'required',
+                    'cat_desck' => 'nullable',
+                    'document' => 'file|max:' . (config('constants.document_size_limit') / 1000),
+                ]);
+           
+            $user_id = $request->session()->get('user.id');
+            $enable_product_editing = $request->session()->get('business.enable_editing_product_from_purchase');
+
+            //Update business exchange rate.
+            Business::update_business($business_id, ['p_exchange_rate' => ($transaction_data['exchange_rate'])]);
+
+            $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
+            
+            // If discount type is fixed them multiply by exchange rate, else don't
+            if ($transaction_data['discount_type'] == 'fixed') {
+                if ($request->has('cat_desck')) {
+                    $transaction_data['discount_amount'] = ($this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details) * $exchange_rate) * $cat_desck;
+                } else {
+                    $transaction_data['discount_amount'] = $this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details) * $exchange_rate;
+                }
+            } elseif ($transaction_data['discount_type'] == 'percentage') {
+                $transaction_data['discount_amount'] = $this->productUtil->num_uf($transaction_data['discount_amount'], $currency_details);
+            } else {
+                $transaction_data['discount_amount'] = 0;
             }
 
-            $user_id = $request->session()->get('user.id');
+            $transaction_data['tax_amount'] = $this->productUtil->num_uf($transaction_data['tax_amount'], $currency_details) * $exchange_rate;
+            $transaction_data['shipping_charges'] = $this->productUtil->num_uf($transaction_data['shipping_charges'], $currency_details) * $exchange_rate;
+            if ($request->has('cat_desck')) {
+                //unformat input values
+                $transaction_data['total_before_tax'] = ($this->productUtil->num_uf($transaction_data['total_before_tax'], $currency_details) * $exchange_rate) * $cat_desck;
+                $transaction_data['final_total'] = ($transaction_data['final_total'] * $exchange_rate) * $cat_desck;
+            } else {
+                //unformat input values
+                $transaction_data['total_before_tax'] = $this->productUtil->num_uf($transaction_data['total_before_tax'], $currency_details) * $exchange_rate;
+                $transaction_data['final_total'] = $this->productUtil->num_uf($transaction_data['final_total'], $currency_details) * $exchange_rate;
+            }
+            $transaction_data['business_id'] = $business_id;
+            $transaction_data['created_by'] = $user_id;
+            $transaction_data['type'] = 'purchase';
+            $transaction_data['payment_status'] = 'due';
+            $transaction_data['transaction_date'] = $this->productUtil->uf_date($transaction_data['transaction_date'], true);
 
-            $input_data['adjustment_type'] = 'normal';
-            $input_data['adjustment_sign'] = 'Plus';
-            $input_data['type'] = 'stock_adjustment';
-            $input_data['business_id'] = $business_id;
-            $input_data['created_by'] = $user_id;
-            $input_data['transaction_date'] = $this->productUtil->uf_date($input_data['transaction_date'], true);
-            // dd($input_data['transaction_date']);
-            $input_data['total_amount_recovered'] = 0;
+            //upload document
+            $transaction_data['document'] = $this->transactionUtil->uploadFile($request, 'document', 'documents');
+
+            $transaction_data['custom_field_1'] = $request->input('custom_field_1', null);
+            $transaction_data['custom_field_2'] = $request->input('custom_field_2', null);
+            $transaction_data['custom_field_3'] = $request->input('custom_field_3', null);
+            $transaction_data['custom_field_4'] = $request->input('custom_field_4', null);
+
+            $transaction_data['shipping_custom_field_1'] = $request->input('shipping_custom_field_1', null);
+            $transaction_data['shipping_custom_field_2'] = $request->input('shipping_custom_field_2', null);
+            $transaction_data['shipping_custom_field_3'] = $request->input('shipping_custom_field_3', null);
+            $transaction_data['shipping_custom_field_4'] = $request->input('shipping_custom_field_4', null);
+            $transaction_data['shipping_custom_field_5'] = $request->input('shipping_custom_field_5', null);
+
+            if ($request->input('additional_expense_value_1') != '') {
+                $transaction_data['additional_expense_key_1'] = $request->input('additional_expense_key_1');
+                $transaction_data['additional_expense_value_1'] = $this->productUtil->num_uf($request->input('additional_expense_value_1'), $currency_details) * $exchange_rate;
+            }
+
+            if ($request->input('additional_expense_value_2') != '') {
+                $transaction_data['additional_expense_key_2'] = $request->input('additional_expense_key_2');
+                $transaction_data['additional_expense_value_2'] = $this->productUtil->num_uf($request->input('additional_expense_value_2'), $currency_details) * $exchange_rate;
+            }
+
+            if ($request->input('additional_expense_value_3') != '') {
+                $transaction_data['additional_expense_key_3'] = $request->input('additional_expense_key_3');
+                $transaction_data['additional_expense_value_3'] = $this->productUtil->num_uf($request->input('additional_expense_value_3'), $currency_details) * $exchange_rate;
+            }
+
+            if ($request->input('additional_expense_value_4') != '') {
+                $transaction_data['additional_expense_key_4'] = $request->input('additional_expense_key_4');
+                $transaction_data['additional_expense_value_4'] = $this->productUtil->num_uf($request->input('additional_expense_value_4'), $currency_details) * $exchange_rate;
+            }
+
+            DB::beginTransaction();
 
             //Update reference count
-            $ref_count = $this->productUtil->setAndGetReferenceCount('stock_adjustment');
+            $ref_count = $this->productUtil->setAndGetReferenceCount($transaction_data['type']);
             //Generate reference number
-            if (empty($input_data['ref_no'])) {
-                $input_data['ref_no'] = $this->productUtil->generateReferenceNumber('stock_adjustment', $ref_count);
+            if (empty($transaction_data['ref_no'])) {
+                $transaction_data['ref_no'] = $this->productUtil->generateReferenceNumber($transaction_data['type'], $ref_count);
             }
 
-            $products = $request->input('purchases');
+            $transaction = Transaction::create($transaction_data);
 
-            if (!empty($products)) {
-                $product_data = [];
+            $purchase_lines = [];
+            $purchases = $request->input('purchases');
 
-                foreach ($products as $product) {
-                    //Increase available quantity increaseProductQuantity
-                        $adjustment_line = [
-                            'product_id' => $product['product_id'],
-                            'variation_id' => $product['variation_id'],
-                            'quantity' => $this->productUtil->num_uf(-$product['quantity']),
-                            'unit_price' => $this->productUtil->num_uf($product['default_sell_price']),
-                            'sign' => $input_data['adjustment_sign'],
-                        ];
-                        if (!empty($product['lot_no_line_id'])) {
-                            //Add lot_no_line_id to stock adjustment line
-                            $adjustment_line['lot_no_line_id'] = $product['lot_no_line_id'];
-                        }
-                        $product_data[] = $adjustment_line;
-                        $this->productUtil->increaseProductQuantity(
-                            $product['product_id'],
-                            $product['variation_id'],
-                            $input_data['location_id'],
-                            $this->productUtil->num_uf($product['quantity'])
-                        );
-                }
+            $this->productUtil->createOrUpdatePurchaseLines($transaction, $purchases, $currency_details, $enable_product_editing);
+            $uf_data = true;
+            //Add Purchase payments
+            $this->transactionUtil->createOrUpdatePaymentLines($transaction, $request->input('payment'), $business_id, $user_id, $uf_data, $cat_desck);
+            //update payment status
+            $this->transactionUtil->updatePaymentStatus($transaction->id, $transaction->final_total);
 
-                $stock_adjustment = Transaction::create($input_data);
-                $stock_adjustment->stock_adjustment_lines()->createMany($product_data);
-
-                //Map Stock adjustment & Purchase.
-                $business = [
-                    'id' => $business_id,
-                    'accounting_method' => $request->session()->get('business.accounting_method'),
-                    'location_id' => $input_data['location_id'],
-                    'adjustment_sign'=>$input_data['adjustment_sign'],
-                ];
-                $currency_details = $this->transactionUtil->purchaseCurrencyDetails($business_id);
-                $enable_product_editing = $request->session()->get('business.enable_editing_product_from_purchase');
-                // dd($stock_adjustment->stock_adjustment_lines);
-                $this->productUtil->createOrUpdatePurchaseLines($stock_adjustment, $products, $currency_details, $enable_product_editing);
-
-                $this->transactionUtil->activityLog($stock_adjustment, 'added', null, [], false);
+            if (!empty($transaction->purchase_order_ids)) {
+                $this->transactionUtil->updatePurchaseOrderStatus($transaction->purchase_order_ids);
             }
+
+            //Adjust stock over selling if found
+            $this->productUtil->adjustStockOverSelling($transaction);
+
+            $this->transactionUtil->activityLog($transaction, 'added');
+
+            PurchaseCreatedOrModified::dispatch($transaction);
+
+            DB::commit();
 
             $output = [
                 'success' => 1,
-                'msg' => __('stock_adjustment.stock_adjustment_added_successfully'),
+                'msg' => __('purchase.purchase_add_success'),
             ];
-            DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-
             \Log::emergency('File:' . $e->getFile() . 'Line:' . $e->getLine() . 'Message:' . $e->getMessage());
-            $msg = trans('messages.something_went_wrong');
-
-            if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {
-                $msg = 'Products must have an opening stock before adding surplus. Please add an opening stock first to proceed.' ;
-            }
 
             $output = [
                 'success' => 0,
-                'msg' => $msg,
+                'msg' => __('messages.something_went_wrong'),
             ];
         }
 
-        return redirect('stock-adjustments')->with('status', $output);
+        return redirect('purchases')->with('status', $output);
     }
-    public function stockSurplus(){
+    public function stockSurplus()
+    {
         if (!auth()->user()->can('purchase.create')) {
             abort(403, 'Unauthorized action.');
         }
+
+        $business_id = request()->session()->get('user.business_id');
+
+        //Check if subscribed or not
+        if (!$this->moduleUtil->isSubscribed($business_id)) {
+            return $this->moduleUtil->expiredResponse();
+        }
+
 
         $business_id = request()->session()->get('user.business_id');
 
@@ -204,6 +284,7 @@ class StockAdjustmentController extends Controller
         $accounts = $this->moduleUtil->accountsDropdown($business_id, true);
 
         $common_settings = !empty(session('business.common_settings')) ? session('business.common_settings') : [];
+
 
         return view('stock_adjustment.surplus')
             ->with(compact('taxes', 'orderStatuses', 'business_locations', 'currency_details', 'default_purchase_status', 'customer_groups', 'types', 'shortcuts', 'payment_line', 'payment_types', 'accounts', 'bl_attributes', 'common_settings'));
@@ -352,6 +433,9 @@ class StockAdjustmentController extends Controller
             $user_id = $request->session()->get('user.id');
 
             $input_data['type'] = 'stock_adjustment';
+            if ($request->adjustment_sign == 'Plus') {
+                $input_data['status'] = 'received';
+            }
             $input_data['business_id'] = $business_id;
             $input_data['created_by'] = $user_id;
             $input_data['transaction_date'] = $this->productUtil->uf_date($input_data['transaction_date'], true);
@@ -421,7 +505,7 @@ class StockAdjustmentController extends Controller
                     'id' => $business_id,
                     'accounting_method' => $request->session()->get('business.accounting_method'),
                     'location_id' => $input_data['location_id'],
-                    'adjustment_sign'=>$request->adjustment_sign,
+                    'adjustment_sign' => $request->adjustment_sign,
                 ];
                 // dd($stock_adjustment->stock_adjustment_lines);
                 if ($request->adjustment_sign == 'Plus') {
@@ -447,7 +531,7 @@ class StockAdjustmentController extends Controller
             $msg = trans('messages.something_went_wrong');
 
             if (get_class($e) == \App\Exceptions\PurchaseSellMismatch::class) {
-                $msg = 'Products must have an opening stock before adding surplus. Please add an opening stock first to proceed.' ;
+                $msg = 'Products must have an opening stock before adding surplus. Please add an opening stock first to proceed.';
             }
 
             $output = [
@@ -533,7 +617,7 @@ class StockAdjustmentController extends Controller
                     ->where('type', 'stock_adjustment')
                     ->with(['stock_adjustment_lines'])
                     ->first();
-                $sign =$stock_adjustment->adjustment_sign;
+                $sign = $stock_adjustment->adjustment_sign;
 
                 //Add deleted product quantity to available quantity
                 $stock_adjustment_lines = $stock_adjustment->stock_adjustment_lines;
@@ -549,7 +633,7 @@ class StockAdjustmentController extends Controller
                         $line_ids[] = $stock_adjustment_line->id;
                     }
 
-                    $this->transactionUtil->mapPurchaseQuantityForDeleteStockAdjustment($line_ids,$sign);
+                    $this->transactionUtil->mapPurchaseQuantityForDeleteStockAdjustment($line_ids, $sign);
                 }
                 $stock_adjustment->delete();
 
@@ -591,13 +675,13 @@ class StockAdjustmentController extends Controller
                 $row_index = $request->input('row_index');
                 $variation_id = $request->input('variation_id');
                 $location_id = $request->input('location_id');
-    
+
                 $business_id = $request->session()->get('user.business_id');
                 $product = $this->productUtil->getDetailsFromVariation($variation_id, $business_id, $location_id, $check_qty = false);
                 $product->formatted_qty_available = $this->productUtil->num_f($product->qty_available);
                 $product->sign = $request->input('sign');
                 $type = !empty($request->input('type')) ? $request->input('type') : 'stock_adjustment';
-    
+
                 // Get lot number dropdown if enabled 
                 $lot_numbers = [];
                 if ($request->session()->get('business.enable_lot_number') == 1 || $request->session()->get('business.enable_product_expiry') == 1) {
@@ -625,7 +709,7 @@ class StockAdjustmentController extends Controller
                     'location_id' => $request->input('location_id'),
                     'business_id' => $request->session()->get('user.business_id'),
                 ]);
-    
+
                 // Return error response
                 return response()->json([
                     'success' => false,
@@ -635,7 +719,7 @@ class StockAdjustmentController extends Controller
             }
         }
     }
-    
+
 
     /**
      * Sets expired purchase line as stock adjustmnet

@@ -69,6 +69,9 @@
 
     <div class="col-sm-4 invoice-col">
       <b>@lang('purchase.ref_no'):</b> #{{ $purchase->ref_no }}<br/>
+      @if (isset($purchase->purchase_lines->first()->purchaseRequisition->requisition_no))
+      <b>Requisition No:</b> {{ $purchase->purchase_lines->first()->purchaseRequisition->requisition_no }}<br/>
+      @endif
       <b>@lang('messages.date'):</b> {{ @format_date($purchase->transaction_date) }}<br/>
       @if(!empty($purchase->status))
         <b>@lang('purchase.purchase_status'):</b> @if($purchase->type == 'purchase_order'){{$po_statuses[$purchase->status]['label'] ?? ''}} @else {{ __('lang_v1.' . $purchase->status) }} @endif<br>

@@ -19,11 +19,13 @@
     @component('components.widget', ['class' => 'box-primary', 'title' => __( 'user.all_roles' )])
         @can('roles.create')
             @slot('tool')
-                <div class="box-tools">
-                    <a class="btn btn-block btn-primary" 
-                    href="{{action([\App\Http\Controllers\RoleController::class, 'create'])}}" >
-                    <i class="fa fa-plus"></i> @lang( 'messages.add' )</a>
-                </div>
+            <div class="box-tools">
+                <button type="button" class="btn btn-block btn-primary btn-modal" 
+                            data-href="{{ action([\App\Http\Controllers\RoleController::class, 'create']) }}" 
+                            data-container=".role_create_modal">
+                            <i class="fa fa-plus"></i> @lang( 'messages.add' )
+                </button>
+            </div>
             @endslot
         @endcan
         @can('roles.view')
@@ -37,7 +39,8 @@
             </table>
         @endcan
     @endcomponent
-
+    <div class="modal fade role_create_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
+    <div class="modal fade users_modal" tabindex="-1" role="dialog" aria-labelledby="gridSystemModalLabel"></div>
 </section>
 <!-- /.content -->
 @stop
@@ -84,6 +87,30 @@
                     });
                 }
             });
+        });
+    });
+
+    $(document).on('click', 'button.btn-modal', function () {
+        var container = $(this).data('container');
+        var href = $(this).data('href');
+        $(container).load(href, function () {
+            $(this).modal('show');
+        });
+    });
+
+    $(document).on('click', '.users-modal-show', function (e) {
+        e.preventDefault();
+        var href = $(this).data('href');
+        $('.users_modal').load(href, function () {
+            $(this).modal('show');
+            $('#role-users-table').DataTable({
+            paging: true,
+            searching: false,
+            info: true,
+            lengthChange: false,
+            pageLength: 15,
+            dom: 'Bfrtip',
+        });
         });
     });
 </script>

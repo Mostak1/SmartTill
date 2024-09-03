@@ -38,6 +38,33 @@ class ProductUtil extends Util
      * @param $combo_variations = []
      * @return bool
      */
+
+     public function generateLotNumber($productId)
+     {
+         $today_prefix = now()->format('ymd'); // Get current date prefix in YYMMDD format
+ 
+         // Find the last lot number with the current date prefix
+         $last_lot_number = PurchaseLine::where('product_id', $productId)
+                                     ->where('lot_number', 'LIKE', $today_prefix . '-%')
+                                     ->pluck('lot_number')
+                                     ->sortDesc()
+                                     ->first();
+ 
+         if ($last_lot_number) {
+             // Extract the numeric part after the prefix
+             $numeric_part = substr($last_lot_number, 8); // Assuming format is YYMMDD-XXXX
+ 
+             // Remove any non-numeric characters and increment the numeric part
+             $numeric_part = preg_replace('/\D/', '', $numeric_part);
+             $next_number = intval($numeric_part) + 1;
+ 
+             // Return the new lot number with leading zeros
+             return $today_prefix . '-' . sprintf('%03d', $next_number); // Format to 3 digits
+         } else {
+             // If no previous lot number exists, start with 001
+             return $today_prefix . '-001';
+         }
+     }
     public function createSingleProductVariation($product, $sku, $purchase_price, $dpp_inc_tax, $profit_percent, $selling_price, $selling_price_inc_tax, $combo_variations = [])
     {
         if (! is_object($product)) {
@@ -1041,6 +1068,9 @@ class ProductUtil extends Util
 
                 //set sell price inc. tax
                 $variation_details->foreign_s_price = $this->calc_percentage_base($variation_details->foreign_s_price_inc_tex, $tax_rate);
+
+                //currency rate
+                $variation_details->currency_rate = $foreign_cat->description;
                 // end foreign price
                 
                 //Set default purchase price exc. tax
@@ -1063,18 +1093,18 @@ class ProductUtil extends Util
                 $latest_price_history = VariationPriceHistory::where('variation_id', $variation_data['product_id'])
                     ->latest('created_at')
                     ->first();
-                    if ($latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
-                   // Create a new price history entry
-                    VariationPriceHistory::create([
-                        'variation_id' => $variation_data['product_id'],
-                        'old_price' => '$ '.number_format($variation_details->foreign_p_price_inc_tex,2).'<br>৳ '.number_format($variation_details->dpp_inc_tax,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
-                        'new_price' => '$ '.number_format($variation_details->foreign_s_price_inc_tex,2).'<br>৳ '.number_format($variation_details->sell_price_inc_tax,2).'<br>$⇄৳ '.number_format($foreign_cat->description,2),
-                        'updated_by' => auth()->id(),
-                        'type' => 'product',
-                        'h_type' => 'Purchase',
-                        'ref_no' => '<a href="#" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], $variation_data['sele_id']) . '" class="btn-modal" data-container=".view_modal">' . $variation_data['ref_no'] . '</a>'
-                    ]);
-                }
+                    if (!$latest_price_history || $latest_price_history->old_price != $variation_details->dpp_inc_tax || $latest_price_history->new_price != $variation_details->sell_price_inc_tax) {
+                        // Create a new price history entry
+                        VariationPriceHistory::create([
+                            'variation_id' => $variation_data['product_id'],
+                            'old_price' => '$ ' . number_format($variation_details->foreign_p_price_inc_tex, 2) . '<br>৳ ' . number_format($variation_details->dpp_inc_tax, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
+                            'new_price' => '$ ' . number_format($variation_details->foreign_s_price_inc_tex, 2) . '<br>৳ ' . number_format($variation_details->sell_price_inc_tax, 2) . '<br>$⇄৳ ' . number_format($foreign_cat->description, 2),
+                            'updated_by' => auth()->id(),
+                            'type' => 'product',
+                            'h_type' => 'Purchase',
+                            'ref_no' => '<a href="#" data-href="' . action([\App\Http\Controllers\PurchaseController::class, 'show'], $variation_data['sele_id']) . '" class="btn-modal" data-container=".view_modal">' . $variation_data['ref_no'] . '</a>'
+                        ]);
+                    }
             }
         } 
         else {
@@ -1409,6 +1439,9 @@ class ProductUtil extends Util
                 if ($transaction->status == 'received') {
                     $this->updateProductQuantity($transaction->location_id, $data['product_id'], $data['variation_id'], $new_quantity_f, 0, $currency_details);
                 }
+                if ($transaction->type == 'stock_adjustment' && $transaction->adjustment_sign=='Plus') {
+                    $purchase_line->quantity_adjusted_surplus = $new_quantity;
+                }
             }
 
                 $purchase_line->quantity = $new_quantity;
@@ -1418,7 +1451,7 @@ class ProductUtil extends Util
                 $purchase_line->purchase_price_inc_tax = ($this->num_uf($data['purchase_price_inc_tax'], $currency_details) * $exchange_rate) / $multiplier;
                 $purchase_line->item_tax = ($this->num_uf($data['item_tax'], $currency_details) * $exchange_rate) / $multiplier;
                 $purchase_line->tax_id = $data['purchase_line_tax_id'];
-                $purchase_line->lot_number = ! empty($data['lot_number']) ? $data['lot_number'] : null;
+                $purchase_line->lot_number = ! empty($data['lot_number']) ? $data['lot_number'] : $this->generateLotNumber($data['product_id']);
                 $purchase_line->mfg_date = ! empty($data['mfg_date']) ? $this->uf_date($data['mfg_date']) : null;
                 $purchase_line->exp_date = ! empty($data['exp_date']) ? $this->uf_date($data['exp_date']) : null;
                 $purchase_line->sub_unit_id = ! empty($data['sub_unit_id']) ? $data['sub_unit_id'] : null;
@@ -1794,7 +1827,8 @@ class ProductUtil extends Util
                             });
                         }
                     }
-                );
+                    )->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id')
+                    ->leftjoin('business_locations as l', 'vld.location_id', '=', 'l.id');
 
         if (! is_null($not_for_selling)) {
             $query->where('products.not_for_selling', $not_for_selling);
@@ -1817,9 +1851,9 @@ class ProductUtil extends Util
             $query->whereIn('products.type', $product_types);
         }
 
-        if (in_array('lot', $search_fields)) {
-            $query->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id');
-        }
+        // if (in_array('lot', $search_fields)) {
+        //     $query->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id');
+        // }
 
         //Include search
         if (! empty($search_term)) {
@@ -1901,8 +1935,12 @@ class ProductUtil extends Util
                 'VLD.qty_available',
                 'variations.sell_price_inc_tax as selling_price',
                 'variations.sub_sku',
-                'U.short_name as unit'
+                'U.short_name as unit',
+                DB::raw('MIN(pl.exp_date) as nearest_exp_date'),
+                'pl.id as purchase_line_id',
+                'pl.lot_number'
             );
+        $query->addSelect(DB::raw('SUM(VLD.qty_available) as total_quantity'));
 
         if (! empty($price_group_id)) {
             $query->addSelect(DB::raw('IF (VGP.price_type = "fixed", VGP.price_inc_tax, VGP.price_inc_tax * variations.sell_price_inc_tax / 100) as variation_group_price'));
@@ -1919,7 +1957,7 @@ class ProductUtil extends Util
     }
     public function filterProduct($business_id, $search_term, $location_id = null, $not_for_selling = null, $price_group_id = null, $product_types = [], $search_fields = [], $check_qty = false, $search_type = 'like')
     {
-        $query = Product::with(['product_locations','brand'])->join('variations', 'products.id', '=', 'variations.product_id')
+        $query = Product::with('brand')->join('variations', 'products.id', '=', 'variations.product_id')
                 ->active()
                 ->whereNull('variations.deleted_at')
                 ->leftjoin('units as U', 'products.unit_id', '=', 'U.id')
@@ -1938,7 +1976,8 @@ class ProductUtil extends Util
                             });
                         }
                     }
-                )->leftjoin('business_locations as l', 'VLD.location_id', '=', 'l.id');
+                )->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id')
+                ->leftjoin('business_locations as l', 'vld.location_id', '=', 'l.id');
 
         if (! is_null($not_for_selling)) {
             $query->where('products.not_for_selling', $not_for_selling);
@@ -1961,9 +2000,9 @@ class ProductUtil extends Util
             $query->whereIn('products.type', $product_types);
         }
 
-        if (in_array('lot', $search_fields)) {
-            $query->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id');
-        }
+        // if (in_array('lot', $search_fields)) {
+        //     $query->leftjoin('purchase_lines as pl', 'variations.id', '=', 'pl.variation_id');
+        // }
 
         //Include search
         if (! empty($search_term)) {
@@ -2044,21 +2083,23 @@ class ProductUtil extends Util
         $query->select(
                 'products.id as product_id',
                 'products.name',
+                'products.sku',
                 'products.type',
                 'products.brand_id',
-                'products.sku',
                 'products.category_id',
                 'l.id as location_id',
-                'l.name as location',
                 'products.enable_stock',
                 'variations.id as variation_id',
                 'variations.name as variation',
                 'VLD.qty_available',
                 'variations.sell_price_inc_tax as selling_price',
                 'variations.sub_sku',
-                'U.short_name as unit'
+                'U.short_name as unit',
+                DB::raw('MIN(pl.exp_date) as nearest_exp_date'),
+                'pl.id as purchase_line_id',
+                'pl.lot_number'
             );
-            $query->addSelect(DB::raw('SUM(VLD.qty_available) as total_quantity'));
+        $query->addSelect(DB::raw('SUM(VLD.qty_available) as total_quantity'));
         if (! empty($price_group_id)) {
             $query->addSelect(DB::raw('IF (VGP.price_type = "fixed", VGP.price_inc_tax, VGP.price_inc_tax * variations.sell_price_inc_tax / 100) as variation_group_price'));
         }
@@ -2361,6 +2402,7 @@ class ProductUtil extends Util
                                     'transactions.return_parent_id',
                                     'transactions.transaction_date',
                                     'transactions.status',
+                                    'transactions.adjustment_sign',
                                     'transactions.mfg_parent_production_purchase_id as mfg_parent_id',
                                     'transactions.invoice_no',
                                     'transactions.ref_no',
@@ -2408,6 +2450,13 @@ class ProductUtil extends Util
                 if ($stock_line->status != 'received') {
                     continue;
                 }
+                if($stock_line->adjustment_sign=='Plus'){
+                    
+                    $label='Surplus';
+                }else{
+                    $label=__('lang_v1.purchase');
+                    
+                }
                 $quantity_change = $stock_line->purchase_line_quantity;
                 $stock += $quantity_change;
                 $stock_in_second_unit += $stock_line->purchase_secondary_unit_quantity;
@@ -2415,7 +2464,7 @@ class ProductUtil extends Util
                     'quantity_change' => $quantity_change,
                     'stock' => $this->roundQuantity($stock),
                     'type' => 'purchase',
-                    'type_label' => __('lang_v1.purchase'),
+                    'type_label' => $label,
                     'ref_no' => $stock_line->ref_no,
                     'sele_id' => $stock_line->transaction_id,
                     'purchase_secondary_unit_quantity' => ! empty($stock_line->purchase_secondary_unit_quantity) ? $this->roundQuantity($stock_line->purchase_secondary_unit_quantity) : 0,

@@ -454,6 +454,7 @@ class PurchaseOrderController extends Controller
                                 ->with(
                                     'contact',
                                     'purchase_lines',
+                                    'purchase_lines.purchaseRequisition',
                                     'purchase_lines.product',
                                     'purchase_lines.product.unit',
                                     'purchase_lines.variations',

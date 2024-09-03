@@ -27,6 +27,9 @@
                             <th>Soft. Count</th>
                             <th style="width: 15%;">Phy. Count Diff.</th>
                             <th style="width: 20%;">Comment</th>
+                            @if(session('business.enable_lot_number'))
+                            <th style="width: 15%;">Lot Number</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -38,7 +41,7 @@
                                 <td>{{ $detail->brand_name }}</td>
                                 <td>{{ $detail->current_stock }}</td>
                                 <td>
-                                    <div class="input-group input-number ">
+                                    <div class="input-group input-number">
                                         <span class="input-group-btn">
                                             <button type="button" class="btn btn-default btn-flat quantity-down-int" data-index="{{ $detail->id }}">
                                                 <i class="fa fa-minus text-danger"></i>
@@ -63,6 +66,19 @@
                                 <td>
                                     {!! Form::text("details[{$detail->id}][comment]", $detail->comment, ['class' => 'form-control ']) !!}
                                 </td>
+                                @if(session('business.enable_lot_number'))
+                                <td>
+                                    <!-- Lot Number Dropdown -->
+                                    {!! Form::select(
+                                        "details[{$detail->id}][lot_number]",
+                                        $detail->product->purchase_lines->pluck('lot_number', 'lot_number')->map(function($lot_number) {
+                                            return $lot_number ?: '-';
+                                        }),
+                                        $detail->lot_number,
+                                        ['class' => 'form-control lot-number-select', 'placeholder' => 'Select Lot', 'disabled' => 'disabled']
+                                    ) !!}
+                                </td>
+                                @endif                                
                             </tr>
                         @endforeach
                     </tbody>
@@ -89,36 +105,44 @@
 <script>
     $(document).ready(function() {
         function updatePhysicalCountText(id, value) {
-            const textElement = $(`#physical_count_text_${id}`);
+            var textElement = $('#physical_count_text_' + id);
+            var lotNumberSelect = $("select[name='details[" + id + "][lot_number]']");
+
             if (value === 0) {
                 textElement.text('0 (match)');
+                lotNumberSelect.prop('disabled', true);
+                lotNumberSelect.show();
             } else if (value < 0) {
-                textElement.text(`${value} (missing)`);
+                textElement.text(value + ' (missing)');
+                lotNumberSelect.prop('disabled', false);
+                lotNumberSelect.show();
             } else if (value > 0) {
-                textElement.text(`+${value} (surplus)`);
+                textElement.text('+' + value + ' (surplus)');
+                lotNumberSelect.prop('disabled', false);
+                lotNumberSelect.show();
             }
         }
 
         $('.quantity-down-int').on('click', function() {
-            const index = $(this).data('index');
-            const input = $(`#physical_count_${index}`);
-            let value = parseInt(input.val()) || 0; // Ensure value is an integer
+            var index = $(this).data('index');
+            var input = $('#physical_count_' + index);
+            var value = parseInt(input.val()) || 0; // Ensure value is an integer
             input.val(value - 1);
-            updatePhysicalCountText(index, parseInt(input.val()));
+            updatePhysicalCountText(index, value - 1);
         });
 
         $('.quantity-up-int').on('click', function() {
-            const index = $(this).data('index');
-            const input = $(`#physical_count_${index}`);
-            let value = parseInt(input.val()) || 0; // Ensure value is an integer
+            var index = $(this).data('index');
+            var input = $('#physical_count_' + index);
+            var value = parseInt(input.val()) || 0; // Ensure value is an integer
             input.val(value + 1);
-            updatePhysicalCountText(index, parseInt(input.val()));
+            updatePhysicalCountText(index, value + 1);
         });
 
         // Initialize text elements
         $('.input_number').each(function() {
-            const id = $(this).data('id');
-            const value = parseInt($(this).val()) || 0; // Ensure value is an integer
+            var id = $(this).data('id');
+            var value = parseInt($(this).val()) || 0; // Ensure value is an integer
             updatePhysicalCountText(id, value);
         });
     });

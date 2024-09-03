@@ -742,7 +742,7 @@
                                 @if (!empty($receipt_details->discount))
                                     <tr>
                                         <td>
-                                            Special Discount {!! $receipt_details->discount_label !!}
+                                            Special {!! $receipt_details->discount_label !!}
                                         </td>
 
                                         <td class="text-right">

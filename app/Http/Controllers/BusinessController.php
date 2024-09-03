@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Business;
 use App\Category;
+use App\Contact;
 use App\Currency;
 use App\Notifications\TestEmailNotification;
 use App\System;
@@ -303,7 +304,7 @@ class BusinessController extends Controller
             '' => __('lang_v1.disable'),
             'logged_in_user' => __('lang_v1.logged_in_user'),
             'user' => __('lang_v1.select_from_users_list'),
-            'cmsn_agnt' => __('lang_v1.select_from_commisssion_agents_list'),
+            'cmsn_agnt' => __('lang_v1.select_from_commission_agents_list'),
         ];
 
         $units_dropdown = Unit::forDropdown($business_id, true);
@@ -328,15 +329,66 @@ class BusinessController extends Controller
 
         $custom_labels = ! empty($business->custom_labels) ? json_decode($business->custom_labels, true) : [];
 
-        $common_settings = ! empty($business->common_settings) ? $business->common_settings : [];
+        // Decode the common_settings field
+        $common_settings = is_string($business->common_settings) ? json_decode($business->common_settings, true) : (array) $business->common_settings;
 
-        $weighing_scale_setting = ! empty($business->weighing_scale_setting) ? $business->weighing_scale_setting : [];
+        // Define the exclude periods options
+        $exclude_periods_options = [
+            '1' => __('Last 1 month'),
+            '2' => __('Last 2 months'),
+            '3' => __('Last 3 months'),
+            '4' => __('Last 4 months'),
+            '5' => __('Last 5 months'),
+            '6' => __('Last 6 months'),
+            '7' => __('Last 7 months'),
+            '8' => __('Last 8 months'),
+            '9' => __('Last 9 months'),
+            '10' => __('Last 10 months'),
+            '12' => __('Last 12 months'),
+        ];
+
+        // Define the exclude periods options
+        $exclude_checked_options = [
+            '1' => __('Last 1 day'),
+            '2' => __('Last 2 days'),
+            '3' => __('Last 3 days'),
+            '4' => __('Last 4 days'),
+            '5' => __('Last 5 days'),
+            '6' => __('Last 6 days'),
+            '7' => __('Last 7 days'),
+            '8' => __('Last 8 days'),
+            '9' => __('Last 9 days'),
+            '10' => __('Last 10 days'),
+            '11' => __('Last 11 days'),
+            '12' => __('Last 12 days'),
+            '13' => __('Last 13 days'),
+            '14' => __('Last 14 days'),
+            '15' => __('Last 15 days'),
+        ];
+
+        // Retrieve the selected exclude period, if any
+        $selected_exclude_period = $common_settings['exclude_period'] ?? '';
+        $selected_exclude_checked = $common_settings['exclude_checked'] ?? '';
+        $expiring_soon = $common_settings['expiring_soon'] ?? '';
+        $expiring_later = $common_settings['expiring_later'] ?? '';
 
         $payment_types = $this->moduleUtil->payment_types(null, false, $business_id);
 
         $categories = Category::where('category_type', 'product')->get();
-
-        return view('business.settings', compact('categories','business', 'currencies', 'tax_rates', 'timezone_list', 'months', 'accounting_methods', 'commission_agent_dropdown', 'units_dropdown', 'date_formats', 'shortcuts', 'pos_settings', 'modules', 'theme_colors', 'email_settings', 'sms_settings', 'mail_drivers', 'allow_superadmin_email_settings', 'custom_labels', 'common_settings', 'weighing_scale_setting', 'payment_types'));
+        if(!empty($common_settings['contact_id'])){
+            $contact = Contact::find($common_settings['contact_id']);
+            $supplier='Supplier :'.$contact->name;
+        }else{
+            $supplier='No supplier Selected For Surplus';
+        }
+         // Pass the variables to the view
+        return view('business.settings', compact(
+            'categories', 'business', 'currencies', 'tax_rates', 'timezone_list', 'months',
+            'accounting_methods', 'commission_agent_dropdown', 'units_dropdown', 'date_formats',
+            'shortcuts', 'pos_settings', 'modules', 'theme_colors', 'email_settings', 'sms_settings',
+            'mail_drivers', 'allow_superadmin_email_settings', 'custom_labels', 'common_settings','supplier',
+            'exclude_periods_options', 'exclude_checked_options', 'selected_exclude_checked', 'selected_exclude_period', 'payment_types', 'expiring_soon', 'expiring_later'
+        ));
     }
 
     /**
@@ -450,7 +502,18 @@ class BusinessController extends Controller
 
             $business_details['custom_labels'] = json_encode($business_details['custom_labels']);
 
-            $business_details['common_settings'] = ! empty($request->input('common_settings')) ? $request->input('common_settings') : [];
+            $common_settings = $request->input('common_settings');
+
+            // Check if $common_settings is a string and needs decoding
+            if (is_string($common_settings)) {
+                $common_settings = json_decode($common_settings, true);
+            } elseif (!is_array($common_settings)) {
+                // Handle unexpected data types
+                $common_settings = [];
+            }
+            
+            // Now you can safely work with $common_settings as an array
+            $business_details['common_settings'] = $common_settings;
 
             //Enabled modules
             $enabled_modules = $request->input('enabled_modules');

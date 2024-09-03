@@ -48,10 +48,11 @@
 						{!! Form::select('adjustment_type', [ 'normal' =>  __('stock_adjustment.normal'), 'abnormal' =>  __('stock_adjustment.abnormal')], null, ['class' => 'form-control select2','required']); !!}
 					</div>
 				</div>
-				<div class="col-sm-3">
+				<div class="col-sm-3 hide">
 					<div class="form-group">
 						{!! Form::label('adjustment_sign','Adjustment Sign' . ':*') !!} @show_tooltip('If your product lost/waste/expair select the Damage or find extra for any reason select the Surplus')
-						{!! Form::select('adjustment_sign', [ 'Minus' => 'Damage', 'Plus' =>  'Surplus'], null, ['class' => 'form-control select2', 'placeholder' => __('messages.please_select'), 'required']); !!}
+						{!! Form::select('adjustment_sign', [ 'Minus' => 'Damage', 'Plus' =>  'Surplus'], null, ['class' => 'form-control select2', 'required']); !!}
+						{{-- {!! Form::text('adjustment_sign', 'Minus', ['class' => 'form-control', 'readonly', 'required']); !!} --}}
 					</div>
 				</div>
 			</div>

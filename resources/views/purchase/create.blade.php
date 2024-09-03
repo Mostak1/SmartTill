@@ -19,7 +19,6 @@
 	<input type="hidden" id="p_symbol" value="{{$currency_details->symbol}}">
 	<input type="hidden" id="p_thousand" value="{{$currency_details->thousand_separator}}">
 	<input type="hidden" id="p_decimal" value="{{$currency_details->decimal_separator}}">
-
 	@include('layouts.partials.error')
 
 	{!! Form::open(['url' => action([\App\Http\Controllers\PurchaseController::class, 'store']), 'method' => 'post', 'id' => 'add_purchase_form', 'files' => true ]) !!}

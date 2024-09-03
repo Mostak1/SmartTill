@@ -82,19 +82,19 @@
           {!! $sell->contact->contact_address !!}
           @if($sell->contact->mobile)
           <br>
-              {{__('contact.mobile')}}: {{ $sell->contact->mobile }}
+              {{('contact.mobile')}}: {{ $sell->contact->mobile }}
           @endif
           @if($sell->contact->alternate_number)
           <br>
-              {{__('contact.alternate_contact_number')}}: {{ $sell->contact->alternate_number }}
+              {{('contact.alternate_contact_number')}}: {{ $sell->contact->alternate_number }}
           @endif
           @if($sell->contact->landline)
             <br>
-              {{__('contact.landline')}}: {{ $sell->contact->landline }}
+              {{('contact.landline')}}: {{ $sell->contact->landline }}
           @endif
           @if($sell->contact->email)
             <br>
-              {{__('business.email')}}: {{ $sell->contact->email }}
+              {{('business.email')}}: {{ $sell->contact->email }}
           @endif
         @endif
         
@@ -175,7 +175,7 @@
                         @php
                             $export_label = __('lang_v1.export_custom_field1');
                             if ($label == 'export_custom_field_1') {
-                                $export_label =__('lang_v1.export_custom_field1');
+                                $export_label =('lang_v1.export_custom_field1');
                             } elseif ($label == 'export_custom_field_2') {
                                 $export_label = __('lang_v1.export_custom_field2');
                             } elseif ($label == 'export_custom_field_3') {
@@ -247,8 +247,11 @@
                     ( {{ __('lang_v1.change_return') }} )
                   @endif
                 </td>
-                <td>@if($payment_line->note) 
-                  {{ ucfirst($payment_line->note) }}
+                <td>@if($payment_line->note || $payment_line->transaction_no) 
+                  {{ ucfirst($payment_line->note) }} <br>
+                  @isset($payment_line->transaction_no)
+                    <small><strong>Transaction No.: </strong>{{ $payment_line->transaction_no }}</small>
+                  @endisset
                   @else
                   --
                   @endif

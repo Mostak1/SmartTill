@@ -8,7 +8,7 @@
 @endphp
 <!-- Content Header (Page header) -->
 <section class="content-header">
-    <h1>@lang('purchase.add_purchase') <i class="fa fa-keyboard-o hover-q text-muted" aria-hidden="true" data-container="body" data-toggle="popover" data-placement="bottom" data-content="@include('purchase.partials.keyboard_shortcuts_details')" data-html="true" data-trigger="hover" data-original-title="" title=""></i></h1>
+    <h1>@lang('Add Surplus') <i class="fa fa-keyboard-o hover-q text-muted" aria-hidden="true" data-container="body" data-toggle="popover" data-placement="bottom" data-content="@include('purchase.partials.keyboard_shortcuts_details')" data-html="true" data-trigger="hover" data-original-title="" title=""></i></h1>
 </section>
 
 <!-- Main content -->
@@ -52,12 +52,13 @@
 			</div>
 			<div class="@if(!empty($default_purchase_status)) col-sm-4 @else col-sm-3 @endif">
 				<div class="form-group">
-					{!! Form::label('transaction_date', __('purchase.purchase_date') . ':*') !!}
+					{!! Form::label('transaction_date', __('Surplus Date') . ':*') !!}
 					<div class="input-group">
 						<span class="input-group-addon">
 							<i class="fa fa-calendar"></i>
 						</span>
 						{!! Form::text('transaction_date', @format_datetime('now'), ['class' => 'form-control', 'readonly', 'required']); !!}
+						{!! Form::hidden('adjustment_sign', 'Plus', ['id' => 'adjustment_sign']) !!}
 					</div>
 				</div>
 			</div>
@@ -306,8 +307,8 @@
 						<tr>
 							<th class="col-md-7 text-right">@lang( 'purchase.net_total_amount' ):</th>
 							<td class="col-md-5 text-left">
-								<span id="total_subtotal" class="display_currency"></span> <br>
-								<small class="bdt-subtotal"></small>
+								<span id="total_subtotal" class="display_currency"></span>
+								{{-- <small class="bdt-subtotal"></small> --}}
 								<!-- This is total before purchase tax-->
 								<input type="hidden" id="total_subtotal_input" value=0  name="total_before_tax">
 							</td>
@@ -569,6 +570,24 @@
 		</div>
 	@endcomponent
     @component('components.widget')
+	<div class="box box-solid">
+		<div class="box-body">
+			<div class="row">
+				<div class="col-sm-4">
+					<div class="form-group">
+							{!! Form::label('additional_notes', __('stock_adjustment.reason_for_stock_adjustment') . ':') !!}
+							{!! Form::textarea('additional_notes', null, ['class' => 'form-control', 'placeholder' => __('stock_adjustment.reason_for_stock_adjustment'), 'rows' => 3]); !!}
+					</div>
+				</div>
+				<div class="col-sm-4 " id="total_amount_recovered_section">
+					<div class="form-group">
+						
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div> <!--box end-->
     <div class="col-sm-12 text-center">
         <button type="button" id="submit_purchase_form" class="btn btn-big btn-primary btn-flat">@lang('messages.save')</button>
     </div>

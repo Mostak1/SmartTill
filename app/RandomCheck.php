@@ -34,4 +34,9 @@ class RandomCheck extends Model
     {
         return $this->belongsTo(User::class, 'modified_by');
     }
+    // Define the relationship with the PurchaseLine model
+    public function purchase_lines()
+    {
+        return $this->hasMany(PurchaseLine::class, 'product_id', 'product_id');
+    }
 }

@@ -271,6 +271,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
 
     Route::resource('pos', SellPosController::class);
 
+    Route::get('/roles/users/{id}', [RoleController::class, 'users']);
     Route::resource('roles', RoleController::class);
     Route::resource('subcategories', SubCategoryController::class);
     Route::get('indexjson', [SubCategoryController::class, 'indexjson'])->name('subcategory.indexjson');

@@ -318,7 +318,7 @@ class TaskController extends Controller
                             'level' =>$task->custom_field_1,
                             'dueDate' => $task->due_date,
                             'assigned_to' => $assigned_to,
-                            'tags' => [__('project::lang.' . $task->priority)],
+                            'tags' => [('project::lang.' . $task->priority)],
                         ];
                     }
 

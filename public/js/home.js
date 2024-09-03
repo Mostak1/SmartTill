@@ -131,6 +131,7 @@ $(document).ready(function() {
             { data: 'product', name: 'p.name' },
             { data: 'location', name: 'l.name' },
             { data: 'stock_left', name: 'stock_left' },
+            { data: 'lot_number', name: 'lot_number' },
             { data: 'exp_date', name: 'exp_date' },
         ],
         fnDrawCallback: function(oSettings) {

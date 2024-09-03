@@ -4,6 +4,7 @@ namespace Modules\Manufacturing\Http\Controllers;
 
 use App\BusinessLocation;
 use App\Media;
+use App\PurchaseLine;
 use App\Transaction;
 use App\Utils\BusinessUtil;
 use App\Utils\ModuleUtil;
@@ -48,7 +49,32 @@ class ProductionController extends Controller
         $this->mfgUtil = $mfgUtil;
         $this->businessUtil = $businessUtil;
     }
+    public function generateLotNumber($productId)
+    {
+        $today_prefix = now()->format('ymd'); // Get current date prefix in YYMMDD format
 
+        // Find the last lot number with the current date prefix
+        $last_lot_number = PurchaseLine::where('product_id', $productId)
+                                    ->where('lot_number', 'LIKE', $today_prefix . '-%')
+                                    ->pluck('lot_number')
+                                    ->sortDesc()
+                                    ->first();
+
+        if ($last_lot_number) {
+            // Extract the numeric part after the prefix
+            $numeric_part = substr($last_lot_number, 8); // Assuming format is YYMMDD-XXXX
+
+            // Remove any non-numeric characters and increment the numeric part
+            $numeric_part = preg_replace('/\D/', '', $numeric_part);
+            $next_number = intval($numeric_part) + 1;
+
+            // Return the new lot number with leading zeros
+            return $today_prefix . '-' . sprintf('%03d', $next_number); // Format to 3 digits
+        } else {
+            // If no previous lot number exists, start with 0001
+            return $today_prefix . '-001';
+        }
+    }
     /**
      * Display a listing of the resource.
      *
@@ -246,10 +272,8 @@ class ProductionController extends Controller
                 'purchase_line_tax_id' => null,
                 'mfg_date' => $this->transactionUtil->format_date($transaction_data['transaction_date']),
             ];
-            if (request()->session()->get('business.enable_lot_number') == 1) {
-                $purchase_line_data['lot_number'] = $request->input('lot_number');
-            }
-
+                $purchase_line_data['lot_number'] = $request->input('lot_number') ?? $this->generateLotNumber($variation->product_id);
+                
             if (request()->session()->get('business.enable_product_expiry') == 1) {
                 $purchase_line_data['exp_date'] = $request->input('exp_date');
             }

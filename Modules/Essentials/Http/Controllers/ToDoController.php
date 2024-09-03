@@ -840,14 +840,15 @@ class ToDoController extends Controller
 
         try {
             $media = Media::findOrFail($id);
-            if ($media->model_type == 'Modules\Essentials\Entities\ToDo') {
-                $todo = ToDo::findOrFail($media->model_id);
+            if ($media->uploaded_by == auth()->user()->id || auth()->user()->can('superadmin')) {
+            
+            $media_path = $media->getDisplayPathAttribute();
 
-                //Can delete document only if task is assigned by or assigned to the user
-                if (in_array(auth()->user()->id, [$todo->user_id, $todo->created_by])) {
-                    unlink($media->display_path);
-                    $media->delete();
-                }
+            if (file_exists($media_path)) {
+                unlink($media_path);
+            }
+            
+            $media->delete();
             }
             $output = [
                 'success' => true,

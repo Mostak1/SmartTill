@@ -93,7 +93,6 @@
                     <thead>
                         <tr>
                             <th>@lang('lang_v1.added_on')</th>
-                            <th>@lang('messages.updated_at')</th>
                             <th> @lang('essentials::lang.task_id')</th>
                             <th class="col-md-2"> @lang('essentials::lang.task')</th>
                             <th> @lang('sale.status')</th>
@@ -175,21 +174,29 @@
             $(document).on('click', '.delete-document', function(e) {
                 e.preventDefault();
                 var element = $(this);
-                var url = $(this).attr('href');
+                var url = element.attr('href');
+
                 $.ajax({
                     url: url,
+                    type: 'DELETE', // Ensure you're using the correct HTTP method for deletion
                     dataType: "json",
                     success: function(result) {
-                        if (result.success == true) {
+                        if (result.success) {
                             toastr.success(result.msg);
                             element.closest('tr').remove();
+                            // Optional: You can reload the table if needed
                             task_table.ajax.reload();
                         } else {
                             toastr.error(result.msg);
                         }
+                    },
+                    error: function(xhr, status, error) {
+                        toastr.error('An error occurred while attempting to delete the document.');
+                        console.error('AJAX Error:', xhr.responseText);
                     }
                 });
             });
+
             // todo task view popup scripts end here
             task_table = $('#task_table').DataTable({
                 processing: true,
@@ -226,10 +233,6 @@
                 columns: [{
                         data: 'created_at',
                         name: 'created_at'
-                    },
-                    {
-                        data: 'updated_at',
-                        name: 'updated_at'
                     },
                     {
                         data: 'task_id',

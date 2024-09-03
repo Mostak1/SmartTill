@@ -48,16 +48,26 @@ class CheckController extends Controller
             if ($request->ajax()) {
                 // Aggregate the sum of physical_count for each check
                 $random_checks = RandomCheck::leftJoin('random_check_details', 'random_check_details.random_check_id', '=', 'random_checks.id')
-                    ->leftJoin('users as checked_by_user', 'random_checks.checked_by', '=', 'checked_by_user.id') // Join with users table for checked_by
-                    ->leftJoin('users as modified_by_user', 'random_checks.modified_by', '=', 'modified_by_user.id') // Join with users table for modified_by
-                    ->leftJoin('business_locations', 'random_check_details.location_id', '=', 'business_locations.id') // Join with business_locations table
+                    ->leftJoin('users as checked_by_user', 'random_checks.checked_by', '=', 'checked_by_user.id')
+                    ->leftJoin('users as modified_by_user', 'random_checks.modified_by', '=', 'modified_by_user.id')
+                    ->leftJoin('business_locations', 'random_check_details.location_id', '=', 'business_locations.id')
                     ->select(
                         'random_checks.id as check_id',
                         'random_checks.check_no as check_no',
                         'random_checks.comment as random_check_comment',
-                        DB::raw("CONCAT(checked_by_user.first_name, ' ', checked_by_user.last_name) as checked_by"), // Concatenate first and last name
-                        DB::raw("CONCAT(modified_by_user.first_name, ' ', modified_by_user.last_name) as modified_by"), // Concatenate first and last name
-                        'business_locations.name as location_name', // Select location name
+                        DB::raw("
+                            CASE
+                                WHEN TRIM(IFNULL(checked_by_user.last_name, '')) = '' THEN checked_by_user.first_name
+                                ELSE CONCAT(checked_by_user.first_name, ' ', checked_by_user.last_name)
+                            END as checked_by
+                        "),
+                        DB::raw("
+                            CASE
+                                WHEN TRIM(IFNULL(modified_by_user.last_name, '')) = '' THEN modified_by_user.first_name
+                                ELSE CONCAT(modified_by_user.first_name, ' ', modified_by_user.last_name)
+                            END as modified_by
+                        "),
+                        'business_locations.name as location_name',
                         DB::raw('SUM(random_check_details.physical_count) as total_physical_count'),
                         DB::raw('COUNT(DISTINCT random_check_details.product_name) as total_product_count'),
                         'random_checks.created_at'
@@ -232,8 +242,18 @@ class CheckController extends Controller
                         'random_checks.id as check_id',
                         'random_checks.check_no as check_no',
                         'random_checks.comment as random_check_comment',
-                        DB::raw("CONCAT(checked_by_user.first_name, ' ', checked_by_user.last_name) as checked_by"), // Concatenate first and last name
-                        DB::raw("CONCAT(modified_by_user.first_name, ' ', modified_by_user.last_name) as modified_by"), // Concatenate first and last name
+                        DB::raw("
+                            CASE
+                                WHEN TRIM(IFNULL(checked_by_user.last_name, '')) = '' THEN checked_by_user.first_name
+                                ELSE CONCAT(checked_by_user.first_name, ' ', checked_by_user.last_name)
+                            END as checked_by
+                        "),
+                        DB::raw("
+                            CASE
+                                WHEN TRIM(IFNULL(modified_by_user.last_name, '')) = '' THEN modified_by_user.first_name
+                                ELSE CONCAT(modified_by_user.first_name, ' ', modified_by_user.last_name)
+                            END as modified_by
+                        "), 
                         'business_locations.name as location_name', // Select location name
                         DB::raw('SUM(random_check_details.physical_count) as total_physical_count'),
                         DB::raw('COUNT(DISTINCT random_check_details.product_name) as total_product_count'),
@@ -639,9 +659,20 @@ class CheckController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        // $business_id = $request->session()->get('user.business_id');
+        $business_id = request()->session()->get('user.business_id');
         $location_id = $request->input('random_check_filter_location_id');
+        // Find the business location
+        $location = BusinessLocation::findOrFail($location_id);
+        $selpermition = $location->custom_field1;
         $categories = $request->input('categories');
+        $business = Business::findOrFail($business_id);
+        $common_settings = $business->common_settings;
+        $exclude_period = $common_settings['exclude_period'] ?? '12';
+        $exclude_checked = $common_settings['exclude_checked'] ?? '7';
+
+        // Calculate the exclusion date based on the period
+        $exclude_date = now()->subMonths($exclude_period);
+        $exclude_days = now()->subDays($exclude_checked);
     
         $categories_products = [];
     
@@ -654,25 +685,34 @@ class CheckController extends Controller
                 ->join('variations as v', 'v.product_id', '=', 'products.id')
                 ->leftJoin('variation_location_details as vld', 'vld.variation_id', '=', 'v.id') 
                 ->whereNull('products.deleted_at')
-                ->where('products.business_id', $location_id)
+                ->where('products.business_id', $business_id)
+                ->where('vld.location_id', '=', $location_id)
                 ->where('products.type', '!=', 'modifier')
                 ->Active();
     
-            // Exclude products that have not been sold in the last year
-            $query->whereHas('transactionSellLines', function ($query) {
-                $query->where('created_at', '>=', now()->subYear());
-            });
+            // Apply specific filters based on selection permission
+            if ($selpermition == 1) {
+                // Exclude products checked within the last $exclude_checked days
+                $query->whereDoesntHave('randomCheckDetails', function ($query) use ($exclude_days) {
+                    $query->where('created_at', '>=', $exclude_days)->whereNull('deleted_at');
+                });
+            } else {
 
+                 // Exclude products that have not been sold in the last year
+                 $query->whereHas('transactionSellLines', function ($query) use ($exclude_date) {
+                    $query->where('created_at', '>=', $exclude_date);
+                });
 
-            // Additional filter to ensure products have been sold on at least one day
-            $query->whereHas('transactionSellLines', function ($query) {
-                $query->where('created_at', '<', now()->subYear());
-            });
+                // Additional filter to ensure products have been sold on at least one day
+                $query->whereHas('transactionSellLines', function ($query) {
+                    $query->where('created_at', '<', now()->subYear());
+                });
 
-            // Exclude products checked within the last week
-            $query->whereDoesntHave('randomCheckDetails', function ($query) {
-                $query->where('created_at', '>=', now()->subWeek())->whereNull('deleted_at');
-            });
+                // Exclude products checked within the last $exclude_checked days
+                $query->whereDoesntHave('randomCheckDetails', function ($query) use ($exclude_days) {
+                    $query->where('created_at', '>=', $exclude_days)->whereNull('deleted_at');
+                });
+            }
             
     
             $category_products = $query->where('products.category_id', $category['category_id'])
@@ -746,7 +786,7 @@ class CheckController extends Controller
 
             $business_id = request()->session()->get('user.business_id');
             $business = Business::where('id', $business_id)->first();
-            $check_prefix = !empty($business->ref_no_prefixes['check']) ? $business->ref_no_prefixes['check'] : '';
+            $check_prefix = !empty($business->ref_no_prefixes['check']) ? $business->ref_no_prefixes['check'] : 'RC';
 
             $randomCheck = RandomCheck::create([
                 'checked_by' => auth()->id(),
@@ -841,7 +881,7 @@ class CheckController extends Controller
         }
 
         // Fetch the RandomCheck data by ID
-        $randomCheck = RandomCheck::with('randomCheckDetails.product')->findOrFail($id);
+        $randomCheck = RandomCheck::with('randomCheckDetails.product.purchase_lines')->findOrFail($id);
         $categories = Category::all()->pluck('name', 'id');
 
         // Fetch the first randomCheckDetail associated with the RandomCheck model
@@ -880,9 +920,23 @@ class CheckController extends Controller
                     // Store a copy of the original detail before updating
                     $randomCheckDetails[] = clone $randomCheckDetail;
 
-                    // Update the detail
+                    // Update the physical count and comment
                     $randomCheckDetail->physical_count = $detail['physical_count'] ?? 0;
                     $randomCheckDetail->comment = $detail['comment'] ?? null;
+
+                    // Handle lot number based on surplus or missing
+                    if (isset($detail['physical_count'])) {
+                        $physicalCountDiff = $detail['physical_count'] - $randomCheckDetail->current_stock;
+
+                        if ($physicalCountDiff > 0) {
+                            // Surplus: create a new lot number
+                            $randomCheckDetail->lot_number = 'S-' . $detail['lot_number'] ?? null;
+                        } elseif ($physicalCountDiff < 0) {
+                            // Missing: use the selected lot number
+                            $randomCheckDetail->lot_number = $detail['lot_number'] ?? null;
+                        }
+                    }
+
                     $randomCheckDetail->save();
                 }
             }
@@ -897,7 +951,7 @@ class CheckController extends Controller
             
             // Redirect to the index or any desired route with a success message
             return redirect()->route('random.randomCheckIndex')
-            ->with('success', 'Random check details updated successfully.');
+                ->with('success', 'Random check details updated successfully.');
 
         } catch (\Exception $e) {
             \Session::flash('error', 'Failed to update.');

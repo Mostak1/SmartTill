@@ -768,6 +768,17 @@ class SellController extends Controller
 
         $change_return = $this->dummyPaymentLine;
 
+        $business = Business::findOrFail($business_id);
+        $common_settings = $business->common_settings;
+        $expiring_soon = $common_settings['expiring_soon'] ?? 30;
+        $expiring_later = $common_settings['expiring_later'] ?? 90;
+
+        // Set session values
+        session([
+            'expiring_soon' => $expiring_soon,
+            'expiring_later' => $expiring_later,
+        ]);
+
         return view('sell.create')
             ->with(compact(
                 'business_details',

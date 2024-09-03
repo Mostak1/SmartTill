@@ -250,6 +250,13 @@ class AdminSidebarMenu
                                 ['icon' => 'fa fas fa-plus-circle', 'active' => request()->segment(1) == 'purchases' && request()->segment(2) == 'create']
                             );
                         }
+                        if (auth()->user()->can('purchase.create')) {
+                            $sub->url(
+                                action([\App\Http\Controllers\StockAdjustmentController::class, 'stockSurplus']),
+                                'Stock Surplus',
+                                ['icon' => 'fa fas fa-plus-circle', 'active' => request()->segment(1) == 'stock-surplus' && request()->segment(2) == 'stockSurplus']
+                            );
+                        }
                         if (auth()->user()->can('purchase.update')) {
                             $sub->url(
                                 action([\App\Http\Controllers\PurchaseReturnController::class, 'index']),
