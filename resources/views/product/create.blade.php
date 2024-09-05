@@ -100,7 +100,7 @@
 
         @php
         $default_location = null;
-        if(count($business_locations) == 1){
+        if(count($business_locations) > 0){
         $default_location = array_key_first($business_locations->toArray());
         }
         @endphp
