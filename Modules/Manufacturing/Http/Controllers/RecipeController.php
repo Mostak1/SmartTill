@@ -113,14 +113,17 @@ class RecipeController extends Controller
                 ->editColumn('default_purchase_price', function ($row) {
                     $dpp = $row->default_purchase_price;
                     $price = $this->mfgUtil->getRecipeTotal($row);
-
+                    
                     $unit_cost = $row->total_quantity > 0 ? $price / $row->total_quantity : 0;
-
-                    if (round($unit_cost,2) > round($dpp,2)) {
+                    
+                    $dpp_rounded = round($dpp, 2);
+                    $unit_cost_rounded = round($unit_cost, 2);
+                    
+                    if ($unit_cost_rounded > $dpp_rounded) {
                         $html = '<span class="display_currency text-danger" data-unit_cost="' . $dpp . '" data-currency_symbol="true">' . $dpp . '</span>';
                     } else {
                         $html = '<span class="display_currency" data-unit_cost="' . $dpp . '" data-currency_symbol="true">' . $dpp . '</span>';
-                    }
+                    }                    
                     return $html;
                 })
                 ->addColumn('unit_cost', function ($row) {

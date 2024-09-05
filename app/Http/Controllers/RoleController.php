@@ -49,11 +49,11 @@ class RoleController extends Controller
                     if (! $row->is_default || $row->name == 'Cashier#'.$row->business_id) {
                         $action = '';
                         if (auth()->user()->can('roles.update')) {
-                            $action .= '<a href="'.action([\App\Http\Controllers\RoleController::class, 'edit'], [$row->id]).'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> '.('messages.edit').'</a>';
+                            $action .= '<a href="'.action([\App\Http\Controllers\RoleController::class, 'edit'], [$row->id]).'" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> '.__('messages.edit').'</a>';
                         }
                         if (auth()->user()->can('roles.delete')) {
                             $action .= '&nbsp
-                                <button data-href="'.action([\App\Http\Controllers\RoleController::class, 'destroy'], [$row->id]).'" class="btn btn-xs btn-danger delete_role_button"><i class="glyphicon glyphicon-trash"></i> '.('messages.delete').'</button>';
+                                <button data-href="'.action([\App\Http\Controllers\RoleController::class, 'destroy'], [$row->id]).'" class="btn btn-xs btn-danger delete_role_button"><i class="glyphicon glyphicon-trash"></i> '.__('messages.delete').'</button>';
                         }
                         $action .= '&nbsp <a href="#" data-href="' .action([\App\Http\Controllers\RoleController::class, 'users'], [$row->id]).'" class="btn btn-xs btn-success users-modal-show"><i class="fas fa-users"></i> '.('Users').'</a>';
 
@@ -108,7 +108,7 @@ class RoleController extends Controller
         // Process the role name to remove the '#{business_id}' part
         $role_name = str_replace('#' . $business_id, '', $role->name);
 
-        $users = User::role($role->name)->get(['username', 'first_name', 'last_name', 'email']);
+        $users = User::role($role->name)->get(['username', 'first_name', 'last_name', 'email','id']);
 
         return view('role.users_modal', compact('role_name', 'users'));
     }

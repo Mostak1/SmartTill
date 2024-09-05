@@ -268,6 +268,10 @@ class SellPosController extends Controller
         $common_settings = $business->common_settings;
         $expiring_soon = $common_settings['expiring_soon'] ?? 30;
         $expiring_later = $common_settings['expiring_later'] ?? 90;
+        $pos_settings = json_decode($business->pos_settings, true);
+        
+        $discount_rules = $pos_settings['discount_rules'] ?? [];
+        $enable_discount_rules = $pos_settings['enable_discount_rules'] ?? [];
 
         // Set session values
         session([
@@ -276,6 +280,8 @@ class SellPosController extends Controller
         ]);
         return view('sale_pos.create')
             ->with(compact(
+                'discount_rules',
+                'enable_discount_rules',
                 'edit_discount',
                 'edit_price',
                 'business_locations',

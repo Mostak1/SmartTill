@@ -113,5 +113,33 @@
         });
         });
     });
+    $(document).on('click', 'button.delete_user_button', function(){
+        swal({
+            title: LANG.sure,
+            text: LANG.confirm_delete_user,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                var href = $(this).data('href');
+                var data = $(this).serialize();
+                $.ajax({
+                    method: "DELETE",
+                    url: href,
+                    dataType: "json",
+                    data: data,
+                    success: function(result){
+                        if(result.success == true){
+                            toastr.success(result.msg);
+                            users_table.ajax.reload();
+                        } else {
+                            toastr.error(result.msg);
+                        }
+                    }
+                });
+            }
+        });
+    });
 </script>
 @endsection

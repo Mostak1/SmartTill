@@ -75,6 +75,7 @@ class StockTransferController extends Controller
                     '=',
                     'l2.id'
                 )
+                ->leftJoin('users as u', 't2.created_by', '=', 'u.id')
                 ->where('transactions.business_id', $business_id)
                 ->where('transactions.type', 'sell_transfer')
                 ->select(
@@ -87,7 +88,13 @@ class StockTransferController extends Controller
                     'transactions.shipping_charges',
                     'transactions.additional_notes',
                     'transactions.id as DT_RowId',
-                    'transactions.status'
+                    'transactions.status',
+                    DB::raw("
+                            CASE
+                                WHEN TRIM(IFNULL(u.last_name, '')) = '' THEN u.first_name
+                                ELSE CONCAT(u.first_name, ' ', u.last_name)
+                            END as created_by
+                        ")
                 );
 
             return Datatables::of($stock_transfers)
@@ -112,6 +119,9 @@ class StockTransferController extends Controller
 
                     return $html;
                 })
+                ->editColumn('created_by', function ($row) {
+                    return $row->created_by;
+                })
                 ->editColumn(
                     'final_total',
                     '<span class="display_currency" data-currency_symbol="true">{{$final_total}}</span>'
@@ -129,7 +139,7 @@ class StockTransferController extends Controller
                     return $status;
                 })
                 ->editColumn('transaction_date', '{{@format_datetime($transaction_date)}}')
-                ->rawColumns(['final_total', 'action', 'shipping_charges', 'status'])
+                ->rawColumns(['final_total', 'action', 'shipping_charges', 'status', 'created_by'])
                 ->setRowAttr([
                     'data-href' => function ($row) {
                         return  action([\App\Http\Controllers\StockTransferController::class, 'show'], [$row->id]);

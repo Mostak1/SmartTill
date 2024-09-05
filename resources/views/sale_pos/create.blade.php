@@ -15,6 +15,12 @@
 		$is_discount_enabled = $pos_settings['disable_discount'] != 1 ? true : false;
 		$is_rp_enabled = session('business.enable_rp') == 1 ? true : false;
 	@endphp
+	@php
+		$expiringSoon = session('expiring_soon');
+		$expiringLater = session('expiring_later');
+	@endphp
+	<input hidden type="number" value="{{ $expiringSoon }}" id="expiring_soon">
+	<input hidden type="number" value="{{ $expiringLater }}" id="expiring_later">
 	{!! Form::open(['url' => action([\App\Http\Controllers\SellPosController::class, 'store']), 'method' => 'post', 'id' => 'add_pos_sell_form' ]) !!}
 	<div class="row mb-12">
 		<div class="col-md-12">
@@ -94,6 +100,10 @@
     @endif
 @stop
 @section('javascript')
+	<script>
+		var discountRules = @json($discount_rules);
+		var enable_discount_rules = @json($enable_discount_rules);
+	</script>
 	<script src="{{ asset('js/pos.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/printer.js?v=' . $asset_v) }}"></script>
 	<script src="{{ asset('js/product.js?v=' . $asset_v) }}"></script>

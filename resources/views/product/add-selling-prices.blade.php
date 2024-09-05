@@ -16,7 +16,7 @@
 		<div class="col-xs-12">
 		<div class="box box-solid">
 			<div class="box-header">
-	            <h3 class="box-title">@lang('sale.product'): {{$product->name}} ({{$product->sku}})</h3>
+	            <h3 class="box-title">@lang('sale.product'): {{$product->name}} ({{$product->sku}}) @show_tooltip(__('lang_v1.price_group_price_type_tooltip'))</h3>
 	        </div>
 			<div class="box-body">
 				<div class="row">
@@ -32,7 +32,7 @@
 										@endif
 										<th>@lang('lang_v1.default_selling_price_inc_tax')</th>
 										@foreach($price_groups as $price_group)
-											<th>{{$price_group->name}} @show_tooltip(__('lang_v1.price_group_price_type_tooltip'))</th>
+											<th>{{$price_group->name}}</th>
 										@endforeach
 									</tr>
 								</thead>
